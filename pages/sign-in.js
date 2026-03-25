@@ -12,18 +12,7 @@ export default function SignInPage() {
           </div>
           <span style={{ fontFamily:'var(--display)', fontSize:26, fontWeight:400, color:'var(--text)' }}>Lettly</span>
         </div>
-        <SignIn
-          routing="hash"
-          signUpUrl="/sign-up"
-          forceRedirectUrl="/dashboard"
-          appearance={{
-            variables: { colorPrimary:'#1b5e3b', colorBackground:'#ffffff', colorInputBackground:'#f7f5f0', colorText:'#1c1c1a', borderRadius:'10px' },
-            elements: {
-              card: { boxShadow:'0 2px 16px rgba(0,0,0,0.08)', border:'none' },
-              formButtonPrimary: { backgroundColor:'#1b5e3b' },
-            },
-          }}
-        />
+        <SignIn afterSignInUrl="/dashboard" />
       </div>
     </>
   )

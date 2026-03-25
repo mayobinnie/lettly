@@ -16,18 +16,7 @@ export default function SignUpPage() {
           <h1 style={{ fontFamily:'var(--display)', fontSize:26, fontWeight:300, color:'var(--text)', marginBottom:6 }}>Start managing smarter</h1>
           <p style={{ fontSize:13, color:'var(--text-2)' }}>Free to try. No credit card needed.</p>
         </div>
-        <SignUp
-          routing="hash"
-          signInUrl="/sign-in"
-          forceRedirectUrl="/dashboard"
-          appearance={{
-            variables: { colorPrimary:'#1b5e3b', colorBackground:'#ffffff', colorInputBackground:'#f7f5f0', colorText:'#1c1c1a', borderRadius:'10px' },
-            elements: {
-              card: { boxShadow:'0 2px 16px rgba(0,0,0,0.08)', border:'none' },
-              formButtonPrimary: { backgroundColor:'#1b5e3b' },
-            },
-          }}
-        />
+        <SignUp afterSignUpUrl="/dashboard" />
       </div>
     </>
   )
