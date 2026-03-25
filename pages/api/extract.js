@@ -48,27 +48,53 @@ export default async function handler(req, res) {
 
   const isPDF = mediaType === 'application/pdf' || filename?.toLowerCase().endsWith('.pdf')
 
-  const docBlock = isPDF
-    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } }
-    : { type: 'image',    source: { type: 'base64', media_type: mediaType || 'image/jpeg', data } }
-
   try {
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2048,
-      messages: [{
-        role: 'user',
-        content: [docBlock, { type: 'text', text: PROMPT }],
-      }],
-    })
+    let response
+
+    if (isPDF) {
+      response = await client.beta.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2048,
+        betas: ['pdfs-2024-09-25'],
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } },
+            { type: 'text', text: PROMPT },
+          ],
+        }],
+      })
+    } else {
+      response = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2048,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data } },
+            { type: 'text', text: PROMPT },
+          ],
+        }],
+      })
+    }
 
     const raw = response.content[0].text.replace(/```json|```/g, '').trim()
-    const extracted = JSON.parse(raw)
+
+    let extracted
+    try {
+      extracted = JSON.parse(raw)
+    } catch {
+      extracted = {
+        documentType: 'other',
+        property: { address: 'Unknown', shortName: filename?.replace('.pdf','') || 'Document' },
+        summary: raw.slice(0, 200),
+      }
+    }
 
     res.status(200).json({ success: true, extracted, filename })
   } catch (err) {
-    console.error('Extract error:', err)
-    res.status(500).json({ success: false, error: 'Could not read document', filename })
+    console.error('Extract error:', err?.message || err)
+    res.status(500).json({ success: false, error: err?.message || 'Could not read document', filename })
   }
 }
 
