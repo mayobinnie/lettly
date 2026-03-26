@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useUser, SignInButton, SignUpButton } from '@clerk/nextjs'
+import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
 
@@ -29,16 +29,12 @@ export default function Landing() {
             <span style={{ fontSize:10, color:'var(--brand)', background:'var(--brand-light)', padding:'2px 9px', borderRadius:20, fontWeight:500 }}>beta</span>
           </div>
           <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-            <SignInButton mode="redirect" redirectUrl="/dashboard">
-              <button style={{ fontSize:13, color:'var(--text-2)', padding:'8px 16px', background:'none', border:'none', cursor:'pointer' }}>
-                Sign in
-              </button>
-            </SignInButton>
-            <SignUpButton mode="redirect" redirectUrl="/dashboard">
-              <button style={{ fontSize:13, fontWeight:500, color:'#fff', background:'var(--brand)', padding:'9px 22px', borderRadius:9, boxShadow:'0 2px 8px rgba(27,94,59,0.2)', border:'none', cursor:'pointer' }}>
-                Get started free
-              </button>
-            </SignUpButton>
+            <a href="https://accounts.lettly.co/sign-in" style={{ fontSize:13, color:'var(--text-2)', padding:'8px 16px' }}>
+              Sign in
+            </a>
+            <a href="https://accounts.lettly.co/sign-up" style={{ fontSize:13, fontWeight:500, color:'#fff', background:'var(--brand)', padding:'9px 22px', borderRadius:9, boxShadow:'0 2px 8px rgba(27,94,59,0.2)' }}>
+              Get started free
+            </a>
           </div>
         </nav>
 
@@ -55,16 +51,12 @@ export default function Landing() {
             Drop your certificates, tenancy agreements and mortgage offers. Lettly reads them all and builds your compliance dashboard automatically.
           </p>
           <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
-            <SignUpButton mode="redirect" redirectUrl="/dashboard">
-              <button style={{ fontSize:15, fontWeight:500, color:'#fff', background:'var(--brand)', padding:'14px 36px', borderRadius:12, boxShadow:'0 6px 20px rgba(27,94,59,0.25)', border:'none', cursor:'pointer' }}>
-                Start free — no card needed
-              </button>
-            </SignUpButton>
-            <SignInButton mode="redirect" redirectUrl="/dashboard">
-              <button style={{ fontSize:15, color:'var(--text-2)', background:'var(--surface)', border:'0.5px solid var(--border-strong)', padding:'14px 28px', borderRadius:12, cursor:'pointer' }}>
-                Sign in
-              </button>
-            </SignInButton>
+            <a href="https://accounts.lettly.co/sign-up" style={{ fontSize:15, fontWeight:500, color:'#fff', background:'var(--brand)', padding:'14px 36px', borderRadius:12, boxShadow:'0 6px 20px rgba(27,94,59,0.25)', display:'inline-block' }}>
+              Start free — no card needed
+            </a>
+            <a href="https://accounts.lettly.co/sign-in" style={{ fontSize:15, color:'var(--text-2)', background:'var(--surface)', border:'0.5px solid var(--border-strong)', padding:'14px 28px', borderRadius:12, display:'inline-block' }}>
+              Sign in
+            </a>
           </div>
         </div>
 
