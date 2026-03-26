@@ -325,7 +325,7 @@ function PricingNudge({portfolioSize}){
 }
 
 /* ---- Overview ---- */
-function PortfolioChart({props}){
+function PortfolioChart({props, years}){
   const ref = useRef(null)
   const chartRef = useRef(null)
 
@@ -333,13 +333,10 @@ function PortfolioChart({props}){
     if(!ref.current || !props.length) return
     if(typeof window === 'undefined') return
 
-    const script = document.createElement('script')
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js'
-    script.onload = () => {
-      if(chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
-      const years = 10
-      const labels = Array.from({length:years+1},(_,i)=> i===0?'Now':`${new Date().getFullYear()+i}`)
-      const colors = ['#1b5e3b','#2d8a5e','#4db87a','#85d4a8','#b8e8cc','#3b82c4','#6baed6']
+    const buildChart = () => {
+      if(chartRef.current){ chartRef.current.destroy(); chartRef.current=null }
+      const labels = Array.from({length:years+1},(_,i)=> i===0?'Now':i===1?'1yr':i===5&&years>=5?'5yr':i===10&&years>=10?'10yr':(new Date().getFullYear()+i).toString())
+      const colors = ['#1b5e3b','#2d8a5e','#378add','#9b59b6','#e67e22','#e74c3c','#16a085']
 
       const datasets = props.filter(p=>p.currentValue).map((p,i)=>{
         const rate = getGrowthRate(p.address)
@@ -348,99 +345,190 @@ function PortfolioChart({props}){
           label: p.shortName,
           data: values,
           borderColor: colors[i % colors.length],
-          backgroundColor: colors[i % colors.length] + '15',
+          backgroundColor: colors[i % colors.length]+'15',
           borderWidth: 2,
           fill: false,
           tension: 0.4,
-          pointRadius: 3,
-          pointHoverRadius: 5,
+          pointRadius: 4,
+          pointHoverRadius: 6,
         }
       })
 
-      // Portfolio total line
-      if(props.filter(p=>p.currentValue).length > 1) {
+      if(props.filter(p=>p.currentValue).length > 1){
         const totalByYear = Array.from({length:years+1},(_,yr)=>
           props.filter(p=>p.currentValue).reduce((s,p)=>{
             const rate = getGrowthRate(p.address)
             return s + projectValue(Number(p.currentValue), rate, years)[yr]
           },0)
         )
-        datasets.push({
-          label: 'Portfolio total',
+        datasets.unshift({
+          label:'Portfolio total',
           data: totalByYear,
-          borderColor: '#1b5e3b',
-          backgroundColor: '#1b5e3b20',
-          borderWidth: 3,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-          borderDash: [],
+          borderColor:'#1b5e3b',
+          backgroundColor:'#1b5e3b20',
+          borderWidth:3,
+          fill:true,
+          tension:0.4,
+          pointRadius:0,
         })
       }
 
       chartRef.current = new window.Chart(ref.current, {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, color: '#888' } },
-            tooltip: {
-              callbacks: {
-                label: ctx => ctx.dataset.label + ': £' + ctx.parsed.y.toLocaleString('en-GB')
+        type:'line',
+        data:{ labels, datasets },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          interaction:{ mode:'index', intersect:false },
+          plugins:{
+            legend:{ display:true, position:'bottom', labels:{ boxWidth:10, font:{size:11}, color:'#888', padding:16 }},
+            tooltip:{
+              callbacks:{
+                label: ctx => ' '+ctx.dataset.label+': £'+Math.round(ctx.parsed.y).toLocaleString('en-GB')
               }
             }
           },
-          scales: {
-            x: { grid: { color: '#f0ede8' }, ticks: { font: { size: 11 }, color: '#888' } },
-            y: {
-              grid: { color: '#f0ede8' },
-              ticks: {
-                font: { size: 11 }, color: '#888',
-                callback: v => '£' + (v>=1000000?(v/1000000).toFixed(1)+'m':(v/1000).toFixed(0)+'k')
+          scales:{
+            x:{ grid:{ color:'#f0ede8' }, ticks:{ font:{size:11}, color:'#888' }},
+            y:{
+              grid:{ color:'#f0ede8' },
+              ticks:{ font:{size:11}, color:'#888',
+                callback: v => '£'+(v>=1000000?(v/1000000).toFixed(1)+'m':(v/1000).toFixed(0)+'k')
               }
             }
           }
         }
       })
     }
-    document.head.appendChild(script)
-    return () => { if(chartRef.current){ chartRef.current.destroy(); chartRef.current=null } }
-  }, [props.map(p=>p.id+p.currentValue+p.address).join(',')])
+
+    if(window.Chart){ buildChart() }
+    else {
+      const script = document.createElement('script')
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js'
+      script.onload = buildChart
+      document.head.appendChild(script)
+    }
+    return () => { if(chartRef.current){ chartRef.current.destroy(); chartRef.current=null }}
+  }, [props.map(p=>p.id+p.currentValue+p.address).join(',')+years])
 
   if(!props.filter(p=>p.currentValue).length) return null
+  return <div style={{position:'relative',height:300}}><canvas ref={ref}/></div>
+}
 
-  return <div style={{position:'relative',height:280}}>
-    <canvas ref={ref}/>
+function YearByYearTable({props, years}){
+  if(!props.filter(p=>p.currentValue).length) return null
+
+  const yearLabels = Array.from({length:years+1},(_,i)=>i===0?'Now':`Year ${i}`)
+  const totalNow = props.filter(p=>p.currentValue).reduce((s,p)=>s+Number(p.currentValue),0)
+  const totalMortgageNow = props.filter(p=>p.mortgage).reduce((s,p)=>s+Number(p.mortgage),0)
+
+  // Build year-by-year for each property and portfolio total
+  const rows = props.filter(p=>p.currentValue).map(p=>{
+    const rate = getGrowthRate(p.address)
+    const values = projectValue(Number(p.currentValue), rate, years)
+    return { name:p.shortName, rate, values, mortgage:Number(p.mortgage)||0, address:p.address }
+  })
+
+  // Portfolio totals per year
+  const totals = Array.from({length:years+1},(_,yr)=>rows.reduce((s,r)=>s+r.values[yr],0))
+  // Equity totals (assuming mortgage reduces by ~1.5% of balance per year as rough estimate)
+  const equityTotals = Array.from({length:years+1},(_,yr)=>
+    totals[yr] - rows.reduce((s,r)=>s+Math.max(0,r.mortgage*Math.pow(0.985,yr)),0)
+  )
+
+  // Show milestone years
+  const milestones = years===1?[0,1]:years===5?[0,1,2,3,4,5]:[0,1,2,3,5,7,10]
+
+  return <div style={{overflowX:'auto',marginTop:16}}>
+    <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:500}}>
+      <thead>
+        <tr style={{borderBottom:'0.5px solid var(--border)',background:'var(--surface2)'}}>
+          <th style={{textAlign:'left',padding:'8px 10px',color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px',whiteSpace:'nowrap'}}>Year</th>
+          {rows.map(r=><th key={r.name} style={{textAlign:'right',padding:'8px 10px',color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px',whiteSpace:'nowrap'}}>{r.name}</th>)}
+          {rows.length>1&&<th style={{textAlign:'right',padding:'8px 10px',color:'var(--brand)',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.4px',whiteSpace:'nowrap'}}>Total</th>}
+          {rows.length>1&&<th style={{textAlign:'right',padding:'8px 10px',color:'#1e6e35',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.4px',whiteSpace:'nowrap'}}>Est. Equity</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {milestones.filter(yr=>yr<=years).map((yr,i)=>{
+          const isNow = yr===0
+          return <tr key={yr} style={{borderBottom:'0.5px solid var(--border)',background:isNow?'var(--surface2)':'transparent'}}>
+            <td style={{padding:'9px 10px',fontWeight:isNow?600:400,color:isNow?'var(--text)':'var(--text-2)'}}>
+              {isNow?'Now':`Year ${yr} (${new Date().getFullYear()+yr})`}
+            </td>
+            {rows.map(r=>{
+              const gain = r.values[yr] - r.values[0]
+              return <td key={r.name} style={{padding:'9px 10px',textAlign:'right',fontFamily:'var(--mono)'}}>
+                <div style={{fontWeight:500,color:isNow?'var(--text)':'var(--text)'}}>{fmt(r.values[yr])}</div>
+                {!isNow&&<div style={{fontSize:10,color:'var(--green)'}}>+{fmt(gain)}</div>}
+              </td>
+            })}
+            {rows.length>1&&<td style={{padding:'9px 10px',textAlign:'right',fontFamily:'var(--mono)',fontWeight:600,color:isNow?'var(--text)':'var(--brand)'}}>
+              <div>{fmt(totals[yr])}</div>
+              {!isNow&&<div style={{fontSize:10,color:'var(--green)'}}>+{fmt(totals[yr]-totals[0])}</div>}
+            </td>}
+            {rows.length>1&&<td style={{padding:'9px 10px',textAlign:'right',fontFamily:'var(--mono)',fontWeight:600,color:isNow?'var(--text)':'#1e6e35'}}>
+              <div>{fmt(Math.max(0,equityTotals[yr]))}</div>
+              {!isNow&&equityTotals[yr]>equityTotals[0]&&<div style={{fontSize:10,color:'var(--green)'}}>+{fmt(equityTotals[yr]-equityTotals[0])}</div>}
+            </td>}
+          </tr>
+        })}
+      </tbody>
+    </table>
+    <div style={{fontSize:10,color:'var(--text-3)',marginTop:8,lineHeight:1.5}}>
+      Growth rates: {rows.map(r=>r.name+' '+r.rate+'%').join(' · ')} · Based on UK HPI regional 5yr averages · Mortgage balance estimated · Not financial advice
+    </div>
   </div>
 }
 
 function GrowthCards({props}){
-  return <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:10,marginBottom:14}}>
+  return <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:10,marginBottom:14}}>
     {props.filter(p=>p.currentValue).map(p=>{
       const rate = getGrowthRate(p.address)
       const val = Number(p.currentValue)
-      const in1yr = projectValue(val, rate, 1)[1]
-      const in5yr = projectValue(val, rate, 5)[5]
-      const in10yr = projectValue(val, rate, 10)[10]
-      const gain1 = in1yr - val
-      const gain10 = in10yr - val
+      const in1 = projectValue(val,rate,1)[1]
+      const in5 = projectValue(val,rate,5)[5]
+      const in10 = projectValue(val,rate,10)[10]
       return <div key={p.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:14}}>
-        <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:2}}>{p.shortName}</div>
-        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10}}>~{rate}% avg annual growth · {p.nation||'England'}</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
-          {[['Now',fmt(val),''],['1yr',fmt(in1yr),'+'+fmt(gain1)],['10yr',fmt(in10yr),'+'+fmt(gain10)]].map(([label,v,g])=>(
-            <div key={label} style={{background:'var(--surface2)',borderRadius:7,padding:'8px 10px'}}>
-              <div style={{fontSize:10,color:'var(--text-3)',marginBottom:3}}>{label}</div>
-              <div style={{fontSize:12,fontWeight:600,fontFamily:'var(--mono)',color:'var(--text)'}}>{v}</div>
-              {g&&<div style={{fontSize:10,color:'var(--green)',marginTop:1}}>{g}</div>}
+        <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:1}}>{p.shortName}</div>
+        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10}}>{rate}% avg annual · {p.nation||'England'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:5}}>
+          {[['Now',val,null],['1yr',in1,in1-val],['5yr',in5,in5-val],['10yr',in10,in10-val]].map(([label,v,gain])=>(
+            <div key={label} style={{background:label==='Now'?'var(--surface2)':'var(--brand-subtle)',borderRadius:7,padding:'8px 7px',border:label==='Now'?'none':'0.5px solid rgba(27,94,59,0.1)'}}>
+              <div style={{fontSize:10,color:'var(--text-3)',marginBottom:2}}>{label}</div>
+              <div style={{fontSize:11,fontWeight:600,fontFamily:'var(--mono)',color:label==='Now'?'var(--text)':'var(--brand)'}}>{fmt(v)}</div>
+              {gain&&<div style={{fontSize:9,color:'var(--green)',marginTop:1}}>+{fmt(gain)}</div>}
             </div>
           ))}
         </div>
       </div>
     })}
+  </div>
+}
+
+
+function GrowthChartWidget({props}){
+  const[chartYears,setChartYears]=useState(10)
+  return<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14,flexWrap:'wrap',gap:8}}>
+      <div>
+        <div style={{fontSize:13,fontWeight:500}}>Projected portfolio growth</div>
+        <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>UK HPI regional averages by postcode · Not financial advice</div>
+      </div>
+      <div style={{display:'flex',gap:4}}>
+        {[1,5,10].map(y=>(
+          <button key={y} onClick={()=>setChartYears(y)}
+            style={{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+              borderColor:chartYears===y?'var(--brand)':'var(--border)',
+              background:chartYears===y?'var(--brand-light)':'var(--surface)',
+              color:chartYears===y?'var(--brand)':'var(--text-2)'}}>
+            {y}yr
+          </button>
+        ))}
+      </div>
+    </div>
+    <PortfolioChart props={props} years={chartYears}/>
+    <YearByYearTable props={props} years={chartYears}/>
   </div>
 }
 
@@ -569,18 +657,10 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck}){
       </div>
     </div>}
 
-    {/* Growth chart */}
-    {props.filter(p=>p.currentValue).length>0&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-        <div>
-          <div style={{fontSize:13,fontWeight:500}}>Projected portfolio growth</div>
-          <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Based on UK HPI regional averages by postcode · Not financial advice</div>
-        </div>
-      </div>
-      <PortfolioChart props={props}/>
-    </div>}
+    {/* Growth chart with year toggle */}
+    {props.filter(p=>p.currentValue).length>0&&<GrowthChartWidget props={props}/>}
 
-    {/* Per-property growth cards */}
+    {/* Per-property growth cards - always show 1/5/10yr */}
     {props.filter(p=>p.currentValue).length>0&&<>
       <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:10}}>Property growth projections</div>
       <GrowthCards props={props}/>
