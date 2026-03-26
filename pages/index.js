@@ -22,6 +22,11 @@ export default function Landing() {
     <>
       <Head>
         <title>Lettly - AI property portfolio management for UK landlords</title>
+        <meta name="theme-color" content="#1b5e3b"/>
+        <link rel="manifest" href="/manifest.json"/>
+        <link rel="apple-touch-icon" href="/icon.svg"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <meta name="apple-mobile-web-app-title" content="Lettly"/>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="The only property platform built for the Renters' Rights Bill era. Drop your documents, Lettly reads them and keeps you compliant." />
       </Head>
@@ -91,7 +96,7 @@ export default function Landing() {
 
           <div className="ticker" style={{ marginBottom:28 }}>
             <span className="ticker-dot"/>
-            Section 21 abolished 1 May 2026 - 2.7m UK landlords need to act now
+            England: Section 21 abolished 1 May 2026 · Scotland: PRT law · Wales: Occupation Contracts
           </div>
 
           <h1 className="hero-title" style={{ marginBottom:22 }}>
@@ -147,7 +152,7 @@ export default function Landing() {
           <div className="stats-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:24, maxWidth:900, margin:'0 auto', textAlign:'center' }}>
             {[
               { num:'2.7m',  label:'UK private landlords affected', sub:'by Renters\' Rights Bill' },
-              { num:'Oct 26',label:'Section 21 abolished', sub:'Are you ready?' },
+              { num:'3',    label:'Nations covered', sub:'England, Scotland, Wales' },
               { num:'2028',  label:'EPC minimum C required', sub:'New tenancies from 2028' },
               { num:'£7.50', label:'Starts from per month', sub:'14-day free trial included' },
             ].map(s => (
@@ -218,10 +223,10 @@ export default function Landing() {
           <div style={{ background:'var(--brand)', borderRadius:20, padding:'clamp(32px,5vw,52px)', color:'#fff', textAlign:'center' }}>
             <div style={{ fontSize:12, fontWeight:500, opacity:0.7, textTransform:'uppercase', letterSpacing:'1px', marginBottom:16 }}>The clock is ticking</div>
             <h2 style={{ fontFamily:'var(--display)', fontSize:'clamp(26px,4vw,40px)', fontWeight:300, lineHeight:1.2, marginBottom:20 }}>
-              Section 21 ends in October 2026.<br/>Are you prepared?
+              Different laws apply in England,<br/>Scotland and Wales.<br/><em style={{fontStyle:'italic'}}>Are you covered?</em>
             </h2>
             <p style={{ fontSize:'clamp(14px,1.8vw,16px)', opacity:0.85, lineHeight:1.8, maxWidth:560, margin:'0 auto 32px' }}>
-              The Renters&#39; Rights Bill abolishes no-fault evictions, converts all tenancies to periodic, and requires PRS Database registration before you can serve any notice. 2.7 million landlords need to act.
+              In England, the Renters Rights Act abolishes Section 21 from 1 May 2026. In Scotland, PRTs have been in force since 2017. In Wales, Occupation Contracts replaced ASTs in 2022. Lettly tracks the right laws for each of your properties automatically.
             </p>
             <div style={{ display:'flex', gap:16, justifyContent:'center', flexWrap:'wrap', marginBottom:36 }}>
               {[

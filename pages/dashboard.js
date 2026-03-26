@@ -916,13 +916,358 @@ function AITab({portfolio}){
   </div>
 }
 
+
+/* ---- Rent Tracker ---- */
+function RentTracker({portfolio, setPortfolio}){
+  const props = portfolio.properties || []
+  const rentLedger = portfolio.rentLedger || {}
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth()
+
+  // Generate last 12 months
+  const months = []
+  for(let i = 11; i >= 0; i--){
+    const d = new Date(currentYear, currentMonth - i, 1)
+    months.push({
+      key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,
+      label: d.toLocaleDateString('en-GB', {month:'short', year:'numeric'}),
+      year: d.getFullYear(),
+      month: d.getMonth(),
+    })
+  }
+
+  const [selMonth, setSelMonth] = useState(months[months.length-1].key)
+  const [selProp, setSelProp] = useState('all')
+
+  function getStatus(propId, monthKey){
+    return rentLedger?.[propId]?.[monthKey] || 'unpaid'
+  }
+
+  function setStatus(propId, monthKey, status){
+    setPortfolio(prev => ({
+      ...prev,
+      rentLedger: {
+        ...prev.rentLedger,
+        [propId]: {
+          ...(prev.rentLedger?.[propId] || {}),
+          [monthKey]: status,
+        }
+      }
+    }))
+  }
+
+  const filteredProps = selProp === 'all' ? props : props.filter(p => p.id === selProp)
+  const totalExpected = filteredProps.reduce((s,p) => s + (Number(p.rent)||0), 0)
+  const totalPaid = filteredProps.filter(p => getStatus(p.id, selMonth) === 'paid').reduce((s,p) => s + (Number(p.rent)||0), 0)
+  const totalArrears = filteredProps.filter(p => ['unpaid','late','partial'].includes(getStatus(p.id, selMonth))).reduce((s,p) => s + (Number(p.rent)||0), 0)
+
+  const statusMeta = {
+    paid:    { label:'Paid',    color:'var(--green)',  bg:'var(--green-bg)' },
+    partial: { label:'Partial', color:'#633806',       bg:'#fff8e1' },
+    late:    { label:'Late',    color:'var(--red)',     bg:'var(--red-bg)' },
+    unpaid:  { label:'Not yet', color:'var(--text-3)', bg:'var(--surface2)' },
+  }
+
+  // Arrears across all time
+  const allArrears = []
+  props.forEach(p => {
+    months.slice(0, 11).forEach(m => { // exclude current month
+      const s = getStatus(p.id, m.key)
+      if(s === 'unpaid' || s === 'late'){
+        allArrears.push({ prop: p.shortName, month: m.label, amount: Number(p.rent)||0, status: s })
+      }
+    })
+  })
+
+  return <div className="fade-up">
+    {allArrears.length > 0 && <div style={{background:'var(--red-bg)',border:'0.5px solid var(--red)',borderRadius:12,padding:'12px 14px',marginBottom:14,color:'var(--red)',fontSize:12,lineHeight:1.8}}>
+      <div style={{fontWeight:600,marginBottom:4}}>Rent arrears - {allArrears.length} outstanding payment{allArrears.length>1?'s':''}</div>
+      {allArrears.slice(0,5).map((a,i) => <div key={i}>- {a.prop} - {a.month}: {fmt(a.amount)} {a.status}</div>)}
+      {allArrears.length > 5 && <div style={{color:'var(--red)',opacity:0.7}}>...and {allArrears.length-5} more</div>}
+    </div>}
+
+    {/* Summary metrics */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+      <Metric label="Expected this month" value={totalExpected?fmt(totalExpected):'-'} sub="Total rent due"/>
+      <Metric label="Received" value={totalPaid?fmt(totalPaid):'-'} sub={totalExpected>0?`${Math.round(totalPaid/totalExpected*100)}% collected`:''} subGreen={totalPaid===totalExpected&&totalExpected>0}/>
+      <Metric label="Outstanding" value={totalArrears?fmt(totalArrears):'-'} sub={totalArrears>0?'Needs chasing':''} subRed={totalArrears>0}/>
+    </div>
+
+    {/* Controls */}
+    <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+      <select value={selMonth} onChange={e=>setSelMonth(e.target.value)} style={{background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 12px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',outline:'none'}}>
+        {months.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
+      </select>
+      <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 12px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',outline:'none'}}>
+        <option value="all">All properties</option>
+        {props.map(p => <option key={p.id} value={p.id}>{p.shortName}</option>)}
+      </select>
+    </div>
+
+    {/* Rent ledger */}
+    {props.length === 0
+      ? <div style={{textAlign:'center',padding:'40px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}><div style={{fontSize:13,color:'var(--text-3)'}}>Add properties with rent amounts to track payments.</div></div>
+      : <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,overflow:'hidden'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+            <thead><tr style={{borderBottom:'0.5px solid var(--border)',background:'var(--surface2)'}}>
+              {['Property','Tenant','Rent/mo','Status','Action','Notes'].map(h => <th key={h} style={{textAlign:'left',padding:'10px 12px',fontSize:11,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px'}}>{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {filteredProps.map((p,i) => {
+                const status = getStatus(p.id, selMonth)
+                const sm = statusMeta[status] || statusMeta.unpaid
+                const noteKey = `${selMonth}_note`
+                const note = rentLedger?.[p.id]?.[noteKey] || ''
+                return <tr key={p.id} style={{borderBottom:i<filteredProps.length-1?'0.5px solid var(--border)':'none'}}>
+                  <td style={{padding:'10px 12px',fontWeight:500}}>{p.shortName}</td>
+                  <td style={{padding:'10px 12px',color:'var(--text-2)'}}>{p.tenantName||'-'}</td>
+                  <td style={{padding:'10px 12px',fontFamily:'var(--mono)',fontWeight:500}}>{p.rent?fmt(Number(p.rent)):'-'}</td>
+                  <td style={{padding:'10px 12px'}}>
+                    <span style={{background:sm.bg,color:sm.color,fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20}}>{sm.label}</span>
+                  </td>
+                  <td style={{padding:'10px 12px'}}>
+                    <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                      {['paid','partial','late','unpaid'].map(s => (
+                        <button key={s} onClick={()=>setStatus(p.id,selMonth,s)}
+                          style={{padding:'3px 8px',borderRadius:6,fontSize:10,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+                            borderColor:status===s?statusMeta[s].color:'var(--border)',
+                            background:status===s?statusMeta[s].bg:'transparent',
+                            color:status===s?statusMeta[s].color:'var(--text-3)'}}>
+                          {statusMeta[s].label}
+                        </button>
+                      ))}
+                    </div>
+                  </td>
+                  <td style={{padding:'10px 12px'}}>
+                    <input
+                      defaultValue={note}
+                      onBlur={e=>setPortfolio(prev=>({...prev,rentLedger:{...prev.rentLedger,[p.id]:{...(prev.rentLedger?.[p.id]||{}),[noteKey]:e.target.value}}}))}
+                      placeholder="e.g. Paid by BACS"
+                      style={{background:'var(--surface2)',border:'0.5px solid var(--border)',borderRadius:6,padding:'4px 8px',fontFamily:'var(--font)',fontSize:11,color:'var(--text)',outline:'none',width:140}}/>
+                  </td>
+                </tr>
+              })}
+            </tbody>
+          </table>
+        </div>
+    }
+
+    {/* Payment history - last 3 months mini view */}
+    {props.length > 0 && <div style={{marginTop:16}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>Payment history</div>
+      <div style={{overflowX:'auto'}}>
+        <table style={{borderCollapse:'collapse',fontSize:11,minWidth:'100%'}}>
+          <thead><tr>
+            <th style={{textAlign:'left',padding:'6px 10px',color:'var(--text-3)',fontWeight:500,whiteSpace:'nowrap',minWidth:120}}>Property</th>
+            {months.slice(-4).map(m => <th key={m.key} style={{padding:'6px 10px',color:'var(--text-3)',fontWeight:500,whiteSpace:'nowrap',textAlign:'center'}}>{m.label}</th>)}
+          </tr></thead>
+          <tbody>
+            {props.map(p => <tr key={p.id} style={{borderTop:'0.5px solid var(--border)'}}>
+              <td style={{padding:'7px 10px',fontWeight:500,color:'var(--text)'}}>{p.shortName}</td>
+              {months.slice(-4).map(m => {
+                const s = getStatus(p.id, m.key)
+                const sm = statusMeta[s]||statusMeta.unpaid
+                return <td key={m.key} style={{padding:'7px 10px',textAlign:'center'}}>
+                  <span style={{display:'inline-block',width:10,height:10,borderRadius:'50%',background:sm.color,opacity:s==='unpaid'?0.3:1}} title={sm.label}/>
+                </td>
+              })}
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+      <div style={{display:'flex',gap:12,marginTop:10,flexWrap:'wrap'}}>
+        {Object.entries(statusMeta).map(([k,v]) => <span key={k} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'var(--text-2)'}}><span style={{width:8,height:8,borderRadius:'50%',background:v.color,opacity:k==='unpaid'?0.3:1,flexShrink:0}}/>{v.label}</span>)}
+      </div>
+    </div>}
+  </div>
+}
+
+/* ---- MTD Tab ---- */
+function MTDTab({portfolio}){
+  const props = portfolio.properties || []
+  const expenses = portfolio.expenses || []
+  const now = new Date()
+  const taxYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1
+  const currentQuarter = Math.floor(((now.getMonth() + 9) % 12) / 3) + 1
+
+  const [year, setYear] = useState(taxYear)
+  const [quarter, setQuarter] = useState(currentQuarter)
+  const [summary, setSummary] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [status, setStatus] = useState('')
+
+  const qualifies = props.reduce((s,p) => s + (Number(p.rent)||0), 0) * 12 >= 50000
+
+  async function previewSummary(){
+    setLoading(true)
+    try{
+      const res = await fetch('/api/mtd-submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({year, quarter, action:'preview'})})
+      const data = await res.json()
+      setSummary(data.summary)
+      setStatus(data.status)
+    }catch{}
+    setLoading(false)
+  }
+
+  async function submitToHMRC(){
+    setLoading(true)
+    try{
+      const res = await fetch('/api/mtd-submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({year, quarter, action:'submit'})})
+      const data = await res.json()
+      setSummary(data.summary)
+      setStatus(data.status)
+      if(data.status === 'submitted') setSubmitted(true)
+    }catch{}
+    setLoading(false)
+  }
+
+  const quarterLabels = {
+    1: 'Q1 - Apr to Jul',
+    2: 'Q2 - Jul to Oct',
+    3: 'Q3 - Oct to Jan',
+    4: 'Q4 - Jan to Apr',
+  }
+
+  const taxYears = [taxYear-1, taxYear, taxYear+1]
+
+  return <div className="fade-up">
+    {/* MTD explanation */}
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12,flexWrap:'wrap',marginBottom:12}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:500,color:'var(--text)',marginBottom:3}}>Making Tax Digital for Income Tax</div>
+          <div style={{fontSize:12,color:'var(--text-3)'}}>Quarterly digital submissions to HMRC - mandatory from April 2026 for landlords earning £50,000+</div>
+        </div>
+        <Pill type={qualifies?'red':'green'}>{qualifies?'You must comply':'Below £50k threshold'}</Pill>
+      </div>
+
+      {!qualifies && <div style={{background:'var(--green-bg)',border:'0.5px solid var(--green)',borderRadius:9,padding:'10px 13px',fontSize:12,color:'var(--green)',lineHeight:1.6,marginBottom:12}}>
+        Your current rental income is below the £50,000 MTD threshold. MTD will be mandatory for you from April 2027 (£30k threshold) or April 2028 (£20k threshold). You can use this tool now to get familiar with the process.
+      </div>}
+
+      {qualifies && <div style={{background:'var(--red-bg)',border:'0.5px solid var(--red)',borderRadius:9,padding:'10px 13px',fontSize:12,color:'var(--red)',lineHeight:1.6,marginBottom:12}}>
+        Your rental income exceeds £50,000. MTD quarterly submissions are mandatory from April 2026. Failure to comply: penalties from £200 per missed quarter.
+      </div>}
+
+      {/* HMRC connection status */}
+      <div style={{background:'var(--surface2)',borderRadius:9,padding:'12px 14px',marginBottom:12}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+          <div>
+            <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:2}}>HMRC connection</div>
+            <div style={{fontSize:11,color:'var(--text-3)'}}>Direct submission requires HMRC API credentials. Lettly is preparing for HMRC registration.</div>
+          </div>
+          <Pill type="amber">Pending registration</Pill>
+        </div>
+        <div style={{fontSize:11,color:'var(--text-2)',marginTop:10,lineHeight:1.7,padding:'8px 10px',background:'var(--surface)',borderRadius:7}}>
+          While HMRC credentials are being registered, use the preview function to generate your quarterly summary, then submit manually via your HMRC online account or send to your accountant.
+        </div>
+      </div>
+
+      {/* Quarter selector */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+        <div><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Tax year</label>
+          <select value={year} onChange={e=>setYear(Number(e.target.value))} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
+            {taxYears.map(y => <option key={y} value={y}>{y}/{y+1}</option>)}
+          </select>
+        </div>
+        <div><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Quarter</label>
+          <select value={quarter} onChange={e=>setQuarter(Number(e.target.value))} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
+            {[1,2,3,4].map(q => <option key={q} value={q}>{quarterLabels[q]}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <button onClick={previewSummary} disabled={loading} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'9px 22px',fontSize:13,fontWeight:500,cursor:loading?'not-allowed':'pointer',opacity:loading?0.6:1}}>
+        {loading?'Calculating...':'Preview quarterly summary'}
+      </button>
+    </div>
+
+    {/* Summary display */}
+    {summary && <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18}}>
+      <div style={{fontSize:14,fontWeight:500,color:'var(--text)',marginBottom:4}}>Quarterly summary</div>
+      <div style={{fontSize:12,color:'var(--text-3)',marginBottom:16}}>{summary.fromDate} to {summary.toDate} - {summary.propertyCount} propert{summary.propertyCount===1?'y':'ies'}</div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+        <div>
+          <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:8}}>Income</div>
+          <Row label="Rent income" value={fmt(summary.income.rentIncome)}/>
+          <Row label="Other property income" value={fmt(summary.income.otherPropertyIncome)}/>
+          <Row label="Total income" value={fmt(summary.income.rentIncome + summary.income.otherPropertyIncome)} valueColor="var(--green)"/>
+        </div>
+        <div>
+          <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:8}}>Expenses</div>
+          {Object.entries(summary.expenses).filter(([,v])=>v>0).map(([k,v]) => (
+            <Row key={k} label={k.replace(/([A-Z])/g,' $1').trim()} value={fmt(v)}/>
+          ))}
+          <Row label="Total expenses" value={fmt(Object.values(summary.expenses).reduce((s,v)=>s+v,0))} valueColor="var(--red)"/>
+        </div>
+      </div>
+
+      <div style={{background:summary.netProfit>=0?'var(--green-bg)':'var(--red-bg)',border:`0.5px solid ${summary.netProfit>=0?'var(--green)':'var(--red)'}`,borderRadius:10,padding:'12px 14px',marginBottom:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{fontSize:13,fontWeight:500,color:summary.netProfit>=0?'var(--green)':'var(--red)'}}>Net {summary.netProfit>=0?'profit':'loss'} this quarter</div>
+          <div style={{fontSize:20,fontWeight:600,fontFamily:'var(--mono)',color:summary.netProfit>=0?'var(--green)':'var(--red)'}}>{fmt(Math.abs(summary.netProfit))}</div>
+        </div>
+      </div>
+
+      <div style={{background:'var(--surface2)',borderRadius:9,padding:'10px 13px',fontSize:12,color:'var(--text-2)',lineHeight:1.7,marginBottom:16}}>
+        This summary is formatted for HMRC MTD ITSA submission. Once Lettly is HMRC-registered, this will submit directly. Until then, share with your accountant or enter manually via your HMRC online account.
+      </div>
+
+      <div style={{display:'flex',gap:8}}>
+        <button onClick={()=>navigator.clipboard.writeText(JSON.stringify(summary,null,2))} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 18px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>
+          Copy JSON for accountant
+        </button>
+        <button onClick={()=>{
+          const text = `LETTLY MTD QUARTERLY SUMMARY
+${summary.fromDate} to ${summary.toDate}
+
+INCOME
+Rent income: ${fmt(summary.income.rentIncome)}
+
+EXPENSES
+${Object.entries(summary.expenses).filter(([,v])=>v>0).map(([k,v])=>`${k}: ${fmt(v)}`).join('
+')}
+
+NET PROFIT: ${fmt(summary.netProfit)}`
+          navigator.clipboard.writeText(text)
+        }} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 18px',fontSize:12,fontWeight:500,cursor:'pointer'}}>
+          Copy for accountant
+        </button>
+      </div>
+    </div>}
+
+    {/* MTD deadlines */}
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginTop:14}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:12}}>MTD submission deadlines {year}/{year+1}</div>
+      {[
+        {q:'Q1', period:'6 Apr - 5 Jul', deadline:'5 Aug', done: quarter>1},
+        {q:'Q2', period:'6 Jul - 5 Oct', deadline:'5 Nov', done: quarter>2},
+        {q:'Q3', period:'6 Oct - 5 Jan', deadline:'5 Feb', done: quarter>3},
+        {q:'Q4', period:'6 Jan - 5 Apr', deadline:'5 May', done: false},
+      ].map((d,i) => <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:i<3?'0.5px solid var(--border)':'none',gap:8,flexWrap:'wrap'}}>
+        <div>
+          <span style={{fontSize:12,fontWeight:500,color:'var(--text)',marginRight:10}}>{d.q}</span>
+          <span style={{fontSize:12,color:'var(--text-2)'}}>{d.period}</span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <span style={{fontSize:12,color:'var(--text-3)'}}>Submit by {d.deadline}</span>
+          <Pill type={d.done?'green':'grey'}>{d.done?'Submitted':'Pending'}</Pill>
+        </div>
+      </div>)}
+    </div>
+  </div>
+}
+
 /* ---- Root ---- */
-const TABS=[{id:'overview',label:'Overview'},{id:'properties',label:'Properties'},{id:'finance',label:'Finance'},{id:'maintenance',label:'Maintenance'},{id:'conditions',label:'Condition reports'},{id:'tools',label:'Tools'},{id:'legislation',label:'Legislation'},{id:'ai',label:'Lettly AI'}]
+const TABS=[{id:'overview',label:'Overview'},{id:'properties',label:'Properties'},{id:'rent',label:'Rent tracker'},{id:'finance',label:'Finance'},{id:'mtd',label:'MTD'},{id:'maintenance',label:'Maintenance'},{id:'conditions',label:'Conditions'},{id:'tools',label:'Tools'},{id:'legislation',label:'Legislation'},{id:'ai',label:'Lettly AI'}]
 
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
   const[tab,setTab]=useState('overview')
-  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],checklist:{},onboarding:null})
+  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null})
   const[queue,setQueue]=useState([])
   const[showDrop,setShowDrop]=useState(false)
   const[loaded,setLoaded]=useState(false)
@@ -979,7 +1324,15 @@ export default function Dashboard(){
   const portfolioWithToggle={...portfolio,_toggleCheck:toggleCheck}
 
   return<>
-    <Head><title>Dashboard - Lettly</title></Head>
+    <Head>
+      <title>Dashboard - Lettly</title>
+      <meta name="theme-color" content="#1b5e3b"/>
+      <link rel="manifest" href="/manifest.json"/>
+      <link rel="apple-touch-icon" href="/icon.svg"/>
+      <meta name="apple-mobile-web-app-capable" content="yes"/>
+      <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+      <meta name="apple-mobile-web-app-title" content="Lettly"/>
+    </Head>
     <style>{`.dash-content{max-width:1060px;margin:0 auto;padding:24px 20px}@media(max-width:640px){.dash-content{padding:16px}}`}</style>
 
     {showWizard&&<OnboardingWizard onComplete={completeWizard} firstName={user?.firstName}/>}
@@ -987,7 +1340,7 @@ export default function Dashboard(){
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault();setShowDrop(true)}} onDrop={e=>{e.preventDefault();const f=Array.from(e.dataTransfer.files).filter(f=>f.type==='application/pdf'||f.type.startsWith('image/'));if(f.length)handleFiles(f)}}>
       <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:30,height:30,background:'var(--brand)',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:14,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:17,fontWeight:400}}>Lettly</span></div>
-        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}>{t.label}{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
+        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}>{t.label}{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='mtd'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--amber)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button><UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/></div>
       </nav>
       {showDrop&&<div className="fade-in" style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 16px'}}><div style={{maxWidth:700,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact/></div></div>}
@@ -996,7 +1349,9 @@ export default function Dashboard(){
         {tab==='overview'&&<div style={{marginBottom:18}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(22px,4vw,28px)',fontWeight:300,marginBottom:3}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:13,color:'var(--text-3)'}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} saved`}</p></div>}
         {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} user={user} onToggleCheck={toggleCheck}/>}
         {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
-        {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/>}
+        {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/> }
+        {tab==='rent'        &&<RentTracker   portfolio={portfolio} setPortfolio={setPortfolio}/> }
+        {tab==='mtd'         &&<MTDTab        portfolio={portfolio}/>}
         {tab==='maintenance' &&<MaintenanceTab portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/>}
         {tab==='tools'       &&<ToolsTab      portfolio={portfolio}/> }
         {tab==='conditions'  &&<div className='fade-up'><ConditionReport portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/></div>}
