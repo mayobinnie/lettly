@@ -298,6 +298,32 @@ function PropertyForm({initial,onSave,onDelete,onClose}){
   </div>
 }
 
+
+
+function NationBreakdown({props}){
+  const nations={}
+  props.forEach(p=>{ nations[p.nation||'England']=(nations[p.nation||'England']||0)+1 })
+  if(Object.keys(nations).length<=1) return null
+  return<div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+    {Object.entries(nations).map(([n,count])=>{
+      const nl=NATION_LABELS[n]||NATION_LABELS.England
+      return<span key={n} style={{fontSize:12,padding:'4px 12px',borderRadius:20,background:nl.bg,color:nl.color,fontWeight:500}}>{n}: {count} propert{count===1?'y':'ies'}</span>
+    })}
+  </div>
+}
+
+function PricingNudge({portfolioSize}){
+  if(!portfolioSize) return null
+  const sizeMap={'1-5':'Starter','5-10':'Standard','10-20':'Portfolio','20+':'Portfolio'}
+  const priceMap={'1-5':'£8','5-10':'£16','10-20':'£28','20+':'£40'}
+  const plan=sizeMap[portfolioSize]||'Portfolio'
+  const price=priceMap[portfolioSize]||'£28'
+  return<div style={{background:'var(--brand-subtle)',border:'0.5px solid rgba(27,94,59,0.15)',borderRadius:12,padding:'12px 16px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+    <div><div style={{fontSize:13,fontWeight:500,color:'var(--brand)',marginBottom:2}}>Based on your portfolio size, the {plan} plan looks right for you</div><div style={{fontSize:12,color:'var(--text-2)'}}>{price}/month - all features included - 14-day free trial</div></div>
+    <a href="/#pricing" style={{fontSize:12,fontWeight:500,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:7,padding:'7px 14px',textDecoration:'none',whiteSpace:'nowrap'}}>View plans</a>
+  </div>
+}
+
 /* ---- Overview ---- */
 function Overview({portfolio,onAddDocs,user,onToggleCheck}){
   const props=portfolio.properties||[]
@@ -342,20 +368,11 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck}){
     </div>
 
     {/* Nation breakdown */}
-    {props.length>0&&(()=>{const nations={};props.forEach(p=>nations[p.nation||'England']=(nations[p.nation||'England']||0)+1);return Object.keys(nations).length>1?<div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>{Object.entries(nations).map(([n,count])=>{const nl=NATION_LABELS[n]||NATION_LABELS.England;return<span key={n} style={{fontSize:12,padding:'4px 12px',borderRadius:20,background:nl.bg,color:nl.color,fontWeight:500}}>{n}: {count} propert{count===1?'y':'ies'}</span>})}</div>:null})()}
+    {props.length>1&&<NationBreakdown props={props}/>}
 
     {showChecklist&&<FirstTimeLandlordChecklist nation={checklistNation} checkedItems={checklist} onToggle={onToggleCheck||((id)=>{})}/>}
 
-    {showPricingNudge&&(()=>{
-      const sizeMap={'1-5':'Starter','5-10':'Growth','10-20':'Portfolio','20+':'Portfolio'}
-      const priceMap={'1-5':'£10','5-10':'£15','10-20':'£25','20+':'£25'}
-      const plan=sizeMap[onboarding.portfolioSize]||'Portfolio'
-      const price=priceMap[onboarding.portfolioSize]||'£25'
-      return<div style={{background:'var(--brand-subtle)',border:'0.5px solid rgba(27,94,59,0.2)',borderRadius:12,padding:'12px 16px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
-        <div><div style={{fontSize:13,fontWeight:500,color:'var(--brand)',marginBottom:2}}>Based on your portfolio size, {plan} plan looks right for you</div><div style={{fontSize:12,color:'var(--text-2)'}}>Up to {onboarding.portfolioSize} properties - {price}/month with a 14-day free trial</div></div>
-        <a href="https://lettly.co/#pricing" style={{fontSize:12,fontWeight:500,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:7,padding:'7px 14px',textDecoration:'none',whiteSpace:'nowrap'}}>View plans</a>
-      </div>
-    })()}
+    {showPricingNudge&&<PricingNudge portfolioSize={onboarding?.portfolioSize}/>}
     {props.length===0?<DropZone onFiles={onAddDocs}/>:<>
       <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
@@ -1094,15 +1111,25 @@ export default function Dashboard(){
   useEffect(()=>{if(isLoaded&&!isSignedIn)router.replace('/')},[isLoaded,isSignedIn,router])
   useEffect(()=>{
     if(!user?.id)return
-    getPortfolio(user.id).then(data=>{
-      const p=data||{properties:[],expenses:[],maintenance:[],checklist:{},onboarding:null}
-      setPortfolio(p)
-      setLoaded(true)
-      // Show wizard if first time (no onboarding data and no properties)
-      if(!p.onboarding&&(!p.properties||p.properties.length===0)){
-        setShowWizard(true)
-      }
-    })
+    // localStorage check is instant - prevents wizard flash on every login
+    const wizardDone = typeof window !== 'undefined' && (localStorage.getItem('lettly_wizard_'+user.id) || localStorage.getItem('lettly_wizard_done'))
+    if(!wizardDone){
+      // Only show wizard after Supabase confirms no onboarding data
+      getPortfolio(user.id).then(data=>{
+        const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
+        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[]}
+        setPortfolio(pSafe)
+        setLoaded(true)
+        if(!p.onboarding){setShowWizard(true)}
+      })
+    } else {
+      getPortfolio(user.id).then(data=>{
+        const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
+        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[]}
+        setPortfolio(pSafe)
+        setLoaded(true)
+      })
+    }
   },[user?.id])
 
   const saveRef=useRef(null)
@@ -1111,11 +1138,12 @@ export default function Dashboard(){
   function completeWizard(answers){
     setPortfolio(prev=>({...prev,onboarding:answers}))
     setShowWizard(false)
-    // Persist to localStorage immediately so wizard never shows again
-    // even if Supabase save is slow
-    if(user?.id){
-      localStorage.setItem('lettly_wizard_' + user.id, '1')
-    }
+    // Double-write to localStorage - both keyed by user ID and a generic flag
+    // Prevents wizard showing again even if user.id isn't available immediately
+    try {
+      if(user?.id) localStorage.setItem('lettly_wizard_'+user.id, '1')
+      localStorage.setItem('lettly_wizard_done', '1')
+    } catch(e) {}
   }
 
   function toggleCheck(id){

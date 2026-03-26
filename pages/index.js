@@ -73,8 +73,8 @@ export default function Landing() {
             <span style={{ fontSize:10, color:'var(--brand)', background:'var(--brand-light)', padding:'2px 9px', borderRadius:20, fontWeight:500 }}>beta</span>
           </div>
           <div className="hide-mobile" style={{ display:'flex', gap:28, alignItems:'center' }}>
-            {['How it works','Features','Legislation','Pricing'].map(l => (
-              <a key={l} href={`#${l.toLowerCase().replace(' ','-')}`} style={{ fontSize:13, color:'var(--text-2)', textDecoration:'none', transition:'color 0.15s' }}
+            {['How it works','Features','Legislation','Pricing','Blog'].map(l => (
+              <a key={l} href={l==='Blog'?'/blog':`#${l.toLowerCase().replace(' ','-')}`} style={{ fontSize:13, color:'var(--text-2)', textDecoration:'none', transition:'color 0.15s' }}
                 onMouseEnter={e=>e.target.style.color='var(--text)'} onMouseLeave={e=>e.target.style.color='var(--text-2)'}>{l}</a>
             ))}
           </div>
@@ -359,7 +359,7 @@ export default function Landing() {
               <span style={{ fontFamily:'var(--display)', fontSize:16, fontWeight:400, color:'var(--text)' }}>Lettly</span>
             </div>
             <div style={{ display:'flex', gap:20, flexWrap:'wrap' }}>
-              {[['Privacy','/privacy'],['Terms','/terms'],['Security','/security'],['Contact','mailto:hello@lettly.co']].map(([l,h]) => (
+              {[['Privacy','/privacy'],['Terms','/terms'],['Security','/security'],['Blog','/blog'],['Contact','mailto:hello@lettly.co']].map(([l,h]) => (
                 <a key={l} href={h} style={{ fontSize:12, color:'var(--text-3)', textDecoration:'none' }}>{l}</a>
               ))}
             </div>
