@@ -38,6 +38,23 @@ export default async function handler(req, res) {
   const { userId } = getAuth(req)
   if (!userId) return res.status(401).json({ error: 'Unauthorised' })
 
+  // Rate limit: 20 extractions per user per day
+  // Uses a simple in-memory store (resets on server restart - good enough for serverless)
+  const today = new Date().toISOString().split('T')[0]
+  const rateKey = `${userId}_${today}`
+  if (!global._extractCounts) global._extractCounts = {}
+  const count = global._extractCounts[rateKey] || 0
+  if (count >= 20) {
+    return res.status(429).json({
+      success: false,
+      error: 'Daily limit reached. You can extract up to 20 documents per day. This resets at midnight.',
+      filename,
+    })
+  }
+  global._extractCounts[rateKey] = count + 1
+  // Clean up old keys to prevent memory leak
+  Object.keys(global._extractCounts).forEach(k => { if (!k.includes(today)) delete global._extractCounts[k] })
+
   const { filename, data, mediaType } = req.body
   if (!data) return res.status(400).json({ error: 'No file data' })
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ success: false, error: 'API key not configured', filename })

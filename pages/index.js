@@ -81,6 +81,14 @@ export default function Landing() {
 
         {/* ── Hero ── */}
         <section style={{ maxWidth:900, margin:'0 auto', padding:'clamp(48px,8vw,100px) clamp(20px,4vw,48px) clamp(40px,6vw,80px)', textAlign:'center' }}>
+          {/* Hero logo lockup */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12, marginBottom:32 }}>
+            <div style={{ width:52, height:52, background:'var(--brand)', borderRadius:14, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <span style={{ color:'#fff', fontSize:26, fontWeight:700, fontFamily:'var(--display)', fontStyle:'italic' }}>L</span>
+            </div>
+            <span style={{ fontFamily:'var(--display)', fontSize:'clamp(28px,4vw,38px)', fontWeight:400, color:'var(--text)', letterSpacing:'-0.5px' }}>Lettly</span>
+          </div>
+
           <div className="ticker" style={{ marginBottom:28 }}>
             <span className="ticker-dot"/>
             Section 21 abolished 1 May 2026 - 2.7m UK landlords need to act now
