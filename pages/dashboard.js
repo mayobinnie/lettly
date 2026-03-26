@@ -328,11 +328,6 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck}){
   const showPricingNudge=onboarding&&onboarding.experience==='experienced'&&onboarding.portfolioSize
   const checklistNation=onboarding?.nation==='mixed'?'England':onboarding?.nation||'England'
 
-  function toggleCheck(id){
-    const updated={...portfolio,checklist:{...checklist,[id]:!checklist[id]}}
-    return updated
-  }
-
   return<div className="fade-up">
     {urgent.length>0&&<div style={{background:'#fce8e6',border:'0.5px solid #E24B4A',borderRadius:12,padding:'12px 14px',marginBottom:14,color:'#791F1F',fontSize:12,lineHeight:1.8}}><div style={{fontWeight:600,marginBottom:4}}>Warning: {urgent.length} urgent action{urgent.length>1?'s':''}</div>{urgent.map((x,i)=><div key={i}>- {x}</div>)}</div>}
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
@@ -1116,9 +1111,10 @@ export default function Dashboard(){
   function completeWizard(answers){
     setPortfolio(prev=>({...prev,onboarding:answers}))
     setShowWizard(false)
-    // Store portfolio size for analytics/pricing suggestions
-    if(answers.portfolioSize){
-      console.log('Portfolio size recorded:', answers.portfolioSize)
+    // Persist to localStorage immediately so wizard never shows again
+    // even if Supabase save is slow
+    if(user?.id){
+      localStorage.setItem('lettly_wizard_' + user.id, '1')
     }
   }
 
