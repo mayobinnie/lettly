@@ -6,7 +6,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 function buildSystemPrompt(portfolio) {
   const props = portfolio?.properties || []
 
-  let prompt = `You are Lettly AI — an expert UK property portfolio assistant with deep knowledge of UK landlord law, the Renters' Rights Bill, EPC requirements, Section 24 tax changes, and buy-to-let finance.
+  let prompt = `You are Lettly AI - an expert UK property portfolio assistant with deep knowledge of UK landlord law, the Renters' Rights Bill, EPC requirements, Section 24 tax changes, and buy-to-let finance.
 
 `
 
@@ -23,10 +23,10 @@ function buildSystemPrompt(portfolio) {
       if (p.monthlyPayment)   prompt += `  Monthly payment: £${p.monthlyPayment}\n`
       if (p.purchasePrice)    prompt += `  Purchase price: £${p.purchasePrice}\n`
       if (p.tenantName)       prompt += `  Tenant: ${p.tenantName}${p.tenantPhone ? ` (${p.tenantPhone})` : ''}\n`
-      if (p.depositAmount)    prompt += `  Deposit: £${p.depositAmount}${p.depositScheme ? ` — ${p.depositScheme}` : ''}\n`
+      if (p.depositAmount)    prompt += `  Deposit: £${p.depositAmount}${p.depositScheme ? ` - ${p.depositScheme}` : ''}\n`
       if (p.gasDue)           prompt += `  Gas cert due: ${p.gasDue}\n`
       if (p.eicrDue)          prompt += `  EICR due: ${p.eicrDue}\n`
-      if (p.insurer)          prompt += `  Insurance: ${p.insurer}${p.policyNo ? ` (${p.policyNo})` : ''}${p.insuranceRenewal ? ` renews ${p.insuranceRenewal}` : ''}${p.insuranceType ? ` — ${p.insuranceType} policy` : ''}\n`
+      if (p.insurer)          prompt += `  Insurance: ${p.insurer}${p.policyNo ? ` (${p.policyNo})` : ''}${p.insuranceRenewal ? ` renews ${p.insuranceRenewal}` : ''}${p.insuranceType ? ` - ${p.insuranceType} policy` : ''}\n`
       prompt += '\n'
     })
   }

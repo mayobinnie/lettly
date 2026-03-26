@@ -3,9 +3,9 @@ import { getAuth } from '@clerk/nextjs/server'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const PROMPT = `You are a UK property management document reader. Extract all relevant information from this document and return ONLY a valid JSON object — no markdown, no explanation, no code fences.
+const PROMPT = `You are a UK property management document reader. Extract all relevant information from this document and return ONLY a valid JSON object - no markdown, no explanation, no code fences.
 
-Use this exact structure (omit any field you cannot find — do not guess):
+Use this exact structure (omit any field you cannot find - do not guess):
 {
   "documentType": "gas_certificate|eicr|insurance|epc_certificate|tenancy_agreement|mortgage_offer|completion_statement|other",
   "property": {

@@ -21,7 +21,7 @@ export default function Landing() {
   return (
     <>
       <Head>
-        <title>Lettly — AI property portfolio management for UK landlords</title>
+        <title>Lettly - AI property portfolio management for UK landlords</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="The only property platform built for the Renters' Rights Bill era. Drop your documents, Lettly reads them and keeps you compliant." />
       </Head>
@@ -44,6 +44,7 @@ export default function Landing() {
         .doc-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 7px 16px; border-radius: 24px; font-weight: 500; }
         .testimonial { background: var(--surface); border: 0.5px solid var(--border); border-radius: 16px; padding: 24px; }
         .nav-sticky { background: var(--surface); border-bottom: 0.5px solid var(--border); }
+        @media (max-width: 900px) { div[style*="repeat(4,1fr)"] { grid-template-columns: 1fr 1fr !important; } }
         @media (max-width: 768px) {
           .hide-mobile { display: none !important; }
           .cta-row { flex-direction: column; align-items: stretch; }
@@ -51,7 +52,7 @@ export default function Landing() {
           .features-grid { grid-template-columns: 1fr !important; }
           .stats-grid { grid-template-columns: 1fr 1fr !important; }
           .steps-grid { grid-template-columns: 1fr !important; }
-          .pricing-grid { grid-template-columns: 1fr !important; }
+          .pricing-grid { grid-template-columns: 1fr 1fr !important; }
         }
       `}</style>
 
@@ -82,7 +83,7 @@ export default function Landing() {
         <section style={{ maxWidth:900, margin:'0 auto', padding:'clamp(48px,8vw,100px) clamp(20px,4vw,48px) clamp(40px,6vw,80px)', textAlign:'center' }}>
           <div className="ticker" style={{ marginBottom:28 }}>
             <span className="ticker-dot"/>
-            Renters&#39; Rights Bill — Royal Assent 2025 · Section 21 ends Oct 2026
+            Renters&#39; Rights Bill - Royal Assent 2025 · Section 21 ends Oct 2026
           </div>
 
           <h1 className="hero-title" style={{ marginBottom:22 }}>
@@ -97,7 +98,7 @@ export default function Landing() {
 
           <div className="cta-row" style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginBottom:48 }}>
             <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:16, padding:'16px 40px' }}>
-              Start free — no card needed
+              Start free - no card needed
             </a>
             <a href="#how-it-works" className="btn-ghost" style={{ fontSize:15 }}>
               See how it works ↓
@@ -128,7 +129,7 @@ export default function Landing() {
               { num:'2.7m',  label:'UK private landlords affected', sub:'by Renters\' Rights Bill' },
               { num:'Oct 26',label:'Section 21 abolished', sub:'Are you ready?' },
               { num:'2028',  label:'EPC minimum C required', sub:'New tenancies from 2028' },
-              { num:'£0',    label:'To get started', sub:'Free plan, no credit card' },
+              { num:'£7.50', label:'Starts from per month', sub:'14-day free trial included' },
             ].map(s => (
               <div key={s.num}>
                 <div className="stat-num">{s.num}</div>
@@ -147,9 +148,9 @@ export default function Landing() {
           </div>
           <div className="steps-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:24 }}>
             {[
-              { num:'1', title:'Drop your documents', body:'Drag any PDF or image into Lettly — gas certs, EICRs, insurance, tenancy agreements, mortgage offers. Everything.' },
+              { num:'1', title:'Drop your documents', body:'Drag any PDF or image into Lettly - gas certs, EICRs, insurance, tenancy agreements, mortgage offers. Everything.' },
               { num:'2', title:'AI reads them instantly', body:'Lettly extracts every date, figure and detail automatically. No typing. No errors. Your portfolio appears in seconds.' },
-              { num:'3', title:'Stay ahead of the law', body:'Compliance deadlines, EPC ratings, Renters\' Rights Bill impacts — all tracked and explained in plain English.' },
+              { num:'3', title:'Stay ahead of the law', body:'Compliance deadlines, EPC ratings, Renters\' Rights Bill impacts - all tracked and explained in plain English.' },
             ].map(s => (
               <div key={s.num} style={{ display:'flex', flexDirection:'column', gap:16 }}>
                 <div style={{ display:'flex', gap:14, alignItems:'flex-start' }}>
@@ -173,12 +174,12 @@ export default function Landing() {
             </div>
             <div className="features-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
               {[
-                { icon:'📄', title:'Document extraction', body:'Upload any property document and Lettly pulls out every date, figure, and detail — gas certs, EICRs, insurance, EPCs, tenancy agreements, mortgage offers.' },
+                { icon:'📄', title:'Document extraction', body:'Upload any property document and Lettly pulls out every date, figure, and detail - gas certs, EICRs, insurance, EPCs, tenancy agreements, mortgage offers.' },
                 { icon:'🔔', title:'Compliance alerts', body:'Never miss a gas cert renewal, EICR deadline or insurance expiry. Email reminders sent automatically before every deadline.' },
                 { icon:'🌿', title:'EPC tracker', body:'Track EPC ratings across your portfolio. Get clear guidance on upgrade costs and timelines for the 2028 minimum C requirement.' },
-                { icon:'⚖️', title:'Legislation centre', body:'Full breakdown of the Renters\' Rights Bill, Section 24 tax changes, EPC requirements and deposit rules — with your specific action list.' },
-                { icon:'💰', title:'Financial dashboard', body:'Portfolio value, total equity, LTV, gross yield, net yield — all calculated automatically as you add properties.' },
-                { icon:'🤖', title:'Lettly AI assistant', body:'Ask anything about your portfolio, legislation, or finances. Get specific answers based on your actual properties — not generic advice.' },
+                { icon:'⚖️', title:'Legislation centre', body:'Full breakdown of the Renters\' Rights Bill, Section 24 tax changes, EPC requirements and deposit rules - with your specific action list.' },
+                { icon:'💰', title:'Financial dashboard', body:'Portfolio value, total equity, LTV, gross yield, net yield - all calculated automatically as you add properties.' },
+                { icon:'🤖', title:'Lettly AI assistant', body:'Ask anything about your portfolio, legislation, or finances. Get specific answers based on your actual properties - not generic advice.' },
               ].map(f => (
                 <div key={f.title} className="feature-card">
                   <div style={{ fontSize:28, marginBottom:14 }}>{f.icon}</div>
@@ -220,42 +221,39 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── Pricing ── */}
+        {/* -- Pricing -- */}
         <section id="pricing" style={{ background:'var(--surface2)', borderTop:'0.5px solid var(--border)', borderBottom:'0.5px solid var(--border)', padding:'clamp(48px,6vw,80px) clamp(20px,4vw,48px)' }}>
-          <div style={{ maxWidth:800, margin:'0 auto' }}>
+          <div style={{ maxWidth:960, margin:'0 auto' }}>
             <div style={{ textAlign:'center', marginBottom:48 }}>
-              <h2 className="section-title" style={{ marginBottom:12 }}>Simple, honest pricing</h2>
-              <p style={{ fontSize:14, color:'var(--text-2)' }}>Less than a cup of coffee a month. Cancel anytime.</p>
+              <h2 className="section-title" style={{ marginBottom:12 }}>Simple, transparent pricing</h2>
+              <p style={{ fontSize:14, color:'var(--text-2)' }}>Start with a 14-day free trial. No contract, cancel anytime.</p>
             </div>
-            <div className="pricing-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-              {/* Free */}
-              <div style={{ background:'var(--surface)', border:'0.5px solid var(--border)', borderRadius:18, padding:'28px 24px' }}>
-                <div style={{ fontSize:13, fontWeight:500, color:'var(--text-2)', marginBottom:12 }}>Free forever</div>
-                <div style={{ fontFamily:'var(--display)', fontSize:40, fontWeight:300, color:'var(--text)', marginBottom:4 }}>£0</div>
-                <div style={{ fontSize:12, color:'var(--text-3)', marginBottom:24 }}>No credit card needed</div>
-                {['Up to 2 properties', 'Document extraction', 'Compliance tracking', 'Legislation centre', 'Lettly AI assistant'].map(f => (
-                  <div key={f} style={{ display:'flex', gap:8, alignItems:'center', fontSize:13, color:'var(--text-2)', marginBottom:10 }}>
-                    <span style={{ color:'var(--green)', fontSize:14 }}>✓</span>{f}
-                  </div>
-                ))}
-                <a href="https://accounts.lettly.co/sign-up" className="btn-ghost" style={{ display:'block', textAlign:'center', marginTop:24, fontSize:13 }}>Get started free</a>
-              </div>
-              {/* Pro */}
-              <div style={{ background:'var(--brand)', border:'0.5px solid var(--brand)', borderRadius:18, padding:'28px 24px', position:'relative', overflow:'hidden' }}>
-                <div style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'3px 10px', fontSize:11, color:'#fff', fontWeight:500 }}>Most popular</div>
-                <div style={{ fontSize:13, fontWeight:500, color:'rgba(255,255,255,0.7)', marginBottom:12 }}>Pro</div>
-                <div style={{ fontFamily:'var(--display)', fontSize:40, fontWeight:300, color:'#fff', marginBottom:4 }}>£14</div>
-                <div style={{ fontSize:12, color:'rgba(255,255,255,0.6)', marginBottom:24 }}>per month · 14-day free trial</div>
-                {['Unlimited properties', 'Everything in Free', 'Email compliance reminders', 'EPC upgrade guidance', 'Portfolio financial analytics', 'Priority support'].map(f => (
-                  <div key={f} style={{ display:'flex', gap:8, alignItems:'center', fontSize:13, color:'rgba(255,255,255,0.9)', marginBottom:10 }}>
-                    <span style={{ color:'rgba(255,255,255,0.8)', fontSize:14 }}>✓</span>{f}
-                  </div>
-                ))}
-                <a href="https://accounts.lettly.co/sign-up" style={{ display:'block', textAlign:'center', marginTop:24, background:'#fff', color:'var(--brand)', fontSize:13, fontWeight:600, padding:'11px 20px', borderRadius:10, textDecoration:'none' }}>Start free trial</a>
-              </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
+              {[
+                { name:'Starter', price:'£7.50', period:'per month', props:'1-2 properties', highlight:false, features:['Up to 2 properties', 'Document extraction', 'Compliance tracking', 'Legislation centre', 'Lettly AI assistant'] },
+                { name:'Standard', price:'£10', period:'per month', props:'3-5 properties', highlight:false, features:['Up to 5 properties', 'Everything in Starter', 'Email reminders', 'EPC tracker', 'Financial dashboard'] },
+                { name:'Portfolio', price:'£14', period:'per month', props:'5-10 properties', highlight:true, popular:true, features:['Up to 10 properties', 'Everything in Standard', 'Full financial analytics', 'Mortgage strategy tools', 'Priority support'] },
+                { name:'Professional', price:'£25', period:'per month', props:'10+ properties', highlight:false, features:['Unlimited properties', 'Everything in Portfolio', 'Multiple user access', 'Bulk document upload', 'Dedicated support'] },
+              ].map(plan => (
+                <div key={plan.name} style={{ background:plan.highlight?'var(--brand)':'var(--surface)', border:plan.highlight?'none':'0.5px solid var(--border)', borderRadius:18, padding:'24px 20px', position:'relative', overflow:'hidden' }}>
+                  {plan.popular&&<div style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'2px 9px', fontSize:10, color:'#fff', fontWeight:500 }}>Popular</div>}
+                  <div style={{ fontSize:12, fontWeight:500, color:plan.highlight?'rgba(255,255,255,0.7)':'var(--text-2)', marginBottom:10 }}>{plan.name}</div>
+                  <div style={{ fontFamily:'var(--display)', fontSize:34, fontWeight:300, color:plan.highlight?'#fff':'var(--text)', lineHeight:1, marginBottom:2 }}>{plan.price}</div>
+                  <div style={{ fontSize:11, color:plan.highlight?'rgba(255,255,255,0.6)':'var(--text-3)', marginBottom:4 }}>{plan.period}</div>
+                  <div style={{ fontSize:11, fontWeight:500, color:plan.highlight?'rgba(255,255,255,0.85)':'var(--brand)', marginBottom:20, padding:'4px 10px', background:plan.highlight?'rgba(255,255,255,0.12)':'var(--brand-light)', borderRadius:20, display:'inline-block' }}>{plan.props}</div>
+                  {plan.features.map(f => (
+                    <div key={f} style={{ display:'flex', gap:7, alignItems:'flex-start', fontSize:12, color:plan.highlight?'rgba(255,255,255,0.85)':'var(--text-2)', marginBottom:9, lineHeight:1.4 }}>
+                      <span style={{ color:plan.highlight?'rgba(255,255,255,0.7)':'var(--green)', fontSize:13, flexShrink:0 }}>✓</span>{f}
+                    </div>
+                  ))}
+                  <a href="https://accounts.lettly.co/sign-up" style={{ display:'block', textAlign:'center', marginTop:20, background:plan.highlight?'#fff':'var(--brand)', color:plan.highlight?'var(--brand)':'#fff', fontSize:12, fontWeight:600, padding:'10px 16px', borderRadius:9, textDecoration:'none' }}>
+                    Start free trial
+                  </a>
+                </div>
+              ))}
             </div>
             <p style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginTop:20 }}>
-              Running costs: ~£0.01 per document read · Vercel hosting · All data encrypted
+              All plans include a 14-day free trial. No credit card required to start. Cancel anytime.
             </p>
           </div>
         </section>

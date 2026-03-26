@@ -33,7 +33,7 @@ function Row({ label, value, valueColor, pill, pillType }) {
   return <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'0.5px solid var(--border)', gap:8 }}>
     <span style={{ fontSize:12, color:'var(--text-2)', flexShrink:0 }}>{label}</span>
     {pill ? <Pill type={pillType||'grey'} dot>{pill}</Pill>
-      : <span style={{ fontSize:12, fontWeight:500, fontFamily:'var(--mono)', color:valueColor||'var(--text)', textAlign:'right' }}>{value||'—'}</span>}
+      : <span style={{ fontSize:12, fontWeight:500, fontFamily:'var(--mono)', color:valueColor||'var(--text)', textAlign:'right' }}>{value||'-'}</span>}
   </div>
 }
 function Metric({ label, value, sub, subGreen, subRed }) {
@@ -238,7 +238,7 @@ function PropertyForm({ initial, onSave, onDelete, onClose }) {
             <Input label="EPC expiry" value={p.epcExpiry} onChange={v=>set('epcExpiry',v)} placeholder="DD/MM/YYYY"/>
           </div>
           {p.epcRating&&['D','E','F','G'].includes(p.epcRating.toUpperCase())&&<div style={{ background:'#fff8e1', border:'0.5px solid #EF9F27', borderRadius:9, padding:'10px 13px', fontSize:12, color:'#633806', lineHeight:1.6, marginBottom:14 }}>
-            EPC {p.epcRating} — upgrade to C required for new lets from 2028 and all lets from 2030.
+            EPC {p.epcRating} - upgrade to C required for new lets from 2028 and all lets from 2030.
           </div>}
           <div style={{ fontSize:12, fontWeight:500, color:'var(--text)', margin:'8px 0 12px' }}>Insurance</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px' }}>
@@ -248,7 +248,7 @@ function PropertyForm({ initial, onSave, onDelete, onClose }) {
             <Select label="Policy type" value={p.insuranceType} onChange={v=>set('insuranceType',v)} options={['','Landlord','Home','Other']}/>
           </div>
           {p.insuranceType?.toLowerCase()==='home'&&<div style={{ background:'var(--red-bg)', border:'0.5px solid var(--red)', borderRadius:9, padding:'10px 13px', fontSize:12, color:'var(--red)', lineHeight:1.6 }}>
-            ⚠️ Home insurance is not valid for a tenanted property — you need landlord insurance.
+            ⚠️ Home insurance is not valid for a tenanted property - you need landlord insurance.
           </div>}
         </>}
       </div>
@@ -282,13 +282,13 @@ function Overview({ portfolio, onAddDocs, user, onEditProperty }) {
   const urgent=[], upcoming=[]
   props.forEach(p=>{
     const gas=dueSoon(p.gasDue), eicr=dueSoon(p.eicrDue), ins=dueSoon(p.insuranceRenewal)
-    if(p.insuranceType?.toLowerCase()==='home') urgent.push(`${p.shortName} — Insurance is HOME policy, not landlord`)
-    if(gas==='overdue')  urgent.push(`${p.shortName} — Gas certificate overdue`)
-    if(eicr==='overdue') urgent.push(`${p.shortName} — EICR overdue`)
-    if(p.epcRating&&['D','E','F','G'].includes(p.epcRating?.toUpperCase())) urgent.push(`${p.shortName} — EPC ${p.epcRating} — upgrade needed by 2028`)
-    if(gas==='due-soon')  upcoming.push({text:`${p.shortName} — Gas cert due ${p.gasDue}`, days:dueDays(p.gasDue)})
-    if(eicr==='due-soon') upcoming.push({text:`${p.shortName} — EICR due ${p.eicrDue}`, days:dueDays(p.eicrDue)})
-    if(ins==='due-soon')  upcoming.push({text:`${p.shortName} — Insurance renews ${p.insuranceRenewal}`, days:dueDays(p.insuranceRenewal)})
+    if(p.insuranceType?.toLowerCase()==='home') urgent.push(`${p.shortName} - Insurance is HOME policy, not landlord`)
+    if(gas==='overdue')  urgent.push(`${p.shortName} - Gas certificate overdue`)
+    if(eicr==='overdue') urgent.push(`${p.shortName} - EICR overdue`)
+    if(p.epcRating&&['D','E','F','G'].includes(p.epcRating?.toUpperCase())) urgent.push(`${p.shortName} - EPC ${p.epcRating} - upgrade needed by 2028`)
+    if(gas==='due-soon')  upcoming.push({text:`${p.shortName} - Gas cert due ${p.gasDue}`, days:dueDays(p.gasDue)})
+    if(eicr==='due-soon') upcoming.push({text:`${p.shortName} - EICR due ${p.eicrDue}`, days:dueDays(p.eicrDue)})
+    if(ins==='due-soon')  upcoming.push({text:`${p.shortName} - Insurance renews ${p.insuranceRenewal}`, days:dueDays(p.insuranceRenewal)})
   })
   upcoming.sort((a,b)=>(a.days||999)-(b.days||999))
 
@@ -310,13 +310,13 @@ function Overview({ portfolio, onAddDocs, user, onEditProperty }) {
 
     {/* Key metrics */}
     <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:10 }}>
-      <Metric label="Portfolio value" value={totalValue?fmt(totalValue):'—'} sub={totalEquity>0?`${fmt(totalEquity)} equity`:'Add property values'} subGreen={totalEquity>0}/>
-      <Metric label="Monthly income" value={totalRent?fmt(totalRent):'—'} sub={net>0?`Net ${fmt(net)}/mo`:'Add rent'} subGreen={net>0}/>
-      <Metric label="Yield" value={grossYield?`${grossYield}%`:'—'} sub={netYield?`${netYield}% net yield`:grossYield?'Add mortgage data':''} subGreen={!!netYield}/>
+      <Metric label="Portfolio value" value={totalValue?fmt(totalValue):'-'} sub={totalEquity>0?`${fmt(totalEquity)} equity`:'Add property values'} subGreen={totalEquity>0}/>
+      <Metric label="Monthly income" value={totalRent?fmt(totalRent):'-'} sub={net>0?`Net ${fmt(net)}/mo`:'Add rent'} subGreen={net>0}/>
+      <Metric label="Yield" value={grossYield?`${grossYield}%`:'-'} sub={netYield?`${netYield}% net yield`:grossYield?'Add mortgage data':''} subGreen={!!netYield}/>
     </div>
     <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:14 }}>
       <Metric label="Properties" value={props.length} sub={props.length===0?'Add a property':'In your portfolio'}/>
-      <Metric label="Total mortgage" value={totalMortgage?fmt(totalMortgage):'—'} sub={totalValue>0&&totalMortgage>0?`${((totalMortgage/totalValue)*100).toFixed(0)}% LTV`:''}/>
+      <Metric label="Total mortgage" value={totalMortgage?fmt(totalMortgage):'-'} sub={totalValue>0&&totalMortgage>0?`${((totalMortgage/totalValue)*100).toFixed(0)}% LTV`:''}/>
       <Metric label="Actions" value={urgent.length+upcoming.length} sub={urgent.length>0?`${urgent.length} urgent`:'Nothing urgent'} subRed={urgent.length>0}/>
     </div>
 
@@ -337,7 +337,7 @@ function Overview({ portfolio, onAddDocs, user, onEditProperty }) {
         }
       </div>
       <div style={{ background:'var(--brand-subtle)', border:'0.5px solid rgba(27,94,59,0.15)', borderRadius:12, padding:'12px 14px' }}>
-        <div style={{ fontSize:12, fontWeight:600, color:'var(--brand)', marginBottom:4 }}>Renters&#39; Rights Bill — Oct 2026</div>
+        <div style={{ fontSize:12, fontWeight:600, color:'var(--brand)', marginBottom:4 }}>Renters&#39; Rights Bill - Oct 2026</div>
         <div style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.7 }}>Section 21 abolished. All tenancies become periodic. PRS Database registration mandatory. See Legislation tab for full details and your action list.</div>
       </div>
     </>}
@@ -411,7 +411,7 @@ function Properties({ portfolio, onAddDocs, onEdit, onAdd }) {
             {p.gasDue           &&<Row label="Gas due"    value={p.gasDue}  valueColor={col(gasC)}/>}
             {p.eicrDue          &&<Row label="EICR due"   value={p.eicrDue} valueColor={col(eicrC)}/>}
             {p.epcRating        &&<Row label="EPC"        value={`${p.epcRating}${p.epcExpiry?' · exp '+p.epcExpiry:''}`} valueColor={epcColor(p.epcRating)}/>}
-            {!p.epcRating       &&<Row label="EPC rating" value="Unknown — drop EPC cert" valueColor="var(--amber)"/>}
+            {!p.epcRating       &&<Row label="EPC rating" value="Unknown - drop EPC cert" valueColor="var(--amber)"/>}
             {p.insurer          &&<Row label="Insurer"    value={p.insurer}/>}
             {p.policyNo         &&<Row label="Policy"     value={p.policyNo}/>}
             {p.insuranceRenewal &&<Row label="Ins. renew" value={p.insuranceRenewal} valueColor={col(insC)}/>}
@@ -420,7 +420,7 @@ function Properties({ portfolio, onAddDocs, onEdit, onAdd }) {
           </div>
         </div>
 
-        {p.insuranceType?.toLowerCase()==='home'&&<div style={{ marginTop:10, fontSize:11, color:'var(--red)', background:'var(--red-bg)', borderRadius:7, padding:'7px 10px', lineHeight:1.6 }}>Home insurance detected — you need a landlord policy for a tenanted property.</div>}
+        {p.insuranceType?.toLowerCase()==='home'&&<div style={{ marginTop:10, fontSize:11, color:'var(--red)', background:'var(--red-bg)', borderRadius:7, padding:'7px 10px', lineHeight:1.6 }}>Home insurance detected - you need a landlord policy for a tenanted property.</div>}
         {p.epcRating&&['D','E','F','G'].includes(p.epcRating.toUpperCase())&&<div style={{ marginTop:10, background:'#fff8e1', border:'0.5px solid #EF9F27', borderRadius:9, padding:'10px 13px', fontSize:12, color:'#633806', lineHeight:1.6 }}>
           <strong>EPC {p.epcRating}:</strong> Upgrade to C needed for new lets from 2028. Estimated cost: {p.epcRating==='D'?'£3,000–£8,000':'£5,000–£15,000'}.
         </div>}
@@ -436,7 +436,7 @@ function LegislationTab() {
   const impactColor={critical:'var(--red)',high:'var(--amber)',ongoing:'var(--text-3)'}
   const impactBg={critical:'var(--red-bg)',high:'var(--amber-bg)',ongoing:'var(--surface2)'}
   return <div className="fade-up">
-    <div style={{ marginBottom:12, fontSize:13, color:'var(--text-2)', lineHeight:1.6 }}>Current UK landlord law and upcoming changes — updated for the Renters&#39; Rights Bill era.</div>
+    <div style={{ marginBottom:12, fontSize:13, color:'var(--text-2)', lineHeight:1.6 }}>Current UK landlord law and upcoming changes - updated for the Renters&#39; Rights Bill era.</div>
     <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
       {LEGISLATION.map(l=><button key={l.id} onClick={()=>setOpen(l.id)} style={{ padding:'7px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'0.5px solid', borderColor:open===l.id?impactColor[l.impact]:'var(--border)', background:open===l.id?impactBg[l.impact]:'var(--surface)', color:open===l.id?impactColor[l.impact]:'var(--text-2)' }}>{l.name}</button>)}
     </div>
@@ -480,7 +480,7 @@ function AITab({ portfolio }) {
     const newMsgs=[...messages,{role:'user',content:q}]
     setMessages(newMsgs);setInput('');setLoading(true)
     try{const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:newMsgs.slice(1),portfolio})});const data=await res.json();setMessages(prev=>[...prev,{role:'assistant',content:data.content||'Sorry, could not get a response.'}])}
-    catch{setMessages(prev=>[...prev,{role:'assistant',content:'Connection error — please try again.'}])}
+    catch{setMessages(prev=>[...prev,{role:'assistant',content:'Connection error - please try again.'}])}
     setLoading(false)
   }
   return <div className="fade-up">
@@ -561,7 +561,7 @@ export default function Dashboard() {
   if(!isLoaded||!isSignedIn) return <div style={{ minHeight:'100vh', background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center' }}><div style={{ width:28, height:28, borderRadius:'50%', border:'2.5px solid var(--brand)', borderTopColor:'transparent', animation:'spin 0.75s linear infinite' }}/></div>
 
   return <>
-    <Head><title>Dashboard — Lettly</title></Head>
+    <Head><title>Dashboard - Lettly</title></Head>
     <style>{`.dash-content{max-width:1060px;margin:0 auto;padding:24px 20px}@media(max-width:640px){.dash-content{padding:16px}}`}</style>
 
     <div style={{ minHeight:'100vh', background:'var(--bg)' }}

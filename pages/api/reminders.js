@@ -33,8 +33,8 @@ function buildReminderEmail(userEmail, userName, reminders) {
 
   return {
     subject: totalUrgent > 0
-      ? `⚠️ ${totalUrgent} compliance action${totalUrgent > 1 ? 's' : ''} needed — Lettly`
-      : `📋 Upcoming compliance reminders — Lettly`,
+      ? `⚠️ ${totalUrgent} compliance action${totalUrgent > 1 ? 's' : ''} needed - Lettly`
+      : `📋 Upcoming compliance reminders - Lettly`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -57,7 +57,7 @@ function buildReminderEmail(userEmail, userName, reminders) {
 
       ${urgent.length > 0 ? `
       <div style="background:#fce8e6;border:0.5px solid #E24B4A;border-radius:10px;padding:14px 16px;margin-bottom:20px">
-        <p style="color:#791F1F;font-weight:600;margin:0 0 4px;font-size:13px">⚠️ Overdue — action needed now</p>
+        <p style="color:#791F1F;font-weight:600;margin:0 0 4px;font-size:13px">⚠️ Overdue - action needed now</p>
         <table style="width:100%;border-collapse:collapse;font-size:13px">${urgentHtml}</table>
       </div>` : ''}
 
@@ -75,7 +75,7 @@ function buildReminderEmail(userEmail, userName, reminders) {
 
       <div style="background:#eaf4ee;border-radius:10px;padding:14px 16px;margin-bottom:24px">
         <p style="color:#1b5e3b;font-size:13px;margin:0;line-height:1.6">
-          <strong>Renters' Rights Bill — Oct 2026:</strong> Section 21 no-fault evictions will be abolished.
+          <strong>Renters' Rights Bill - Oct 2026:</strong> Section 21 no-fault evictions will be abolished.
           PRS Database registration will be mandatory before serving any notice.
         </p>
       </div>
