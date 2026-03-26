@@ -154,7 +154,7 @@ export default function Landing() {
               { num:'2.7m',  label:'UK private landlords affected', sub:'by Renters\' Rights Bill' },
               { num:'3',    label:'Nations covered', sub:'England, Scotland, Wales' },
               { num:'2028',  label:'EPC minimum C required', sub:'New tenancies from 2028' },
-              { num:'£7.50', label:'Starts from per month', sub:'14-day free trial included' },
+              { num:'£4',    label:'Per property per month', sub:'All features on every plan' },
             ].map(s => (
               <div key={s.num}>
                 <div className="stat-num">{s.num}</div>
@@ -283,32 +283,53 @@ export default function Landing() {
               <h2 className="section-title" style={{ marginBottom:12 }}>Simple, transparent pricing</h2>
               <p style={{ fontSize:14, color:'var(--text-2)' }}>Start with a 14-day free trial. No contract, cancel anytime.</p>
             </div>
+            <div style={{ textAlign:'center', marginBottom:28 }}>
+              <div style={{ display:'inline-block', background:'var(--brand-light)', border:'0.5px solid rgba(27,94,59,0.2)', borderRadius:12, padding:'10px 24px', fontSize:15, fontWeight:500, color:'var(--brand)' }}>
+                £4 per property per month - all features included
+              </div>
+              <div style={{ fontSize:13, color:'var(--text-2)', marginTop:10 }}>Every plan includes every feature. You pay for your portfolio size, nothing else.</div>
+            </div>
+
             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
               {[
-                { name:'Starter', price:'£10', period:'per month', props:'1-5 properties', highlight:false, features:['Up to 5 properties', 'Document extraction', 'Compliance tracking', 'Legislation centre', 'Lettly AI assistant', 'Finance tracker'] },
-                { name:'Growth', price:'£15', period:'per month', props:'5-10 properties', highlight:false, features:['Up to 10 properties', 'Everything in Starter', 'Email compliance reminders', 'EPC tracker', 'Maintenance log', 'Document generator'] },
-                { name:'Portfolio', price:'£25', period:'per month', props:'10+ properties', highlight:true, popular:true, features:['Unlimited properties', 'Everything in Growth', 'Remortgage planner', 'Section 24 calculator', 'Portfolio report export', 'Priority support'] },
-                
+                { name:'Starter',   price:'£8',  props:'1-2 properties',  popular:false },
+                { name:'Standard',  price:'£16', props:'3-4 properties',  popular:false },
+                { name:'Portfolio', price:'£28', props:'5-7 properties',  popular:true  },
+                { name:'Pro',       price:'£40', props:'8+ properties - unlimited', popular:false },
               ].map(plan => (
-                <div key={plan.name} style={{ background:plan.highlight?'var(--brand)':'var(--surface)', border:plan.highlight?'none':'0.5px solid var(--border)', borderRadius:18, padding:'24px 20px', position:'relative', overflow:'hidden' }}>
+                <div key={plan.name} style={{ background:plan.popular?'var(--brand)':'var(--surface)', border:plan.popular?'none':'0.5px solid var(--border)', borderRadius:18, padding:'24px 20px', position:'relative', display:'flex', flexDirection:'column' }}>
                   {plan.popular&&<div style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'2px 9px', fontSize:10, color:'#fff', fontWeight:500 }}>Popular</div>}
-                  <div style={{ fontSize:12, fontWeight:500, color:plan.highlight?'rgba(255,255,255,0.7)':'var(--text-2)', marginBottom:10 }}>{plan.name}</div>
-                  <div style={{ fontFamily:'var(--display)', fontSize:34, fontWeight:300, color:plan.highlight?'#fff':'var(--text)', lineHeight:1, marginBottom:2 }}>{plan.price}</div>
-                  <div style={{ fontSize:11, color:plan.highlight?'rgba(255,255,255,0.6)':'var(--text-3)', marginBottom:4 }}>{plan.period}</div>
-                  <div style={{ fontSize:11, fontWeight:500, color:plan.highlight?'rgba(255,255,255,0.85)':'var(--brand)', marginBottom:20, padding:'4px 10px', background:plan.highlight?'rgba(255,255,255,0.12)':'var(--brand-light)', borderRadius:20, display:'inline-block' }}>{plan.props}</div>
-                  {plan.features.map(f => (
-                    <div key={f} style={{ display:'flex', gap:7, alignItems:'flex-start', fontSize:12, color:plan.highlight?'rgba(255,255,255,0.85)':'var(--text-2)', marginBottom:9, lineHeight:1.4 }}>
-                      <span style={{ color:plan.highlight?'rgba(255,255,255,0.7)':'var(--green)', fontSize:13, flexShrink:0 }}>✓</span>{f}
+                  <div style={{ fontSize:12, fontWeight:500, color:plan.popular?'rgba(255,255,255,0.7)':'var(--text-2)', marginBottom:10 }}>{plan.name}</div>
+                  <div style={{ fontFamily:'var(--display)', fontSize:38, fontWeight:300, color:plan.popular?'#fff':'var(--text)', lineHeight:1, marginBottom:3 }}>{plan.price}</div>
+                  <div style={{ fontSize:11, color:plan.popular?'rgba(255,255,255,0.55)':'var(--text-3)', marginBottom:16 }}>per month - 14-day free trial</div>
+                  <div style={{ fontSize:13, fontWeight:500, color:plan.popular?'rgba(255,255,255,0.9)':'var(--brand)', marginBottom:20, padding:'6px 12px', background:plan.popular?'rgba(255,255,255,0.15)':'var(--brand-light)', borderRadius:10, textAlign:'center' }}>{plan.props}</div>
+                  {[
+                    'Document AI extraction',
+                    'Compliance tracking and alerts',
+                    'Nation-specific legislation',
+                    'EPC tracker and 2028 guidance',
+                    'Finance and P&L tracker',
+                    'Maintenance log with photos',
+                    'Tenant issue report portal',
+                    'Document generator',
+                    'Remortgage planner',
+                    'Section 24 tax calculator',
+                    'Condition reports',
+                    'Lettly AI assistant',
+                  ].map(f => (
+                    <div key={f} style={{ display:'flex', gap:8, alignItems:'flex-start', fontSize:12, color:plan.popular?'rgba(255,255,255,0.82)':'var(--text-2)', marginBottom:9, lineHeight:1.4 }}>
+                      <span style={{ color:plan.popular?'rgba(255,255,255,0.6)':'var(--green)', fontSize:13, flexShrink:0, marginTop:1 }}>✓</span>{f}
                     </div>
                   ))}
-                  <a href="https://accounts.lettly.co/sign-up" style={{ display:'block', textAlign:'center', marginTop:20, background:plan.highlight?'#fff':'var(--brand)', color:plan.highlight?'var(--brand)':'#fff', fontSize:12, fontWeight:600, padding:'10px 16px', borderRadius:9, textDecoration:'none' }}>
+                  <a href="https://accounts.lettly.co/sign-up" style={{ display:'block', textAlign:'center', marginTop:'auto', paddingTop:20, background:plan.popular?'#fff':'var(--brand)', color:plan.popular?'var(--brand)':'#fff', fontSize:13, fontWeight:600, padding:'11px 16px', borderRadius:10, textDecoration:'none' }}>
                     Start free trial
                   </a>
                 </div>
               ))}
             </div>
-            <p style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginTop:20 }}>
-              All plans include a 14-day free trial. No credit card required to start. Cancel anytime.
+
+                        <p style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginTop:20 }}>
+              £4 per property per month - 14-day free trial on all plans - no credit card required - cancel anytime
             </p>
           </div>
         </section>
