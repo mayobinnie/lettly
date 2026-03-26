@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       // Try native PDF support first (SDK 0.39+), fall back to beta
       try {
         response = await client.messages.create({
-          model: 'claude-opus-4-5',
+          model: 'claude-sonnet-4-6',
           max_tokens: 2048,
           messages: [{
             role: 'user',
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
       } catch (e1) {
         // Fall back to beta PDF header
         response = await client.beta.messages.create({
-          model: 'claude-opus-4-5',
+          model: 'claude-sonnet-4-6',
           max_tokens: 2048,
           betas: ['pdfs-2024-09-25'],
           messages: [{
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
       }
     } else {
       response = await client.messages.create({
-        model: 'claude-opus-4-5',
+        model: 'claude-sonnet-4-6',
         max_tokens: 2048,
         messages: [{
           role: 'user',
