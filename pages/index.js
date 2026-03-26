@@ -83,18 +83,30 @@ export default function Landing() {
         <section style={{ maxWidth:900, margin:'0 auto', padding:'clamp(48px,8vw,100px) clamp(20px,4vw,48px) clamp(40px,6vw,80px)', textAlign:'center' }}>
           <div className="ticker" style={{ marginBottom:28 }}>
             <span className="ticker-dot"/>
-            Renters&#39; Rights Bill - Royal Assent 2025 · Section 21 ends Oct 2026
+            Section 21 abolished 1 May 2026 - 2.7m UK landlords need to act now
           </div>
 
           <h1 className="hero-title" style={{ marginBottom:22 }}>
-            The only property platform<br/>
-            <span className="hero-em">built for what&#39;s coming.</span>
+            Drop a document.<br/>
+            <span className="hero-em">Your portfolio builds itself.</span>
           </h1>
 
-          <p style={{ fontSize:'clamp(15px,2vw,18px)', color:'var(--text-2)', lineHeight:1.8, maxWidth:580, margin:'0 auto 44px' }}>
-            Drop your certificates, tenancy agreements and mortgage offers.
-            Lettly reads them instantly, tracks your compliance, and keeps you ahead of the Renters&#39; Rights Bill.
+          <p style={{ fontSize:'clamp(15px,2vw,18px)', color:'var(--text-2)', lineHeight:1.8, maxWidth:600, margin:'0 auto 20px' }}>
+            Whether you just inherited a house, accidentally became a landlord, or manage a growing portfolio - Lettly reads your documents, tracks your compliance, and keeps you on the right side of the law.
           </p>
+
+          <div style={{ display:'flex', flexWrap:'wrap', justifyContent:'center', gap:20, margin:'0 auto 40px', maxWidth:560, fontSize:14, color:'var(--text-2)' }}>
+            {[
+              { icon:'✓', text:'Section 21 abolished 1 May 2026 - are you ready?' },
+              { icon:'✓', text:'EPC minimum C required from 2028' },
+              { icon:'✓', text:'England, Scotland and Wales covered' },
+            ].map(item => (
+              <div key={item.text} style={{ display:'flex', alignItems:'flex-start', gap:8, textAlign:'left' }}>
+                <span style={{ color:'var(--brand)', fontWeight:600, flexShrink:0 }}>{item.icon}</span>
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
 
           <div className="cta-row" style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginBottom:48 }}>
             <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:16, padding:'16px 40px' }}>
@@ -223,6 +235,34 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* -- Data security -- */}
+        <section style={{ maxWidth:900, margin:'0 auto', padding:'clamp(48px,6vw,80px) clamp(20px,4vw,48px)' }}>
+          <div style={{ textAlign:'center', marginBottom:48 }}>
+            <h2 className="section-title" style={{ marginBottom:12 }}>Your data is safe with us</h2>
+            <p style={{ fontSize:14, color:'var(--text-2)' }}>You are uploading sensitive financial documents and tenant data. Here is how we protect it.</p>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:32 }}>
+            {[
+              { icon:'🔐', title:'AES-256 encryption', body:'All data encrypted at rest and in transit. Your documents and portfolio data are never stored unencrypted.' },
+              { icon:'🇬🇧', title:'Stored in the EU', body:'Your data is stored in AWS eu-west-1 (Ireland). UK GDPR compliant. You can request deletion at any time.' },
+              { icon:'🚫', title:'Never sold or shared', body:'Lettly makes money from subscriptions only. We never sell your data or share it with advertisers or third parties.' },
+              { icon:'🏦', title:'Bank-grade auth', body:'Authentication by Clerk - the same security standard used by enterprise financial platforms. MFA supported.' },
+              { icon:'👤', title:'Row-level security', body:'Your data is locked to your account only. Other users cannot access your portfolio even if they tried.' },
+              { icon:'🤖', title:'AI processing is transient', body:'Documents sent for AI extraction are processed and discarded. Anthropic does not retain your files under our API agreement.' },
+            ].map(s => (
+              <div key={s.title} style={{ background:'var(--surface)', border:'0.5px solid var(--border)', borderRadius:14, padding:'20px 18px' }}>
+                <div style={{ fontSize:22, marginBottom:10 }}>{s.icon}</div>
+                <div style={{ fontSize:14, fontWeight:500, color:'var(--text)', marginBottom:6 }}>{s.title}</div>
+                <div style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.7 }}>{s.body}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ background:'var(--brand-subtle)', border:'0.5px solid rgba(27,94,59,0.15)', borderRadius:12, padding:'16px 20px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
+            <div><div style={{ fontSize:13, fontWeight:500, color:'var(--brand)', marginBottom:3 }}>Built on trusted infrastructure</div><div style={{ fontSize:12, color:'var(--text-2)' }}>Supabase (SOC 2) - Vercel (SOC 2) - Clerk (SOC 2) - Stripe (PCI DSS Level 1)</div></div>
+            <a href="/security" style={{ fontSize:12, fontWeight:500, color:'var(--brand)', textDecoration:'none', background:'var(--brand-light)', padding:'7px 16px', borderRadius:8 }}>Full security details</a>
+          </div>
+        </section>
+
         {/* -- Pricing -- */}
         <section id="pricing" style={{ background:'var(--surface2)', borderTop:'0.5px solid var(--border)', borderBottom:'0.5px solid var(--border)', padding:'clamp(48px,6vw,80px) clamp(20px,4vw,48px)' }}>
           <div style={{ maxWidth:960, margin:'0 auto' }}>
@@ -285,12 +325,12 @@ export default function Landing() {
               <span style={{ fontFamily:'var(--display)', fontSize:16, fontWeight:400, color:'var(--text)' }}>Lettly</span>
             </div>
             <div style={{ display:'flex', gap:20, flexWrap:'wrap' }}>
-              {['Privacy','Terms','Contact'].map(l => (
-                <a key={l} href={`mailto:hello@lettly.co`} style={{ fontSize:12, color:'var(--text-3)', textDecoration:'none' }}>{l}</a>
+              {[['Privacy','/privacy'],['Terms','/terms'],['Security','/security'],['Contact','mailto:hello@lettly.co']].map(([l,h]) => (
+                <a key={l} href={h} style={{ fontSize:12, color:'var(--text-3)', textDecoration:'none' }}>{l}</a>
               ))}
             </div>
             <div style={{ fontSize:12, color:'var(--text-3)' }}>
-              © 2026 Lettly · Built for UK landlords · lettly.co
+              © 2026 Lettly Ltd · Registered in England and Wales · ICO registered
             </div>
           </div>
         </footer>

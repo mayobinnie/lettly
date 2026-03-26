@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/legislation-monitor",
+      "schedule": "0 8 * * 1"
+    }
+  ]
+}

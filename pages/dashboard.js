@@ -32,53 +32,62 @@ function OnboardingWizard({onComplete,firstName}){
   const[step,setStep]=useState(0)
   const[answers,setAnswers]=useState({experience:'',howGot:'',nation:''})
 
-  const steps=[
-    {
-      q:`Welcome to Lettly, ${firstName||'there'}.`,
-      sub:'A few quick questions so we can set things up for you.',
-      options:null,
-      isIntro:true
-    },
-    {
-      q:'Have you been a landlord before?',
-      key:'experience',
-      options:[
+  // Steps for new/some experience users
+  const stepsNew=[
+    { q:`Welcome to Lettly, ${firstName||'there'}.`, sub:'A few quick questions to set things up for you.', isIntro:true },
+    { q:'Have you been a landlord before?', key:'experience', options:[
         {value:'new',label:'No - this is my first property',icon:'🏠'},
-        {value:'some',label:'Yes - I have some experience',icon:'📋'},
+        {value:'some',label:'Yes - some experience',icon:'📋'},
         {value:'experienced',label:'Yes - I manage multiple properties',icon:'🏢'},
-      ]
-    },
-    {
-      q:'How did you come to have this property?',
-      key:'howGot',
-      options:[
+    ]},
+    { q:'How did you come to have this property?', key:'howGot', options:[
         {value:'inherited',label:'I inherited it',icon:'🏛️'},
         {value:'purchased',label:'I purchased it as a buy-to-let',icon:'💷'},
         {value:'converted',label:'I moved out and am letting my home',icon:'🔑'},
         {value:'other',label:'Other',icon:'📝'},
-      ]
-    },
-    {
-      q:'Where is the property located?',
-      key:'nation',
-      sub:'Different laws apply in England, Scotland and Wales.',
+    ]},
+    { q:'Where is the property located?', key:'nation', sub:'Legislation differs between England, Scotland and Wales.',
       options:[
         {value:'England',label:'England',icon:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
         {value:'Scotland',label:'Scotland',icon:'🏴󠁧󠁢󠁳󠁣󠁴󠁿'},
         {value:'Wales',label:'Wales',icon:'🏴󠁧󠁢󠁷󠁬󠁳󠁿'},
-        {value:'mixed',label:'Multiple / not sure',icon:'🇬🇧'},
-      ]
-    }
+        {value:'mixed',label:'Mix of nations',icon:'🇬🇧'},
+    ]},
+  ]
+  // Shorter steps for experienced landlords
+  const stepsExp=[
+    { q:`Welcome back to Lettly, ${firstName||'there'}.`, sub:'Quick setup - just three questions.', isIntro:true },
+    { q:'How many properties do you currently manage?', key:'portfolioSize', sub:'This helps us show the right plan for your portfolio.', options:[
+        {value:'1-5',   label:'1 to 5 properties',  icon:'🏠'},
+        {value:'5-10',  label:'5 to 10 properties',  icon:'🏘️'},
+        {value:'10-20', label:'10 to 20 properties', icon:'🏢'},
+        {value:'20+',   label:'More than 20',        icon:'🏙️'},
+    ]},
+    { q:'Where are your properties located?', key:'nation', sub:'We show the right legislation for each nation.',
+      options:[
+        {value:'England', label:'Mainly England',  icon:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+        {value:'Scotland',label:'Mainly Scotland', icon:'🏴󠁧󠁢󠁳󠁣󠁴󠁿'},
+        {value:'Wales',   label:'Mainly Wales',    icon:'🏴󠁧󠁢󠁷󠁬󠁳󠁿'},
+        {value:'mixed',   label:'Mix of nations',  icon:'🇬🇧'},
+    ]},
   ]
 
+  const[isExp,setIsExp]=useState(false)
+  const steps=isExp?stepsExp:stepsNew
+
   function choose(key,value){
-    const updated={...answers,[key]:value}
+    // After first question - switch to short path if experienced
+    if(key==='experience'&&value==='experienced'){setIsExp(true)}
+    // If portfolioSize answered, also mark as experienced
+    const extra=key==='portfolioSize'?{experience:'experienced'}:{}
+    const updated={...answers,...extra,[key]:value}
     setAnswers(updated)
-    if(step<steps.length-1){setStep(s=>s+1)}
+    const nextSteps=key==='experience'&&value==='experienced'?stepsExp:steps
+    if(step<nextSteps.length-1){setStep(s=>s+1)}
     else{onComplete(updated)}
   }
 
-  const current=steps[step]
+  const current=steps[Math.min(step,steps.length-1)]
 
   return<div style={{position:'fixed',inset:0,background:'var(--bg)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
     <div style={{maxWidth:480,width:'100%'}}>
@@ -86,16 +95,12 @@ function OnboardingWizard({onComplete,firstName}){
         <div style={{width:36,height:36,background:'var(--brand)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:18,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div>
         <span style={{fontFamily:'var(--display)',fontSize:20,fontWeight:400}}>Lettly</span>
       </div>
-
-      {/* Progress dots */}
       <div style={{display:'flex',gap:6,marginBottom:32}}>
         {steps.slice(1).map((_,i)=><div key={i} style={{width:i<step?28:6,height:6,borderRadius:3,background:i<step?'var(--brand)':'var(--border-strong)',transition:'all 0.3s'}}/>)}
       </div>
-
       <div className="fade-up">
         <h2 style={{fontFamily:'var(--display)',fontSize:'clamp(22px,4vw,30px)',fontWeight:300,color:'var(--text)',marginBottom:8,lineHeight:1.2}}>{current.q}</h2>
         {current.sub&&<p style={{fontSize:14,color:'var(--text-2)',marginBottom:28,lineHeight:1.6}}>{current.sub}</p>}
-
         {current.isIntro
           ?<button onClick={()=>setStep(1)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:12,padding:'14px 32px',fontSize:15,fontWeight:500,cursor:'pointer',marginTop:16}}>Get started</button>
           :<div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -320,6 +325,7 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck}){
   const checklist=portfolio.checklist||{}
   const onboarding=portfolio.onboarding||{}
   const showChecklist=onboarding&&(onboarding.experience==='new'||onboarding.experience==='some')
+  const showPricingNudge=onboarding&&onboarding.experience==='experienced'&&onboarding.portfolioSize
   const checklistNation=onboarding?.nation==='mixed'?'England':onboarding?.nation||'England'
 
   function toggleCheck(id){
@@ -345,6 +351,16 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck}){
 
     {showChecklist&&<FirstTimeLandlordChecklist nation={checklistNation} checkedItems={checklist} onToggle={onToggleCheck||((id)=>{})}/>}
 
+    {showPricingNudge&&(()=>{
+      const sizeMap={'1-5':'Starter','5-10':'Growth','10-20':'Portfolio','20+':'Portfolio'}
+      const priceMap={'1-5':'£10','5-10':'£15','10-20':'£25','20+':'£25'}
+      const plan=sizeMap[onboarding.portfolioSize]||'Portfolio'
+      const price=priceMap[onboarding.portfolioSize]||'£25'
+      return<div style={{background:'var(--brand-subtle)',border:'0.5px solid rgba(27,94,59,0.2)',borderRadius:12,padding:'12px 16px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+        <div><div style={{fontSize:13,fontWeight:500,color:'var(--brand)',marginBottom:2}}>Based on your portfolio size, {plan} plan looks right for you</div><div style={{fontSize:12,color:'var(--text-2)'}}>Up to {onboarding.portfolioSize} properties - {price}/month with a 14-day free trial</div></div>
+        <a href="https://lettly.co/#pricing" style={{fontSize:12,fontWeight:500,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:7,padding:'7px 14px',textDecoration:'none',whiteSpace:'nowrap'}}>View plans</a>
+      </div>
+    })()}
     {props.length===0?<DropZone onFiles={onAddDocs}/>:<>
       <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
@@ -388,6 +404,8 @@ function Properties({portfolio,onAddDocs,onEdit,onAdd}){
             <button onClick={()=>onEdit(p)} style={{marginTop:8,fontSize:11,color:'var(--brand)',background:'none',border:'0.5px solid var(--brand-light)',borderRadius:6,padding:'3px 10px',cursor:'pointer'}}>Edit</button>
           </div>
         </div>
+        {/* Rentability checklist */}
+        <RentabilityChecklist prop={p}/>
         {/* Nation-specific warnings */}
         {p.nation==='Scotland'&&!p.notes?.includes('registered')&&<div style={{background:'#e0ecf8',border:'0.5px solid #005EB8',borderRadius:9,padding:'8px 12px',fontSize:11,color:'#003090',lineHeight:1.5,marginBottom:12}}>Scottish property: ensure you are registered with your local council as a landlord. Use a Private Residential Tenancy agreement.</div>}
         {p.nation==='Wales'&&<div style={{background:'#fce8ec',border:'0.5px solid #C8102E',borderRadius:9,padding:'8px 12px',fontSize:11,color:'#8b0000',lineHeight:1.5,marginBottom:12}}>Welsh property: ensure you are registered with Rent Smart Wales. Use an Occupation Contract, not an AST.</div>}
@@ -458,6 +476,240 @@ function FinanceTab({portfolio,setPortfolio}){
       {props.filter(p=>p.ownership==='Personal'&&p.mortgage).length===0?<div style={{fontSize:12,color:'var(--text-3)',padding:'8px 0'}}>Add personal properties with mortgage details to use this calculator.</div>:<div style={{fontSize:12,color:'var(--text-2)',marginBottom:8}}>Analysing {props.filter(p=>p.ownership==='Personal').length} personal propert{props.filter(p=>p.ownership==='Personal').length===1?'y':'ies'}</div>}
       {s24Result&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,fontSize:12,lineHeight:1.8,whiteSpace:'pre-wrap',color:'var(--text-2)',marginTop:8}}>{s24Result}</div>}
     </div>
+  </div>
+}
+
+
+/* ---- Property Rentability Checklist ---- */
+function RentabilityChecklist({prop}){
+  if(!prop)return null
+  const nation=prop.nation||'England'
+  const checks=[
+    {id:'gas',label:'Gas Safety Certificate',status:prop.gasDue?'done':'missing',due:prop.gasDue,hint:'Annual - Gas Safe registered engineer'},
+    {id:'eicr',label:'EICR (Electrical)',status:prop.eicrDue?'done':'missing',due:prop.eicrDue,hint:'Every 5 years'},
+    {id:'epc',label:'EPC certificate',status:prop.epcRating?(['A','B','C','D'].includes(prop.epcRating?.toUpperCase())?(prop.epcRating?.toUpperCase()==='E'?'warning':'done'):'fail'):'missing',due:prop.epcExpiry,hint:'Minimum E (C from 2028)'},
+    {id:'ins',label:'Landlord insurance',status:prop.insurer&&prop.insuranceType?.toLowerCase()!=='home'?'done':prop.insurer?'fail':'missing',hint:'Must be landlord policy not home insurance'},
+    {id:'deposit',label:'Deposit protected',status:prop.depositScheme?'done':'missing',hint:'Within 30 days of receipt'},
+    {id:'tenancy',label:nation==='Wales'?'Occupation Contract':'Tenancy agreement',status:(prop.docs||[]).includes('tenancy_agreement')?'done':'missing',hint:nation==='Scotland'?'Private Residential Tenancy':nation==='Wales'?'Written Statement required':'AST or periodic tenancy'},
+    ...(nation==='Scotland'?[{id:'scot_reg',label:'Scottish Landlord Register',status:prop.scottishReg?'done':'missing',hint:'Mandatory - register with local council'}]:[]),
+    ...(nation==='Wales'?[{id:'rent_smart',label:'Rent Smart Wales',status:prop.rentSmart?'done':'missing',hint:'Mandatory registration and licence'}]:[]),
+    {id:'smoke',label:'Smoke alarms fitted',status:prop.smokeAlarms?'done':'missing',hint:'Every floor, tested on move-in'},
+    {id:'co',label:'CO alarm fitted',status:prop.coAlarm?'done':'missing',hint:'Every room with combustion appliance'},
+  ]
+  const done=checks.filter(c=>c.status==='done').length
+  const fail=checks.filter(c=>c.status==='fail'||c.status==='missing').length
+  const pct=Math.round((done/checks.length)*100)
+  const isLettable=fail===0
+
+  return<div style={{background:isLettable?'var(--green-bg)':'#fce8e6',border:`0.5px solid ${isLettable?'var(--green)':'#E24B4A'}`,borderRadius:12,padding:14,marginBottom:12}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8}}>
+      <div style={{fontSize:12,fontWeight:600,color:isLettable?'var(--green)':'#791F1F'}}>
+        {isLettable?'Property is legally lettable':'Property may not be legally lettable'}
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <div style={{width:60,height:5,borderRadius:3,background:'rgba(0,0,0,0.1)',overflow:'hidden'}}>
+          <div style={{width:`${pct}%`,height:'100%',background:isLettable?'var(--green)':'#E24B4A',borderRadius:3}}/>
+        </div>
+        <span style={{fontSize:11,fontWeight:500,color:isLettable?'var(--green)':'#791F1F'}}>{pct}%</span>
+      </div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3px 12px'}}>
+      {checks.map(ch=><div key={ch.id} style={{display:'flex',alignItems:'flex-start',gap:6,padding:'3px 0'}}>
+        <span style={{fontSize:13,flexShrink:0,marginTop:1,color:ch.status==='done'?'var(--green)':ch.status==='fail'?'var(--red)':'var(--amber)'}}>
+          {ch.status==='done'?'✓':ch.status==='fail'?'✗':'○'}
+        </span>
+        <div>
+          <div style={{fontSize:11,color:ch.status==='done'?'var(--text-2)':'var(--text)',fontWeight:ch.status!=='done'?500:400}}>{ch.label}</div>
+          {ch.status!=='done'&&<div style={{fontSize:10,color:'var(--text-3)'}}>{ch.hint}</div>}
+          {ch.due&&ch.status==='done'&&<div style={{fontSize:10,color:'var(--text-3)'}}>Due: {ch.due}</div>}
+        </div>
+      </div>)}
+    </div>
+  </div>
+}
+
+/* ---- Condition Report ---- */
+function ConditionReport({portfolio,setPortfolio,userId}){
+  const props=portfolio.properties||[]
+  const reports=portfolio.conditionReports||[]
+  const[showForm,setShowForm]=useState(false)
+  const[selProp,setSelProp]=useState('')
+  const[reportType,setReportType]=useState('move_in')
+  const[photos,setPhotos]=useState({})
+  const[form,setForm]=useState({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
+  const photoRef=useRef(null)
+  const[photoCategory,setPhotoCategory]=useState('general')
+
+  const photoCategories=[
+    {id:'general',label:'General condition'},
+    {id:'kitchen',label:'Kitchen'},
+    {id:'bathroom',label:'Bathroom'},
+    {id:'lounge',label:'Living room'},
+    {id:'bedroom',label:'Bedrooms'},
+    {id:'exterior',label:'Exterior'},
+    {id:'meter_elec',label:'Electric meter'},
+    {id:'meter_gas',label:'Gas meter'},
+    {id:'meter_water',label:'Water meter'},
+    {id:'keys',label:'Keys handed over'},
+    {id:'garden',label:'Garden'},
+    {id:'damage',label:'Existing damage'},
+  ]
+
+  async function handlePhotos(files){
+    const compressed=await Promise.all(Array.from(files).slice(0,4).map(async f=>{
+      const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})
+      return new Promise(res=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,1200/img.width);const cv=document.createElement('canvas');cv.width=img.width*scale;cv.height=img.height*scale;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',0.75))};img.src=b64})
+    }))
+    setPhotos(prev=>({...prev,[photoCategory]:[...(prev[photoCategory]||[]),...compressed].slice(0,8)}))
+  }
+
+  function saveReport(){
+    if(!selProp)return
+    const prop=props.find(p=>p.shortName===selProp||p.id===selProp)
+    const report={
+      id:Math.random().toString(36).slice(2),
+      propertyId:prop?.id,
+      propertyName:selProp,
+      type:reportType,
+      date:new Date().toLocaleDateString('en-GB'),
+      timestamp:new Date().toISOString(),
+      ...form,
+      photos,
+      completedBy:userId,
+    }
+    setPortfolio(prev=>({...prev,conditionReports:[...(prev.conditionReports||[]),report]}))
+    setShowForm(false)
+    setPhotos({})
+    setForm({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
+  }
+
+  const propReports=selProp?reports.filter(r=>r.propertyName===selProp):reports
+
+  return<div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <div>
+        <div style={{fontSize:13,fontWeight:500}}>Condition reports</div>
+        <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Move-in and move-out inspections with photos, meter readings and key handover</div>
+      </div>
+      <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>+ New report</button>
+    </div>
+
+    {showForm&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:16}}>
+        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label>
+          <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
+            <option value="">Select property</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}
+          </select>
+        </div>
+        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Report type</label>
+          <select value={reportType} onChange={e=>setReportType(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
+            <option value="move_in">Move-in inspection</option>
+            <option value="move_out">Move-out inspection</option>
+            <option value="periodic">Periodic inspection</option>
+            <option value="inventory">Inventory</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Meter readings */}
+      <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:10}}>Meter readings</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0 12px',marginBottom:16}}>
+        {[['elecMeterReading','Electric meter'],['gasMeterReading','Gas meter'],['waterMeterReading','Water meter']].map(([key,label])=>(
+          <div key={key} style={{marginBottom:14}}>
+            <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder="Reading"
+              style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/>
+          </div>
+        ))}
+      </div>
+
+      {/* Keys and deposit */}
+      <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:10}}>Keys and deposit</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:16}}>
+        {[['keysHanded','Keys handed to/from'],['depositAmount','Deposit amount (£)'],['depositScheme','Deposit scheme'],['depositRef','Deposit reference']].map(([key,label])=>(
+          <div key={key} style={{marginBottom:14}}>
+            <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder={label}
+              style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/>
+          </div>
+        ))}
+      </div>
+
+      {/* Photos by category */}
+      <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:10}}>Photos</div>
+      <input ref={photoRef} type="file" accept="image/*" multiple capture="environment" style={{display:'none'}} onChange={e=>handlePhotos(e.target.files)}/>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
+        {photoCategories.map(cat=><button key={cat.id} onClick={()=>{setPhotoCategory(cat.id);setTimeout(()=>photoRef.current?.click(),100)}}
+          style={{padding:'5px 10px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--border)',background:(photos[cat.id]||[]).length>0?'var(--brand-light)':'var(--surface)',color:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--text-2)',position:'relative'}}>
+          {cat.label}
+          {(photos[cat.id]||[]).length>0&&<span style={{position:'absolute',top:-4,right:-4,width:14,height:14,borderRadius:'50%',background:'var(--brand)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{(photos[cat.id]||[]).length}</span>}
+        </button>)}
+      </div>
+      {/* Show photos */}
+      <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:14}}>
+        {Object.entries(photos).flatMap(([cat,imgs])=>imgs.map((img,i)=>(
+          <div key={`${cat}-${i}`} style={{position:'relative',width:56,height:56,borderRadius:7,overflow:'hidden',border:'0.5px solid var(--border)'}}>
+            <img src={img} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+            <button onClick={()=>setPhotos(prev=>({...prev,[cat]:prev[cat].filter((_,j)=>j!==i)}))}
+              style={{position:'absolute',top:2,right:2,width:14,height:14,borderRadius:'50%',background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
+          </div>
+        )))}
+      </div>
+
+      <div style={{marginBottom:14}}>
+        <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Additional notes</label>
+        <textarea value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Any additional observations or notes..." rows={3}
+          style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',resize:'vertical',boxSizing:'border-box'}}/>
+      </div>
+
+      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+        <button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
+        <button onClick={saveReport} disabled={!selProp} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:selProp?'pointer':'not-allowed',opacity:selProp?1:0.5}}>Save report</button>
+      </div>
+    </div>}
+
+    {/* Report list */}
+    {reports.length>0&&<>
+      {props.length>1&&<div style={{marginBottom:10}}>
+        <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 12px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',outline:'none'}}>
+          <option value="">All properties</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}
+        </select>
+      </div>}
+      {(selProp?reports.filter(r=>r.propertyName===selProp):reports).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(r=>{
+        const typeLabel={move_in:'Move-in',move_out:'Move-out',periodic:'Periodic',inventory:'Inventory'}[r.type]||r.type
+        const typeColor={move_in:'brand',move_out:'amber',periodic:'grey',inventory:'blue'}[r.type]||'grey'
+        const totalPhotos=Object.values(r.photos||{}).reduce((s,p)=>s+p.length,0)
+        return<div key={r.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px',marginBottom:8}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+            <div>
+              <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:3}}>
+                <span style={{fontSize:13,fontWeight:500}}>{r.propertyName}</span>
+                <Pill type={typeColor}>{typeLabel}</Pill>
+                <span style={{fontSize:11,color:'var(--text-3)'}}>{r.date}</span>
+              </div>
+              <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.7}}>
+                {r.elecMeterReading&&<span style={{marginRight:12}}>Electric: {r.elecMeterReading}</span>}
+                {r.gasMeterReading&&<span style={{marginRight:12}}>Gas: {r.gasMeterReading}</span>}
+                {r.waterMeterReading&&<span style={{marginRight:12}}>Water: {r.waterMeterReading}</span>}
+                {r.keysHanded&&<span style={{marginRight:12}}>Keys: {r.keysHanded}</span>}
+                {r.depositRef&&<span style={{marginRight:12}}>Deposit ref: {r.depositRef}</span>}
+                {totalPhotos>0&&<span>{totalPhotos} photo{totalPhotos!==1?'s':''}</span>}
+              </div>
+            </div>
+          </div>
+          {totalPhotos>0&&<div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+            {Object.entries(r.photos||{}).flatMap(([cat,imgs])=>imgs.slice(0,2).map((img,i)=>(
+              <img key={`${cat}-${i}`} src={img} alt="" style={{width:44,height:44,borderRadius:6,objectFit:'cover',border:'0.5px solid var(--border)',cursor:'pointer'}} onClick={()=>window.open(img)}/>
+            ))).slice(0,8)}
+            {totalPhotos>8&&<div style={{width:44,height:44,borderRadius:6,background:'var(--surface2)',border:'0.5px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'var(--text-3)'}}>+{totalPhotos-8}</div>}
+          </div>}
+          {r.notes&&<div style={{fontSize:11,color:'var(--text-2)',marginTop:8,paddingTop:8,borderTop:'0.5px solid var(--border)',lineHeight:1.6}}>{r.notes}</div>}
+        </div>
+      })}
+    </>}
+    {reports.length===0&&!showForm&&<div style={{textAlign:'center',padding:'32px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}>
+      <div style={{fontSize:13,color:'var(--text-3)'}}>No condition reports yet. Create a move-in report when a new tenant arrives.</div>
+    </div>}
   </div>
 }
 
@@ -665,12 +917,12 @@ function AITab({portfolio}){
 }
 
 /* ---- Root ---- */
-const TABS=[{id:'overview',label:'Overview'},{id:'properties',label:'Properties'},{id:'finance',label:'Finance'},{id:'maintenance',label:'Maintenance'},{id:'tools',label:'Tools'},{id:'legislation',label:'Legislation'},{id:'ai',label:'Lettly AI'}]
+const TABS=[{id:'overview',label:'Overview'},{id:'properties',label:'Properties'},{id:'finance',label:'Finance'},{id:'maintenance',label:'Maintenance'},{id:'conditions',label:'Condition reports'},{id:'tools',label:'Tools'},{id:'legislation',label:'Legislation'},{id:'ai',label:'Lettly AI'}]
 
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
   const[tab,setTab]=useState('overview')
-  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],checklist:{},onboarding:null})
+  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],checklist:{},onboarding:null})
   const[queue,setQueue]=useState([])
   const[showDrop,setShowDrop]=useState(false)
   const[loaded,setLoaded]=useState(false)
@@ -697,6 +949,10 @@ export default function Dashboard(){
   function completeWizard(answers){
     setPortfolio(prev=>({...prev,onboarding:answers}))
     setShowWizard(false)
+    // Store portfolio size for analytics/pricing suggestions
+    if(answers.portfolioSize){
+      console.log('Portfolio size recorded:', answers.portfolioSize)
+    }
   }
 
   function toggleCheck(id){
@@ -742,7 +998,8 @@ export default function Dashboard(){
         {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
         {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/>}
         {tab==='maintenance' &&<MaintenanceTab portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/>}
-        {tab==='tools'       &&<ToolsTab      portfolio={portfolio}/>}
+        {tab==='tools'       &&<ToolsTab      portfolio={portfolio}/> }
+        {tab==='conditions'  &&<div className='fade-up'><ConditionReport portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/></div>}
         {tab==='legislation' &&<LegislationTab portfolio={portfolio}/>}
         {tab==='ai'          &&<AITab         portfolio={portfolio}/>}
       </div>
