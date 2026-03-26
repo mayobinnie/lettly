@@ -62,3 +62,67 @@ a { color: inherit; text-decoration: none; }
   animation: shimmer 1.4s infinite;
   border-radius: var(--radius-sm);
 }
+
+/* ─── Mobile responsive ─────────────────────────────────── */
+@media (max-width: 768px) {
+  html { font-size: 13px; }
+
+  /* Nav */
+  nav { padding: 0 16px !important; height: 52px !important; }
+  nav span[style*="font-size:21"] { font-size: 17px !important; }
+
+  /* Tab bar — scroll horizontally on mobile */
+  nav > div:nth-child(2) { 
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: calc(100vw - 160px);
+  }
+  nav > div:nth-child(2)::-webkit-scrollbar { display: none; }
+
+  /* Main content padding */
+  div[style*="maxWidth:1060"] { padding: 16px !important; }
+  div[style*="max-width:1060"] { padding: 16px !important; }
+  div[style*="maxWidth:960"] { padding: 0 16px 48px !important; }
+  div[style*="maxWidth:760"] { padding: 48px 16px 40px !important; }
+
+  /* Grid → single column on mobile */
+  div[style*="gridTemplateColumns:repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+  div[style*="gridTemplateColumns:repeat(3"] { grid-template-columns: 1fr !important; }
+  div[style*="gridTemplateColumns:repeat(2"] { grid-template-columns: 1fr !important; }
+  div[style*="gridTemplateColumns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+  div[style*="grid-template-columns:repeat(3"] { grid-template-columns: 1fr !important; }
+  div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+
+  /* Hero headline */
+  h1[style*="fontSize:56"] { font-size: 34px !important; }
+  h1[style*="fontSize:58"] { font-size: 34px !important; }
+  h1[style*="font-size:56"] { font-size: 34px !important; }
+
+  /* Property cards — stack header */
+  div[style*="display:flex"][style*="justifyContent:space-between"] > div:last-child { 
+    margin-left: 0 !important; 
+  }
+
+  /* AI chat height */
+  div[style*="height:500"] { height: 420px !important; }
+  div[style*="height:480"] { height: 380px !important; }
+
+  /* Buttons — full width on mobile */
+  div[style*="justifyContent:center"] > a,
+  div[style*="justifyContent:center"] > button {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Drop zone */
+  div[style*="padding:'60px 40px"] { padding: 36px 20px 32px !important; }
+  div[style*="padding:'56px 40px"] { padding: 36px 20px 30px !important; }
+}
+
+@media (max-width: 480px) {
+  div[style*="gridTemplateColumns:repeat(4"] { grid-template-columns: 1fr !important; }
+  div[style*="gridTemplateColumns:repeat(2"] { grid-template-columns: 1fr !important; }
+  h1[style*="fontSize:56"] { font-size: 28px !important; line-height: 1.2 !important; }
+}
