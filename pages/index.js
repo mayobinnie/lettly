@@ -79,8 +79,8 @@ export default function Landing() {
             ))}
           </div>
           <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-            <a href="https://accounts.lettly.co/sign-in" className="btn-ghost" style={{ fontSize:13, padding:'7px 18px' }}>Sign in</a>
-            <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:13, padding:'8px 20px', boxShadow:'0 2px 10px rgba(27,94,59,0.2)' }}>Get started free</a>
+            <a href="/sign-in" className="btn-ghost" style={{ fontSize:13, padding:'7px 18px' }}>Sign in</a>
+            <a href="/sign-up" className="btn-primary" style={{ fontSize:13, padding:'8px 20px', boxShadow:'0 2px 10px rgba(27,94,59,0.2)' }}>Get started free</a>
           </div>
         </nav>
 
@@ -122,7 +122,7 @@ export default function Landing() {
           </div>
 
           <div className="cta-row" style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginBottom:48 }}>
-            <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:16, padding:'16px 40px' }}>
+            <a href="/sign-up" className="btn-primary" style={{ fontSize:16, padding:'16px 40px' }}>
               Start free - no card needed
             </a>
             <a href="#how-it-works" className="btn-ghost" style={{ fontSize:15 }}>
@@ -242,7 +242,7 @@ export default function Landing() {
                 </div>
               ))}
             </div>
-            <a href="https://accounts.lettly.co/sign-up" style={{ display:'inline-block', background:'#fff', color:'var(--brand)', fontSize:15, fontWeight:600, padding:'14px 36px', borderRadius:12, textDecoration:'none', boxShadow:'0 4px 16px rgba(0,0,0,0.15)' }}>
+            <a href="/sign-up" style={{ display:'inline-block', background:'#fff', color:'var(--brand)', fontSize:15, fontWeight:600, padding:'14px 36px', borderRadius:12, textDecoration:'none', boxShadow:'0 4px 16px rgba(0,0,0,0.15)' }}>
               Get compliant with Lettly →
             </a>
           </div>
@@ -321,7 +321,7 @@ export default function Landing() {
                       <span style={{ color:plan.popular?'rgba(255,255,255,0.6)':'var(--green)', fontSize:13, flexShrink:0, marginTop:1 }}>✓</span>{f}
                     </div>
                   ))}
-                  <a href="https://accounts.lettly.co/sign-up" style={{ display:'block', textAlign:'center', marginTop:'auto', paddingTop:20, background:plan.popular?'#fff':'var(--brand)', color:plan.popular?'var(--brand)':'#fff', fontSize:13, fontWeight:600, padding:'11px 16px', borderRadius:10, textDecoration:'none' }}>
+                  <a href="/sign-up" style={{ display:'block', textAlign:'center', marginTop:'auto', paddingTop:20, background:plan.popular?'#fff':'var(--brand)', color:plan.popular?'var(--brand)':'#fff', fontSize:13, fontWeight:600, padding:'11px 16px', borderRadius:10, textDecoration:'none' }}>
                     Start free trial
                   </a>
                 </div>
@@ -343,7 +343,7 @@ export default function Landing() {
             Free to start. No credit card. Takes 2 minutes to set up your first property.
           </p>
           <div className="cta-row" style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
-            <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:16, padding:'16px 40px' }}>
+            <a href="/sign-up" className="btn-primary" style={{ fontSize:16, padding:'16px 40px' }}>
               Create free account →
             </a>
           </div>

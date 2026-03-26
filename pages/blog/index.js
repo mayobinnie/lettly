@@ -20,7 +20,7 @@ export default function Blog() {
           </Link>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
             <Link href="/#pricing" style={{ fontSize: 13, color: 'var(--text-2)', textDecoration: 'none' }}>Pricing</Link>
-            <a href="https://accounts.lettly.co/sign-up" style={{ background: 'var(--brand)', color: '#fff', fontSize: 13, fontWeight: 500, padding: '7px 18px', borderRadius: 8, textDecoration: 'none' }}>Get started free</a>
+            <a href="/sign-up" style={{ background: 'var(--brand)', color: '#fff', fontSize: 13, fontWeight: 500, padding: '7px 18px', borderRadius: 8, textDecoration: 'none' }}>Get started free</a>
           </div>
         </nav>
 
@@ -54,7 +54,7 @@ export default function Blog() {
           <div style={{ marginTop: 56, background: 'var(--brand)', borderRadius: 16, padding: 'clamp(24px,4vw,40px)', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--display)', fontSize: 'clamp(20px,3vw,28px)', fontWeight: 300, color: '#fff', marginBottom: 10, lineHeight: 1.3 }}>Track your compliance automatically</div>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 24, lineHeight: 1.7 }}>Drop your documents and Lettly builds your compliance dashboard instantly. Gas certs, EICRs, EPCs, tenancy agreements - all tracked with deadline reminders.</p>
-            <a href="https://accounts.lettly.co/sign-up" style={{ display: 'inline-block', background: '#fff', color: 'var(--brand)', fontSize: 14, fontWeight: 600, padding: '12px 32px', borderRadius: 10, textDecoration: 'none' }}>Start free - no card needed</a>
+            <a href="/sign-up" style={{ display: 'inline-block', background: '#fff', color: 'var(--brand)', fontSize: 14, fontWeight: 600, padding: '12px 32px', borderRadius: 10, textDecoration: 'none' }}>Start free - no card needed</a>
           </div>
         </div>
 
