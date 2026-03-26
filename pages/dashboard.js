@@ -154,7 +154,7 @@ function QueueItem({ item }) {
         </div>
         {isDone && ext && <div style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.6 }}>{ext.summary}{ext.property?.shortName && <span style={{ marginLeft:6, color:'var(--brand)', fontWeight:500 }}>· {ext.property.shortName}</span>}</div>}
         {isDone && ext?.documentType && <div style={{ marginTop:6 }}><DocBadge type={ext.documentType}/></div>}
-        {isError && <div style={{ fontSize:11, color:'var(--red)', marginTop:3 }}>Could not read this file — try a clearer PDF or image.</div>}
+        {isError && <div style={{ fontSize:11, color:'var(--red)', marginTop:3 }}>{item.result?.error || 'Could not read this file.'}</div>}
       </div>
     </div>
   )

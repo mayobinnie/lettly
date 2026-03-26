@@ -46,6 +46,11 @@ export default async function handler(req, res) {
   const { filename, data, mediaType } = req.body
   if (!data) return res.status(400).json({ error: 'No file data' })
 
+  // Check API key exists
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(500).json({ success: false, error: 'ANTHROPIC_API_KEY not set in environment', filename })
+  }
+
   const isPDF = mediaType === 'application/pdf' || filename?.toLowerCase().endsWith('.pdf')
 
   try {
@@ -80,10 +85,13 @@ export default async function handler(req, res) {
 
     res.status(200).json({ success: true, extracted, filename })
   } catch (err) {
-    console.error('Extract error:', err?.status, err?.message)
+    // Return the REAL error message so we can diagnose
+    const errorMsg = err?.error?.error?.message || err?.message || JSON.stringify(err)
+    console.error('Extract error:', err?.status, errorMsg)
     res.status(500).json({
       success: false,
-      error: err?.message || 'Could not read document',
+      error: errorMsg,
+      status: err?.status,
       filename,
     })
   }
