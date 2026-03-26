@@ -6,7 +6,7 @@ const PROMPT = `You are a UK property management document reader. Extract all re
 
 Use this exact structure (omit any field you cannot find — do not guess):
 {
-  "documentType": "gas_certificate|eicr|insurance|tenancy_agreement|mortgage_offer|completion_statement|other",
+  "documentType": "gas_certificate|eicr|insurance|epc_certificate|tenancy_agreement|mortgage_offer|completion_statement|other",
   "property": {
     "address": "full property address as written",
     "shortName": "short display name e.g. 7 Tower Hill Mews"
@@ -14,7 +14,8 @@ Use this exact structure (omit any field you cannot find — do not guess):
   "compliance": {
     "gas": { "date": "DD/MM/YYYY", "due": "DD/MM/YYYY", "engineer": "name", "gasSafeNo": "number" },
     "eicr": { "date": "DD/MM/YYYY", "due": "DD/MM/YYYY", "result": "Satisfactory|Unsatisfactory" },
-    "insurance": { "insurer": "name", "policyNumber": "number", "renewal": "DD/MM/YYYY", "type": "Landlord|Home|Other", "premium": 0 }
+    "insurance": { "insurer": "name", "policyNumber": "number", "renewal": "DD/MM/YYYY", "type": "Landlord|Home|Other", "premium": 0 },
+    "epc": { "rating": "A|B|C|D|E|F|G", "expiry": "DD/MM/YYYY", "score": 0 }
   },
   "tenancy": {
     "tenantName": "full name",
