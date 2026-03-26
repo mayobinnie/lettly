@@ -146,7 +146,7 @@ export default function Landing() {
             <h2 className="section-title" style={{ marginBottom:12 }}>From documents to dashboard<br/>in under 60 seconds</h2>
             <p style={{ fontSize:14, color:'var(--text-2)' }}>No manual data entry. No spreadsheets. Just drop and go.</p>
           </div>
-          <div className="steps-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:24 }}>
+          <div className="steps-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:24 }}>
             {[
               { num:'1', title:'Drop your documents', body:'Drag any PDF or image into Lettly - gas certs, EICRs, insurance, tenancy agreements, mortgage offers. Everything.' },
               { num:'2', title:'AI reads them instantly', body:'Lettly extracts every date, figure and detail automatically. No typing. No errors. Your portfolio appears in seconds.' },
@@ -174,12 +174,14 @@ export default function Landing() {
             </div>
             <div className="features-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
               {[
-                { icon:'📄', title:'Document extraction', body:'Upload any property document and Lettly pulls out every date, figure, and detail - gas certs, EICRs, insurance, EPCs, tenancy agreements, mortgage offers.' },
-                { icon:'🔔', title:'Compliance alerts', body:'Never miss a gas cert renewal, EICR deadline or insurance expiry. Email reminders sent automatically before every deadline.' },
-                { icon:'🌿', title:'EPC tracker', body:'Track EPC ratings across your portfolio. Get clear guidance on upgrade costs and timelines for the 2028 minimum C requirement.' },
-                { icon:'⚖️', title:'Legislation centre', body:'Full breakdown of the Renters\' Rights Bill, Section 24 tax changes, EPC requirements and deposit rules - with your specific action list.' },
-                { icon:'💰', title:'Financial dashboard', body:'Portfolio value, total equity, LTV, gross yield, net yield - all calculated automatically as you add properties.' },
-                { icon:'🤖', title:'Lettly AI assistant', body:'Ask anything about your portfolio, legislation, or finances. Get specific answers based on your actual properties - not generic advice.' },
+                { icon:'📄', title:'Document AI extraction', body:'Drop any PDF or photo - gas certs, EICRs, EPCs, insurance, tenancy agreements, mortgage offers. Lettly reads every date and figure automatically.' },
+                { icon:'🔔', title:'Compliance tracking', body:'Never miss a gas cert, EICR or insurance deadline. Compliance timeline on your dashboard, plus email reminders to your inbox.' },
+                { icon:'🌿', title:'EPC tracker', body:'EPC ratings tracked per property with 2028 upgrade guidance and estimated costs. Know which properties need work before the deadline hits.' },
+                { icon:'💰', title:'Finance and P&L', body:'Income, mortgage payments and expenses tracked in one place. Annual P&L summary ready to hand straight to your accountant.' },
+                { icon:'🔧', title:'Maintenance log', body:'Log repairs with photos, contractor details and costs. Tenants get a personal link to report issues directly - all saved to your log automatically.' },
+                { icon:'📝', title:'Document generator', body:'AI drafts Section 8 notices, inspection reports, rent increase letters and right of entry notices. Copy and send in seconds.' },
+                { icon:'🏦', title:'Remortgage planner', body:'See your equity, ERC cost and capital release options per property. Know whether to remortgage now or wait for your fixed rate to end.' },
+                { icon:'⚖️', title:'Legislation centre', body:'Full breakdown of the Renters Rights Bill, Section 24 tax, EPC minimum C and deposit rules - with a specific action list for your portfolio.' },
               ].map(f => (
                 <div key={f.title} className="feature-card">
                   <div style={{ fontSize:28, marginBottom:14 }}>{f.icon}</div>
