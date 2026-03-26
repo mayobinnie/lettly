@@ -230,10 +230,10 @@ export default function Landing() {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
               {[
-                { name:'Starter', price:'£7.50', period:'per month', props:'1-2 properties', highlight:false, features:['Up to 2 properties', 'Document extraction', 'Compliance tracking', 'Legislation centre', 'Lettly AI assistant'] },
-                { name:'Standard', price:'£10', period:'per month', props:'3-5 properties', highlight:false, features:['Up to 5 properties', 'Everything in Starter', 'Email reminders', 'EPC tracker', 'Financial dashboard'] },
-                { name:'Portfolio', price:'£14', period:'per month', props:'5-10 properties', highlight:true, popular:true, features:['Up to 10 properties', 'Everything in Standard', 'Full financial analytics', 'Mortgage strategy tools', 'Priority support'] },
-                { name:'Professional', price:'£25', period:'per month', props:'10+ properties', highlight:false, features:['Unlimited properties', 'Everything in Portfolio', 'Multiple user access', 'Bulk document upload', 'Dedicated support'] },
+                { name:'Starter', price:'£10', period:'per month', props:'1-5 properties', highlight:false, features:['Up to 5 properties', 'Document extraction', 'Compliance tracking', 'Legislation centre', 'Lettly AI assistant', 'Finance tracker'] },
+                { name:'Growth', price:'£15', period:'per month', props:'5-10 properties', highlight:false, features:['Up to 10 properties', 'Everything in Starter', 'Email compliance reminders', 'EPC tracker', 'Maintenance log', 'Document generator'] },
+                { name:'Portfolio', price:'£25', period:'per month', props:'10+ properties', highlight:true, popular:true, features:['Unlimited properties', 'Everything in Growth', 'Remortgage planner', 'Section 24 calculator', 'Portfolio report export', 'Priority support'] },
+                
               ].map(plan => (
                 <div key={plan.name} style={{ background:plan.highlight?'var(--brand)':'var(--surface)', border:plan.highlight?'none':'0.5px solid var(--border)', borderRadius:18, padding:'24px 20px', position:'relative', overflow:'hidden' }}>
                   {plan.popular&&<div style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'2px 9px', fontSize:10, color:'#fff', fontWeight:500 }}>Popular</div>}
