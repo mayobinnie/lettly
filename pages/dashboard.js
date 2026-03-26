@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import { useUser, UserButton } from '@clerk/nextjs'
 import { useRouter } from 'next/router'
-import { fmt, dueSoon, dueDays, epcColor, mergeDoc, LEGISLATION, LEGISLATION_SCOTLAND, LEGISLATION_WALES } from '../lib/data'
+import { fmt, dueSoon, dueDays, epcColor, mergeDoc, LEGISLATION, LEGISLATION_SCOTLAND, LEGISLATION_WALES, getGrowthRate, projectValue } from '../lib/data'
 import { getPortfolio, savePortfolio } from '../lib/supabase'
 import { detectNation, NATION_LABELS, getChecklist } from '../lib/nations'
 
@@ -325,6 +325,181 @@ function PricingNudge({portfolioSize}){
 }
 
 /* ---- Overview ---- */
+function PortfolioChart({props}){
+  const ref = useRef(null)
+  const chartRef = useRef(null)
+
+  useEffect(()=>{
+    if(!ref.current || !props.length) return
+    if(typeof window === 'undefined') return
+
+    const script = document.createElement('script')
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js'
+    script.onload = () => {
+      if(chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
+      const years = 10
+      const labels = Array.from({length:years+1},(_,i)=> i===0?'Now':`${new Date().getFullYear()+i}`)
+      const colors = ['#1b5e3b','#2d8a5e','#4db87a','#85d4a8','#b8e8cc','#3b82c4','#6baed6']
+
+      const datasets = props.filter(p=>p.currentValue).map((p,i)=>{
+        const rate = getGrowthRate(p.address)
+        const values = projectValue(Number(p.currentValue), rate, years)
+        return {
+          label: p.shortName,
+          data: values,
+          borderColor: colors[i % colors.length],
+          backgroundColor: colors[i % colors.length] + '15',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+        }
+      })
+
+      // Portfolio total line
+      if(props.filter(p=>p.currentValue).length > 1) {
+        const totalByYear = Array.from({length:years+1},(_,yr)=>
+          props.filter(p=>p.currentValue).reduce((s,p)=>{
+            const rate = getGrowthRate(p.address)
+            return s + projectValue(Number(p.currentValue), rate, years)[yr]
+          },0)
+        )
+        datasets.push({
+          label: 'Portfolio total',
+          data: totalByYear,
+          borderColor: '#1b5e3b',
+          backgroundColor: '#1b5e3b20',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          borderDash: [],
+        })
+      }
+
+      chartRef.current = new window.Chart(ref.current, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, color: '#888' } },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.dataset.label + ': £' + ctx.parsed.y.toLocaleString('en-GB')
+              }
+            }
+          },
+          scales: {
+            x: { grid: { color: '#f0ede8' }, ticks: { font: { size: 11 }, color: '#888' } },
+            y: {
+              grid: { color: '#f0ede8' },
+              ticks: {
+                font: { size: 11 }, color: '#888',
+                callback: v => '£' + (v>=1000000?(v/1000000).toFixed(1)+'m':(v/1000).toFixed(0)+'k')
+              }
+            }
+          }
+        }
+      })
+    }
+    document.head.appendChild(script)
+    return () => { if(chartRef.current){ chartRef.current.destroy(); chartRef.current=null } }
+  }, [props.map(p=>p.id+p.currentValue+p.address).join(',')])
+
+  if(!props.filter(p=>p.currentValue).length) return null
+
+  return <div style={{position:'relative',height:280}}>
+    <canvas ref={ref}/>
+  </div>
+}
+
+function GrowthCards({props}){
+  return <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:10,marginBottom:14}}>
+    {props.filter(p=>p.currentValue).map(p=>{
+      const rate = getGrowthRate(p.address)
+      const val = Number(p.currentValue)
+      const in1yr = projectValue(val, rate, 1)[1]
+      const in5yr = projectValue(val, rate, 5)[5]
+      const in10yr = projectValue(val, rate, 10)[10]
+      const gain1 = in1yr - val
+      const gain10 = in10yr - val
+      return <div key={p.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:14}}>
+        <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:2}}>{p.shortName}</div>
+        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10}}>~{rate}% avg annual growth · {p.nation||'England'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
+          {[['Now',fmt(val),''],['1yr',fmt(in1yr),'+'+fmt(gain1)],['10yr',fmt(in10yr),'+'+fmt(gain10)]].map(([label,v,g])=>(
+            <div key={label} style={{background:'var(--surface2)',borderRadius:7,padding:'8px 10px'}}>
+              <div style={{fontSize:10,color:'var(--text-3)',marginBottom:3}}>{label}</div>
+              <div style={{fontSize:12,fontWeight:600,fontFamily:'var(--mono)',color:'var(--text)'}}>{v}</div>
+              {g&&<div style={{fontSize:10,color:'var(--green)',marginTop:1}}>{g}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    })}
+  </div>
+}
+
+function PortfolioScore({props,checklist,urgent}){
+  // Calculate a portfolio health score out of 100
+  const scores = []
+  // Compliance score
+  const complianceItems = ['gasDue','eicrDue','insuranceRenewal']
+  const complianceScore = props.length > 0
+    ? props.reduce((s,p) => {
+        let ps = 0
+        if(p.gasDue && dueSoon(p.gasDue) !== 'overdue') ps += 33
+        if(p.eicrDue && dueSoon(p.eicrDue) !== 'overdue') ps += 33
+        if(p.insurer && p.insuranceType?.toLowerCase() !== 'home') ps += 34
+        return s + ps
+      }, 0) / props.length
+    : 0
+  scores.push({label:'Compliance', score:Math.round(complianceScore), color:'#1e6e35'})
+
+  // Financial health
+  const totalRent = props.reduce((s,p)=>s+(Number(p.rent)||0),0)
+  const totalPayment = props.reduce((s,p)=>s+(Number(p.monthlyPayment)||0),0)
+  const coverage = totalPayment > 0 ? totalRent / totalPayment : 0
+  const finScore = coverage >= 1.5 ? 100 : coverage >= 1.25 ? 75 : coverage >= 1.0 ? 50 : 25
+  scores.push({label:'Financial health', score:finScore, color:'#0C447C'})
+
+  // Data completeness
+  const fields = ['shortName','address','rent','currentValue','mortgage','tenantName','gasDue','eicrDue','epcRating','insurer']
+  const dataScore = props.length > 0
+    ? Math.round(props.reduce((s,p) => s + fields.filter(f=>p[f]).length/fields.length*100, 0) / props.length)
+    : 0
+  scores.push({label:'Data completeness', score:dataScore, color:'#633806'})
+
+  const overall = scores.length > 0 ? Math.round(scores.reduce((s,x)=>s+x.score,0)/scores.length) : 0
+
+  return <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <div style={{fontSize:13,fontWeight:500}}>Portfolio health score</div>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <div style={{width:44,height:44,borderRadius:'50%',background:overall>=75?'var(--green-bg)':overall>=50?'#fff8e1':'var(--red-bg)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <span style={{fontSize:14,fontWeight:700,color:overall>=75?'var(--green)':overall>=50?'#633806':'var(--red)'}}>{overall}</span>
+        </div>
+        <span style={{fontSize:12,color:'var(--text-3)'}}>/100</span>
+      </div>
+    </div>
+    {scores.map(s=>(
+      <div key={s.label} style={{marginBottom:10}}>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text-2)',marginBottom:4}}>
+          <span>{s.label}</span><span style={{fontWeight:500}}>{s.score}%</span>
+        </div>
+        <div style={{height:5,borderRadius:3,background:'var(--surface2)',overflow:'hidden'}}>
+          <div style={{width:s.score+'%',height:'100%',background:s.color,borderRadius:3,transition:'width 0.6s ease'}}/>
+        </div>
+      </div>
+    ))}
+    {props.length===0&&<div style={{fontSize:12,color:'var(--text-3)',textAlign:'center',padding:'8px 0'}}>Add properties to see your score</div>}
+  </div>
+}
+
 function Overview({portfolio,onAddDocs,user,onToggleCheck}){
   const props=portfolio.properties||[]
   const totalRent=props.reduce((s,p)=>s+(Number(p.rent)||0),0)
@@ -354,32 +529,76 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck}){
   const showPricingNudge=onboarding&&onboarding.experience==='experienced'&&onboarding.portfolioSize
   const checklistNation=onboarding?.nation==='mixed'?'England':onboarding?.nation||'England'
 
+  // Projected portfolio value in 10 years
+  const projectedValue = props.filter(p=>p.currentValue).reduce((s,p)=>{
+    const rate = getGrowthRate(p.address)
+    return s + projectValue(Number(p.currentValue), rate, 10)[10]
+  }, 0)
+  const projectedGain = projectedValue - totalValue
+
   return<div className="fade-up">
     {urgent.length>0&&<div style={{background:'#fce8e6',border:'0.5px solid #E24B4A',borderRadius:12,padding:'12px 14px',marginBottom:14,color:'#791F1F',fontSize:12,lineHeight:1.8}}><div style={{fontWeight:600,marginBottom:4}}>Warning: {urgent.length} urgent action{urgent.length>1?'s':''}</div>{urgent.map((x,i)=><div key={i}>- {x}</div>)}</div>}
+
+    {/* Main metrics */}
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
-      <Metric label="Portfolio value" value={totalValue?fmt(totalValue):'-'} sub={totalEquity>0?`${fmt(totalEquity)} equity`:''} subGreen={totalEquity>0}/>
-      <Metric label="Monthly income" value={totalRent?fmt(totalRent):'-'} sub={net>0?`Net ${fmt(net)}/mo`:''} subGreen={net>0}/>
-      <Metric label="Gross yield" value={grossYield?`${grossYield}%`:'-'} sub={grossYield?'Across portfolio':''}/>
+      <Metric label="Portfolio value" value={totalValue?fmt(totalValue):'-'} sub={totalEquity>0?fmt(totalEquity)+' equity':''} subGreen={totalEquity>0}/>
+      <Metric label="Monthly income" value={totalRent?fmt(totalRent):'-'} sub={net>0?'Net '+fmt(net)+'/mo':''} subGreen={net>0}/>
+      <Metric label="Gross yield" value={grossYield?grossYield+'%':'-'} sub={grossYield?(Number(grossYield)>=5?'Above 5% target':'Below 5% target'):''} subGreen={Number(grossYield)>=5}/>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:14}}>
       <Metric label="Properties" value={props.length} sub={props.length===0?'Add a property':'In portfolio'}/>
-      <Metric label="Total mortgage" value={totalMortgage?fmt(totalMortgage):'-'} sub={totalValue>0&&totalMortgage>0?`${((totalMortgage/totalValue)*100).toFixed(0)}% LTV`:''}/>
-      <Metric label="Actions needed" value={urgent.length+upcoming.length} sub={urgent.length>0?`${urgent.length} urgent`:'Nothing urgent'} subRed={urgent.length>0}/>
+      <Metric label="Total mortgage" value={totalMortgage?fmt(totalMortgage):'-'} sub={totalValue>0&&totalMortgage>0?((totalMortgage/totalValue)*100).toFixed(0)+'% LTV':''}/>
+      <Metric label="Actions needed" value={urgent.length+upcoming.length} sub={urgent.length>0?urgent.length+' urgent':'Nothing urgent'} subRed={urgent.length>0}/>
     </div>
 
-    {/* Nation breakdown */}
-    {props.length>1&&<NationBreakdown props={props}/>}
+    {/* Projected value banner */}
+    {projectedValue>0&&<div style={{background:'var(--brand)',borderRadius:14,padding:'16px 20px',marginBottom:14,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,alignItems:'center'}}>
+      <div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Projected value in 10 years</div>
+        <div style={{fontFamily:'var(--display)',fontSize:26,fontWeight:300,color:'#fff'}}>{fmt(projectedValue)}</div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',marginTop:2}}>Based on regional HPI growth rates</div>
+      </div>
+      <div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Projected gain</div>
+        <div style={{fontSize:22,fontWeight:600,fontFamily:'var(--mono)',color:'#a3f0a0'}}>{projectedGain>0?'+'+fmt(projectedGain):'-'}</div>
+      </div>
+      <div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Equity today</div>
+        <div style={{fontSize:22,fontWeight:600,fontFamily:'var(--mono)',color:'#fff'}}>{totalEquity>0?fmt(totalEquity):'-'}</div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.55)',marginTop:2}}>{totalValue>0&&totalMortgage>0?((totalMortgage/totalValue)*100).toFixed(0)+'% LTV':''}</div>
+      </div>
+    </div>}
+
+    {/* Growth chart */}
+    {props.filter(p=>p.currentValue).length>0&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:500}}>Projected portfolio growth</div>
+          <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Based on UK HPI regional averages by postcode · Not financial advice</div>
+        </div>
+      </div>
+      <PortfolioChart props={props}/>
+    </div>}
+
+    {/* Per-property growth cards */}
+    {props.filter(p=>p.currentValue).length>0&&<>
+      <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:10}}>Property growth projections</div>
+      <GrowthCards props={props}/>
+    </>}
+
+    {/* Portfolio health score */}
+    {props.length>0&&<PortfolioScore props={props} checklist={checklist} urgent={urgent}/>}
 
     {showChecklist&&<FirstTimeLandlordChecklist nation={checklistNation} checkedItems={checklist} onToggle={onToggleCheck||((id)=>{})}/>}
-
     {showPricingNudge&&<PricingNudge portfolioSize={onboarding?.portfolioSize}/>}
+
     {props.length===0?<DropZone onFiles={onAddDocs}/>:<>
       <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
           <div style={{fontSize:13,fontWeight:500}}>Compliance timeline</div>
           <button onClick={sendReminders} disabled={sending} style={{background:emailSent?'var(--green-bg)':'var(--brand-light)',color:emailSent?'var(--green)':'var(--brand)',border:'none',borderRadius:7,padding:'5px 12px',fontSize:11,fontWeight:500,cursor:'pointer'}}>{emailSent?'Sent!':sending?'Sending...':'Email reminders'}</button>
         </div>
-        {upcoming.length===0&&urgent.length===0?<div style={{fontSize:12,color:'var(--text-3)',padding:'6px 0'}}>No upcoming compliance issues.</div>:upcoming.map((t,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:i<upcoming.length-1?'0.5px solid var(--border)':'none',gap:8,flexWrap:'wrap'}}><span style={{fontSize:12,color:'var(--text-2)'}}>{t.text}</span><Pill type={t.days!=null&&t.days<=30?'red':'amber'} dot>{t.days!=null&&t.days<=0?'Overdue':t.days!=null?`${t.days}d`:'Due soon'}</Pill></div>)}
+        {upcoming.length===0&&urgent.length===0?<div style={{fontSize:12,color:'var(--text-3)',padding:'6px 0'}}>No upcoming compliance issues.</div>:upcoming.map((t,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:i<upcoming.length-1?'0.5px solid var(--border)':'none',gap:8,flexWrap:'wrap'}}><span style={{fontSize:12,color:'var(--text-2)'}}>{t.text}</span><Pill type={t.days!=null&&t.days<=30?'red':'amber'} dot>{t.days!=null&&t.days<=0?'Overdue':t.days!=null?t.days+'d':'Due soon'}</Pill></div>)}
       </div>
     </>}
   </div>
@@ -441,286 +660,263 @@ function FinanceTab({portfolio,setPortfolio}){
   const[newExp,setNewExp]=useState({date:'',property:'',category:'',description:'',amount:''})
   const[taxRate,setTaxRate]=useState('40')
   const[s24Result,setS24Result]=useState(''),[s24Loading,setS24Loading]=useState(false)
+  const[view,setView]=useState('overview') // overview | expenses | yields | s24
+
   const cats=['Mortgage payment','Insurance','Gas certificate','EICR','Repairs and maintenance','Agent fees','Letting fees','Legal fees','Accountant fees','Utilities','Council tax','Ground rent','Service charge','Other']
-  const totalRent=props.reduce((s,p)=>s+(Number(p.rent)||0),0)*12
-  const totalMortgage=props.reduce((s,p)=>s+(Number(p.monthlyPayment)||0),0)*12
+
+  // Core figures
+  const monthlyRent=props.reduce((s,p)=>s+(Number(p.rent)||0),0)
+  const annualRent=monthlyRent*12
+  const monthlyMortgage=props.reduce((s,p)=>s+(Number(p.monthlyPayment)||0),0)
+  const annualMortgage=monthlyMortgage*12
+  const totalValue=props.reduce((s,p)=>s+(Number(p.currentValue)||0),0)
+  const totalMortgage=props.reduce((s,p)=>s+(Number(p.mortgage)||0),0)
+  const totalEquity=totalValue-totalMortgage
   const totalExpenses=expenses.reduce((s,e)=>s+(Number(e.amount)||0),0)
-  const netProfit=totalRent-totalMortgage-totalExpenses
-  function addExpense(){if(!newExp.amount||!newExp.category)return;const updated={...portfolio,expenses:[...expenses,{...newExp,id:Math.random().toString(36).slice(2)}]};setPortfolio(updated);setNewExp({date:'',property:'',category:'',description:'',amount:''});setShowForm(false)}
+  const monthlyExpensesAvg=totalExpenses/12
+  const monthlyNet=monthlyRent-monthlyMortgage-(monthlyExpensesAvg)
+  const annualNet=annualRent-annualMortgage-totalExpenses
+  const portfolioLTV=totalValue>0?((totalMortgage/totalValue)*100):0
+  const grossYield=totalValue>0?((annualRent/totalValue)*100):0
+  const netYield=totalValue>0?((annualNet/totalValue)*100):0
+  const returnOnEquity=totalEquity>0?((annualNet/totalEquity)*100):0
+  const interestCoverage=annualMortgage>0?(annualRent/annualMortgage):0
+  const avgLTV=props.length>0?props.filter(p=>p.currentValue&&p.mortgage).reduce((s,p)=>s+((Number(p.mortgage)/Number(p.currentValue))*100),0)/Math.max(1,props.filter(p=>p.currentValue&&p.mortgage).length):0
+
+  // Next remortgage opportunity - properties within 6 months of fixed end
+  const remortgageProps=props.filter(p=>{
+    if(!p.fixedEnd)return false
+    const parts=p.fixedEnd.split('/')
+    if(parts.length<3)return false
+    const d=new Date(parts[2],parts[1]-1,parts[0])
+    const diff=(d-new Date())/(1000*60*60*24*30)
+    return diff<=6&&diff>=-1
+  })
+
+  function addExpense(){
+    if(!newExp.amount||!newExp.category)return
+    const updated={...portfolio,expenses:[...expenses,{...newExp,id:Math.random().toString(36).slice(2)}]}
+    setPortfolio(updated)
+    setNewExp({date:'',property:'',category:'',description:'',amount:''})
+    setShowForm(false)
+  }
   function deleteExpense(id){setPortfolio({...portfolio,expenses:expenses.filter(e=>e.id!==id)})}
-  const bycat={};expenses.forEach(e=>{bycat[e.category]=(bycat[e.category]||0)+Number(e.amount||0)})
-  async function calcSection24(){setS24Loading(true);try{const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'section24_report',portfolio,extra:{taxRate}})});const data=await res.json();setS24Result(data.content||'Could not calculate.')}catch{setS24Result('Connection error.')};setS24Loading(false)}
+  const bycat={}
+  expenses.forEach(e=>{bycat[e.category]=(bycat[e.category]||0)+Number(e.amount||0)})
+
+  async function calcSection24(){
+    setS24Loading(true)
+    try{
+      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'section24_report',portfolio,extra:{taxRate}})})
+      const data=await res.json()
+      setS24Result(data.content||'Could not calculate.')
+    }catch{setS24Result('Connection error.')}
+    setS24Loading(false)
+  }
+
+  const MetricCard=({label,value,sub,subGreen,subRed,large,highlight,warn})=>(
+    <div style={{background:highlight?'var(--brand-subtle)':warn?'var(--red-bg)':'var(--surface2)',borderRadius:12,padding:'14px 16px',border:highlight?'0.5px solid rgba(27,94,59,0.2)':warn?'0.5px solid var(--red)':'none'}}>
+      <div style={{fontSize:11,color:highlight?'var(--brand)':warn?'var(--red)':'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>{label}</div>
+      <div style={{fontSize:large?26:20,fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px',color:highlight?'var(--brand)':warn?'var(--red)':'var(--text)'}}>{value}</div>
+      {sub&&<div style={{fontSize:11,marginTop:3,color:subGreen?'var(--green)':subRed?'var(--red)':'var(--text-3)'}}>{sub}</div>}
+    </div>
+  )
+
   return<div className="fade-up">
-    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
-      <Metric label="Annual rent income" value={totalRent?fmt(totalRent):'-'} sub="Across all properties" subGreen={totalRent>0}/>
-      <Metric label="Annual mortgage costs" value={totalMortgage?fmt(totalMortgage):'-'} sub="All payments x12"/>
-      <Metric label="Net profit (est.)" value={fmt(netProfit)} sub={netProfit>0?'Before tax':'Loss position'} subGreen={netProfit>0} subRed={netProfit<=0}/>
+    {/* Sub-nav */}
+    <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
+      {[['overview','Overview'],['expenses','Income & Expenses'],['yields','Yield Analysis'],['s24','Section 24']].map(([id,label])=>(
+        <button key={id} onClick={()=>setView(id)} style={{padding:'6px 14px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:view===id?'var(--brand)':'var(--border)',background:view===id?'var(--brand-light)':'var(--surface)',color:view===id?'var(--brand)':'var(--text-2)'}}>
+          {label}
+        </button>
+      ))}
     </div>
-    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}><div style={{fontSize:13,fontWeight:500}}>Income and expenses</div><button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'5px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add expense</button></div>
-      {showForm&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,marginBottom:14}}>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
-          <Input label="Date" value={newExp.date} onChange={v=>setNewExp(p=>({...p,date:v}))} placeholder="DD/MM/YYYY"/>
-          <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label><select value={newExp.property} onChange={e=>setNewExp(p=>({...p,property:e.target.value}))} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">All properties</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}</select></div>
-          <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Category</label><select value={newExp.category} onChange={e=>setNewExp(p=>({...p,category:e.target.value}))} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">Select category</option>{cats.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
-          <Input label="Amount (£)" value={newExp.amount} onChange={v=>setNewExp(p=>({...p,amount:v}))} placeholder="e.g. 120" type="number"/>
-          <div style={{gridColumn:'1/-1'}}><Input label="Description" value={newExp.description} onChange={v=>setNewExp(p=>({...p,description:v}))} placeholder="Brief description"/></div>
+
+    {view==='overview'&&<>
+      {/* Monthly headline */}
+      <div style={{background:'var(--brand)',borderRadius:14,padding:'20px 24px',marginBottom:16,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        {[
+          {label:'Monthly rent',value:monthlyRent?fmt(monthlyRent):'-',sub:annualRent?fmt(annualRent)+'/yr':''},
+          {label:'Monthly mortgage',value:monthlyMortgage?fmt(monthlyMortgage):'-',sub:annualMortgage?fmt(annualMortgage)+'/yr':''},
+          {label:'Monthly net',value:monthlyNet?fmt(monthlyNet):'-',sub:annualNet?fmt(annualNet)+'/yr':'',pos:monthlyNet>0},
+        ].map(m=>(
+          <div key={m.label}>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>{m.label}</div>
+            <div style={{fontSize:22,fontWeight:600,fontFamily:'var(--mono)',color:m.pos?'#a3f0a0':'#fff'}}>{m.value}</div>
+            {m.sub&&<div style={{fontSize:11,color:'rgba(255,255,255,0.55)',marginTop:2}}>{m.sub}</div>}
+          </div>
+        ))}
+      </div>
+
+      {/* Portfolio health metrics */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+        <MetricCard label="Portfolio value" value={totalValue?fmt(totalValue):'-'} sub={totalEquity>0?fmt(totalEquity)+' equity':''} subGreen={totalEquity>0} highlight={totalEquity>0}/>
+        <MetricCard label="Total mortgage" value={totalMortgage?fmt(totalMortgage):'-'} sub={portfolioLTV>0?portfolioLTV.toFixed(1)+'% LTV':''}/>
+        <MetricCard label="Total equity" value={totalEquity>0?fmt(totalEquity):'-'} sub={totalEquity>0?'Across '+props.length+' propert'+(props.length===1?'y':'ies'):''} subGreen={totalEquity>0} highlight={totalEquity>0}/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+        <MetricCard label="Gross yield" value={grossYield>0?grossYield.toFixed(2)+'%':'-'} sub={grossYield>0?(grossYield>=5?'Above 5% target':'Below 5% target'):''} subGreen={grossYield>=5} subRed={grossYield>0&&grossYield<5}/>
+        <MetricCard label="Net yield" value={netYield?netYield.toFixed(2)+'%':'-'} sub={netYield>0?(netYield>=3?'Healthy':'Low net yield'):''} subGreen={netYield>=3} subRed={netYield>0&&netYield<3}/>
+        <MetricCard label="Return on equity" value={returnOnEquity?returnOnEquity.toFixed(1)+'%':'-'} sub="Annual net profit / equity" highlight={returnOnEquity>8}/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+        <MetricCard label="Interest coverage" value={interestCoverage?interestCoverage.toFixed(2)+'x':'-'} sub={interestCoverage>0?(interestCoverage>=1.5?'Healthy buffer':'Tight - under 1.5x'):''} subGreen={interestCoverage>=1.5} subRed={interestCoverage>0&&interestCoverage<1.25} warn={interestCoverage>0&&interestCoverage<1.25}/>
+        <MetricCard label="Annual expenses" value={totalExpenses?fmt(totalExpenses):'-'} sub={totalExpenses>0?fmt(totalExpenses/12)+'/mo avg':''}/>
+        <MetricCard label="Portfolio LTV" value={portfolioLTV>0?portfolioLTV.toFixed(1)+'%':'-'} sub={portfolioLTV>0?(portfolioLTV<=75?'Under 75% - remortgage headroom':'Over 75% - limited headroom'):''} subGreen={portfolioLTV>0&&portfolioLTV<=75} warn={portfolioLTV>80}/>
+      </div>
+
+      {/* Per-property summary */}
+      {props.length>0&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:500,marginBottom:12}}>Property breakdown</div>
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,minWidth:640}}>
+            <thead><tr style={{borderBottom:'0.5px solid var(--border)',background:'var(--surface2)'}}>
+              {['Property','Rent/mo','Mortgage/mo','Net/mo','Value','Mortgage','Equity','LTV','Gross yield'].map(h=>(
+                <th key={h} style={{textAlign:'left',padding:'8px 10px',fontSize:10,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px',whiteSpace:'nowrap'}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {props.map((p,i)=>{
+                const rent=Number(p.rent)||0
+                const mortgage=Number(p.monthlyPayment)||0
+                const net=rent-mortgage
+                const val=Number(p.currentValue)||0
+                const mort=Number(p.mortgage)||0
+                const equity=val-mort
+                const ltv=val>0?((mort/val)*100):0
+                const gy=val>0?((rent*12/val)*100):0
+                return<tr key={p.id} style={{borderBottom:i<props.length-1?'0.5px solid var(--border)':'none'}}>
+                  <td style={{padding:'9px 10px',fontWeight:500,whiteSpace:'nowrap'}}>{p.shortName}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{rent?fmt(rent):'-'}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{mortgage?fmt(mortgage):'-'}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:net>0?'var(--green)':net<0?'var(--red)':'var(--text-3)',fontWeight:500}}>{rent&&mortgage?fmt(net):'-'}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{val?fmt(val):'-'}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{mort?fmt(mort):'-'}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:equity>0?'var(--green)':'var(--red)',fontWeight:500}}>{val&&mort?fmt(equity):'-'}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:ltv>80?'var(--red)':ltv>75?'var(--amber)':'var(--green)'}}>{ltv?ltv.toFixed(0)+'%':'-'}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:gy>=5?'var(--green)':gy>0?'var(--amber)':'var(--text-3)'}}>{gy?gy.toFixed(1)+'%':'-'}</td>
+                </tr>
+              })}
+            </tbody>
+          </table>
         </div>
-        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button><button onClick={addExpense} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Add</button></div>
       </div>}
-      {expenses.length===0?<div style={{fontSize:12,color:'var(--text-3)',padding:'10px 0',textAlign:'center'}}>No expenses logged yet.</div>:<>
-        <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
-          <thead><tr style={{borderBottom:'0.5px solid var(--border)'}}>{['Date','Property','Category','Description','Amount',''].map(h=><th key={h} style={{textAlign:'left',padding:'6px 8px',fontSize:11,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px'}}>{h}</th>)}</tr></thead>
-          <tbody>{expenses.map(e=><tr key={e.id} style={{borderBottom:'0.5px solid var(--border)'}}><td style={{padding:'8px 8px',color:'var(--text-2)'}}>{e.date||'-'}</td><td style={{padding:'8px 8px',color:'var(--text-2)'}}>{e.property||'All'}</td><td style={{padding:'8px 8px'}}>{e.category}</td><td style={{padding:'8px 8px',color:'var(--text-2)'}}>{e.description}</td><td style={{padding:'8px 8px',fontFamily:'var(--mono)',fontWeight:500}}>{fmt(Number(e.amount))}</td><td style={{padding:'8px 8px'}}><button onClick={()=>deleteExpense(e.id)} style={{color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',fontSize:14}}>x</button></td></tr>)}</tbody>
-          <tfoot><tr style={{borderTop:'0.5px solid var(--border-strong)'}}><td colSpan={4} style={{padding:'8px 8px',fontWeight:500,fontSize:12}}>Total expenses</td><td style={{padding:'8px 8px',fontFamily:'var(--mono)',fontWeight:600,color:'var(--red)'}}>{fmt(totalExpenses)}</td><td/></tr></tfoot>
-        </table>
-        {Object.keys(bycat).length>0&&<div style={{marginTop:14,display:'flex',flexWrap:'wrap',gap:8}}>{Object.entries(bycat).sort((a,b)=>b[1]-a[1]).map(([cat,total])=><span key={cat} style={{fontSize:11,padding:'4px 10px',borderRadius:20,background:'var(--surface2)',color:'var(--text-2)'}}>{cat}: {fmt(total)}</span>)}</div>}
-      </>}
-    </div>
-    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
+
+      {/* Remortgage alerts */}
+      {remortgageProps.length>0&&<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'12px 14px',marginBottom:14,fontSize:12,color:'#633806',lineHeight:1.7}}>
+        <div style={{fontWeight:600,marginBottom:4}}>Remortgage window — {remortgageProps.length} propert{remortgageProps.length===1?'y':'ies'} coming off fixed rate</div>
+        {remortgageProps.map(p=><div key={p.id}>- {p.shortName}: fixed rate ends {p.fixedEnd} — book now to avoid SVR</div>)}
+      </div>}
+    </>}
+
+    {view==='expenses'&&<>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+        <MetricCard label="Annual rent income" value={annualRent?fmt(annualRent):'-'} subGreen={annualRent>0}/>
+        <MetricCard label="Annual expenses" value={fmt(annualMortgage+totalExpenses)} sub="Mortgage + all costs"/>
+        <MetricCard label="Annual net profit" value={fmt(annualNet)} subGreen={annualNet>0} subRed={annualNet<=0} sub={annualNet>0?'Before tax':'Loss position'}/>
+      </div>
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <div style={{fontSize:13,fontWeight:500}}>Income and expenses</div>
+          <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'5px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add expense</button>
+        </div>
+        {showForm&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,marginBottom:14}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+            <Input label="Date" value={newExp.date} onChange={v=>setNewExp(p=>({...p,date:v}))} placeholder="DD/MM/YYYY"/>
+            <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label><select value={newExp.property} onChange={e=>setNewExp(p=>({...p,property:e.target.value}))} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">All</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}</select></div>
+            <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Category</label><select value={newExp.category} onChange={e=>setNewExp(p=>({...p,category:e.target.value}))} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">Select</option>{cats.map(cat=><option key={cat} value={cat}>{cat}</option>)}</select></div>
+            <Input label="Amount (£)" value={newExp.amount} onChange={v=>setNewExp(p=>({...p,amount:v}))} placeholder="e.g. 120" type="number"/>
+            <div style={{gridColumn:'1/-1'}}><Input label="Description" value={newExp.description} onChange={v=>setNewExp(p=>({...p,description:v}))} placeholder="Brief description"/></div>
+          </div>
+          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button><button onClick={addExpense} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Add</button></div>
+        </div>}
+        {expenses.length===0
+          ?<div style={{fontSize:12,color:'var(--text-3)',padding:'10px 0',textAlign:'center'}}>No expenses logged yet.</div>
+          :<><table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+            <thead><tr style={{borderBottom:'0.5px solid var(--border)'}}>{['Date','Property','Category','Description','Amount',''].map(h=><th key={h} style={{textAlign:'left',padding:'6px 8px',fontSize:11,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px'}}>{h}</th>)}</tr></thead>
+            <tbody>{expenses.map(e=><tr key={e.id} style={{borderBottom:'0.5px solid var(--border)'}}><td style={{padding:'8px'}}>{e.date||'-'}</td><td style={{padding:'8px',color:'var(--text-2)'}}>{e.property||'All'}</td><td style={{padding:'8px'}}>{e.category}</td><td style={{padding:'8px',color:'var(--text-2)'}}>{e.description}</td><td style={{padding:'8px',fontFamily:'var(--mono)',fontWeight:500}}>{fmt(Number(e.amount))}</td><td style={{padding:'8px'}}><button onClick={()=>deleteExpense(e.id)} style={{color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',fontSize:14}}>x</button></td></tr>)}</tbody>
+            <tfoot><tr style={{borderTop:'0.5px solid var(--border-strong)'}}><td colSpan={4} style={{padding:'8px',fontWeight:500,fontSize:12}}>Total</td><td style={{padding:'8px',fontFamily:'var(--mono)',fontWeight:600,color:'var(--red)'}}>{fmt(totalExpenses)}</td><td/></tr></tfoot>
+          </table>
+          {Object.keys(bycat).length>0&&<div style={{marginTop:12,display:'flex',flexWrap:'wrap',gap:6}}>{Object.entries(bycat).sort((a,b)=>b[1]-a[1]).map(([cat,total])=><span key={cat} style={{fontSize:11,padding:'3px 9px',borderRadius:20,background:'var(--surface2)',color:'var(--text-2)'}}>{cat}: {fmt(total)}</span>)}</div>}
+          </>
+        }
+      </div>
+    </>}
+
+    {view==='yields'&&<>
+      <div style={{fontSize:13,color:'var(--text-2)',marginBottom:16,lineHeight:1.7}}>Yield analysis helps you identify your best and worst performing properties. Gross yield is rent vs purchase price. Net yield accounts for all costs.</div>
+      {props.length===0
+        ?<div style={{textAlign:'center',padding:'40px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}><div style={{fontSize:13,color:'var(--text-3)'}}>Add properties with values and rent to see yield analysis.</div></div>
+        :<div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {[...props].sort((a,b)=>{
+            const ya=a.rent&&a.currentValue?Number(a.rent)*12/Number(a.currentValue):0
+            const yb=b.rent&&b.currentValue?Number(b.rent)*12/Number(b.currentValue):0
+            return yb-ya
+          }).map((p,i)=>{
+            const rent=Number(p.rent)||0
+            const val=Number(p.currentValue)||0
+            const purchase=Number(p.purchasePrice)||0
+            const mort=Number(p.mortgage)||0
+            const payment=Number(p.monthlyPayment)||0
+            const propExpenses=expenses.filter(e=>e.property===p.shortName).reduce((s,e)=>s+(Number(e.amount)||0),0)
+            const gy=val>0?(rent*12/val*100):0
+            const gyPurchase=purchase>0?(rent*12/purchase*100):0
+            const ny=val>0?((rent*12-payment*12-propExpenses)/val*100):0
+            const equity=val-mort
+            const ltv=val>0?(mort/val*100):0
+            const cashFlow=rent-payment
+            return<div key={p.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                <div style={{fontWeight:500,fontSize:14}}>{p.shortName}</div>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                  {gy>0&&<span style={{fontSize:12,padding:'3px 10px',borderRadius:20,background:gy>=5?'var(--green-bg)':gy>=3?'#fff8e1':'var(--red-bg)',color:gy>=5?'var(--green)':gy>=3?'#633806':'var(--red)',fontWeight:500}}>Gross yield: {gy.toFixed(2)}%</span>}
+                  {ny?<span style={{fontSize:12,padding:'3px 10px',borderRadius:20,background:ny>=3?'var(--green-bg)':'var(--surface2)',color:ny>=3?'var(--green)':'var(--text-3)',fontWeight:500}}>Net yield: {ny.toFixed(2)}%</span>:null}
+                </div>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+                {[
+                  {l:'Monthly rent',v:rent?fmt(rent):'-'},
+                  {l:'Monthly cash flow',v:cashFlow?fmt(cashFlow):'-',c:cashFlow>0?'var(--green)':cashFlow<0?'var(--red)':'var(--text)'},
+                  {l:'Current value',v:val?fmt(val):'-'},
+                  {l:'Equity',v:equity>0?fmt(equity):'-',c:equity>0?'var(--green)':'var(--text)'},
+                  {l:'LTV',v:ltv?ltv.toFixed(1)+'%':'-',c:ltv>80?'var(--red)':ltv>75?'var(--amber)':'var(--green)'},
+                  {l:'Gross yield on purchase',v:gyPurchase?gyPurchase.toFixed(2)+'%':'-'},
+                  {l:'Annual rent',v:rent?fmt(rent*12):'-'},
+                  {l:'Annual expenses',v:propExpenses?fmt(propExpenses):'-'},
+                ].map(m=><div key={m.l} style={{background:'var(--surface2)',borderRadius:8,padding:'10px 12px'}}>
+                  <div style={{fontSize:10,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:3}}>{m.l}</div>
+                  <div style={{fontSize:14,fontWeight:600,fontFamily:'var(--mono)',color:m.c||'var(--text)'}}>{m.v}</div>
+                </div>)}
+              </div>
+            </div>
+          })}
+        </div>
+      }
+    </>}
+
+    {view==='s24'&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-        <div><div style={{fontSize:13,fontWeight:500}}>Section 24 tax calculator</div><div style={{fontSize:12,color:'var(--text-3)',marginTop:2}}>Extra tax on personal properties vs Ltd Company</div></div>
+        <div>
+          <div style={{fontSize:13,fontWeight:500}}>Section 24 tax calculator</div>
+          <div style={{fontSize:12,color:'var(--text-3)',marginTop:2}}>Extra tax cost on personal properties vs Ltd Company</div>
+        </div>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <select value={taxRate} onChange={e=>setTaxRate(e.target.value)} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,fontFamily:'var(--font)',color:'var(--text)',outline:'none'}}><option value="20">20% basic rate</option><option value="40">40% higher rate</option><option value="45">45% additional rate</option></select>
+          <select value={taxRate} onChange={e=>setTaxRate(e.target.value)} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,fontFamily:'var(--font)',color:'var(--text)',outline:'none'}}>
+            <option value="20">20% basic rate</option>
+            <option value="40">40% higher rate</option>
+            <option value="45">45% additional rate</option>
+          </select>
           <button onClick={calcSection24} disabled={s24Loading} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'6px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>{s24Loading?'Calculating...':'Calculate'}</button>
         </div>
       </div>
-      {props.filter(p=>p.ownership==='Personal'&&p.mortgage).length===0?<div style={{fontSize:12,color:'var(--text-3)',padding:'8px 0'}}>Add personal properties with mortgage details to use this calculator.</div>:<div style={{fontSize:12,color:'var(--text-2)',marginBottom:8}}>Analysing {props.filter(p=>p.ownership==='Personal').length} personal propert{props.filter(p=>p.ownership==='Personal').length===1?'y':'ies'}</div>}
+      <div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#633806',lineHeight:1.7,marginBottom:12}}>
+        Section 24 restricts mortgage interest relief for personally-owned properties. You can only claim 20% tax credit on mortgage interest regardless of your tax rate. This calculator shows your extra annual tax vs Ltd Company ownership.
+      </div>
+      {props.filter(p=>p.ownership==='Personal'&&p.mortgage).length===0
+        ?<div style={{fontSize:12,color:'var(--text-3)',padding:'8px 0'}}>Add personal properties with mortgage details to use this calculator.</div>
+        :<div style={{fontSize:12,color:'var(--text-2)',marginBottom:8}}>{props.filter(p=>p.ownership==='Personal').length} personal propert{props.filter(p=>p.ownership==='Personal').length===1?'y':'ies'} — {props.filter(p=>p.ownership==='Ltd Company').length} Ltd Company</div>
+      }
       {s24Result&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,fontSize:12,lineHeight:1.8,whiteSpace:'pre-wrap',color:'var(--text-2)',marginTop:8}}>{s24Result}</div>}
-    </div>
-  </div>
-}
-
-
-/* ---- Property Rentability Checklist ---- */
-function RentabilityChecklist({prop}){
-  if(!prop)return null
-  const nation=prop.nation||'England'
-  const checks=[
-    {id:'gas',label:'Gas Safety Certificate',status:prop.gasDue?'done':'missing',due:prop.gasDue,hint:'Annual - Gas Safe registered engineer'},
-    {id:'eicr',label:'EICR (Electrical)',status:prop.eicrDue?'done':'missing',due:prop.eicrDue,hint:'Every 5 years'},
-    {id:'epc',label:'EPC certificate',status:prop.epcRating?(['A','B','C','D'].includes(prop.epcRating?.toUpperCase())?(prop.epcRating?.toUpperCase()==='E'?'warning':'done'):'fail'):'missing',due:prop.epcExpiry,hint:'Minimum E (C from 2028)'},
-    {id:'ins',label:'Landlord insurance',status:prop.insurer&&prop.insuranceType?.toLowerCase()!=='home'?'done':prop.insurer?'fail':'missing',hint:'Must be landlord policy not home insurance'},
-    {id:'deposit',label:'Deposit protected',status:prop.depositScheme?'done':'missing',hint:'Within 30 days of receipt'},
-    {id:'tenancy',label:nation==='Wales'?'Occupation Contract':'Tenancy agreement',status:(prop.docs||[]).includes('tenancy_agreement')?'done':'missing',hint:nation==='Scotland'?'Private Residential Tenancy':nation==='Wales'?'Written Statement required':'AST or periodic tenancy'},
-    ...(nation==='Scotland'?[{id:'scot_reg',label:'Scottish Landlord Register',status:prop.scottishReg?'done':'missing',hint:'Mandatory - register with local council'}]:[]),
-    ...(nation==='Wales'?[{id:'rent_smart',label:'Rent Smart Wales',status:prop.rentSmart?'done':'missing',hint:'Mandatory registration and licence'}]:[]),
-    {id:'smoke',label:'Smoke alarms fitted',status:prop.smokeAlarms?'done':'missing',hint:'Every floor, tested on move-in'},
-    {id:'co',label:'CO alarm fitted',status:prop.coAlarm?'done':'missing',hint:'Every room with combustion appliance'},
-  ]
-  const done=checks.filter(c=>c.status==='done').length
-  const fail=checks.filter(c=>c.status==='fail'||c.status==='missing').length
-  const pct=Math.round((done/checks.length)*100)
-  const isLettable=fail===0
-
-  return<div style={{background:isLettable?'var(--green-bg)':'#fce8e6',border:`0.5px solid ${isLettable?'var(--green)':'#E24B4A'}`,borderRadius:12,padding:14,marginBottom:12}}>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8}}>
-      <div style={{fontSize:12,fontWeight:600,color:isLettable?'var(--green)':'#791F1F'}}>
-        {isLettable?'Property is legally lettable':'Property may not be legally lettable'}
-      </div>
-      <div style={{display:'flex',alignItems:'center',gap:8}}>
-        <div style={{width:60,height:5,borderRadius:3,background:'rgba(0,0,0,0.1)',overflow:'hidden'}}>
-          <div style={{width:`${pct}%`,height:'100%',background:isLettable?'var(--green)':'#E24B4A',borderRadius:3}}/>
-        </div>
-        <span style={{fontSize:11,fontWeight:500,color:isLettable?'var(--green)':'#791F1F'}}>{pct}%</span>
-      </div>
-    </div>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3px 12px'}}>
-      {checks.map(ch=><div key={ch.id} style={{display:'flex',alignItems:'flex-start',gap:6,padding:'3px 0'}}>
-        <span style={{fontSize:13,flexShrink:0,marginTop:1,color:ch.status==='done'?'var(--green)':ch.status==='fail'?'var(--red)':'var(--amber)'}}>
-          {ch.status==='done'?'✓':ch.status==='fail'?'✗':'○'}
-        </span>
-        <div>
-          <div style={{fontSize:11,color:ch.status==='done'?'var(--text-2)':'var(--text)',fontWeight:ch.status!=='done'?500:400}}>{ch.label}</div>
-          {ch.status!=='done'&&<div style={{fontSize:10,color:'var(--text-3)'}}>{ch.hint}</div>}
-          {ch.due&&ch.status==='done'&&<div style={{fontSize:10,color:'var(--text-3)'}}>Due: {ch.due}</div>}
-        </div>
-      </div>)}
-    </div>
-  </div>
-}
-
-/* ---- Condition Report ---- */
-function ConditionReport({portfolio,setPortfolio,userId}){
-  const props=portfolio.properties||[]
-  const reports=portfolio.conditionReports||[]
-  const[showForm,setShowForm]=useState(false)
-  const[selProp,setSelProp]=useState('')
-  const[reportType,setReportType]=useState('move_in')
-  const[photos,setPhotos]=useState({})
-  const[form,setForm]=useState({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
-  const photoRef=useRef(null)
-  const[photoCategory,setPhotoCategory]=useState('general')
-
-  const photoCategories=[
-    {id:'general',label:'General condition'},
-    {id:'kitchen',label:'Kitchen'},
-    {id:'bathroom',label:'Bathroom'},
-    {id:'lounge',label:'Living room'},
-    {id:'bedroom',label:'Bedrooms'},
-    {id:'exterior',label:'Exterior'},
-    {id:'meter_elec',label:'Electric meter'},
-    {id:'meter_gas',label:'Gas meter'},
-    {id:'meter_water',label:'Water meter'},
-    {id:'keys',label:'Keys handed over'},
-    {id:'garden',label:'Garden'},
-    {id:'damage',label:'Existing damage'},
-  ]
-
-  async function handlePhotos(files){
-    const compressed=await Promise.all(Array.from(files).slice(0,4).map(async f=>{
-      const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})
-      return new Promise(res=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,1200/img.width);const cv=document.createElement('canvas');cv.width=img.width*scale;cv.height=img.height*scale;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',0.75))};img.src=b64})
-    }))
-    setPhotos(prev=>({...prev,[photoCategory]:[...(prev[photoCategory]||[]),...compressed].slice(0,8)}))
-  }
-
-  function saveReport(){
-    if(!selProp)return
-    const prop=props.find(p=>p.shortName===selProp||p.id===selProp)
-    const report={
-      id:Math.random().toString(36).slice(2),
-      propertyId:prop?.id,
-      propertyName:selProp,
-      type:reportType,
-      date:new Date().toLocaleDateString('en-GB'),
-      timestamp:new Date().toISOString(),
-      ...form,
-      photos,
-      completedBy:userId,
-    }
-    setPortfolio(prev=>({...prev,conditionReports:[...(prev.conditionReports||[]),report]}))
-    setShowForm(false)
-    setPhotos({})
-    setForm({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
-  }
-
-  const propReports=selProp?reports.filter(r=>r.propertyName===selProp):reports
-
-  return<div>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-      <div>
-        <div style={{fontSize:13,fontWeight:500}}>Condition reports</div>
-        <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Move-in and move-out inspections with photos, meter readings and key handover</div>
-      </div>
-      <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>+ New report</button>
-    </div>
-
-    {showForm&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:16}}>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:16}}>
-        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label>
-          <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
-            <option value="">Select property</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}
-          </select>
-        </div>
-        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Report type</label>
-          <select value={reportType} onChange={e=>setReportType(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
-            <option value="move_in">Move-in inspection</option>
-            <option value="move_out">Move-out inspection</option>
-            <option value="periodic">Periodic inspection</option>
-            <option value="inventory">Inventory</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Meter readings */}
-      <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:10}}>Meter readings</div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0 12px',marginBottom:16}}>
-        {[['elecMeterReading','Electric meter'],['gasMeterReading','Gas meter'],['waterMeterReading','Water meter']].map(([key,label])=>(
-          <div key={key} style={{marginBottom:14}}>
-            <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
-            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder="Reading"
-              style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/>
-          </div>
-        ))}
-      </div>
-
-      {/* Keys and deposit */}
-      <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:10}}>Keys and deposit</div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:16}}>
-        {[['keysHanded','Keys handed to/from'],['depositAmount','Deposit amount (£)'],['depositScheme','Deposit scheme'],['depositRef','Deposit reference']].map(([key,label])=>(
-          <div key={key} style={{marginBottom:14}}>
-            <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
-            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder={label}
-              style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/>
-          </div>
-        ))}
-      </div>
-
-      {/* Photos by category */}
-      <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:10}}>Photos</div>
-      <input ref={photoRef} type="file" accept="image/*" multiple capture="environment" style={{display:'none'}} onChange={e=>handlePhotos(e.target.files)}/>
-      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
-        {photoCategories.map(cat=><button key={cat.id} onClick={()=>{setPhotoCategory(cat.id);setTimeout(()=>photoRef.current?.click(),100)}}
-          style={{padding:'5px 10px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--border)',background:(photos[cat.id]||[]).length>0?'var(--brand-light)':'var(--surface)',color:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--text-2)',position:'relative'}}>
-          {cat.label}
-          {(photos[cat.id]||[]).length>0&&<span style={{position:'absolute',top:-4,right:-4,width:14,height:14,borderRadius:'50%',background:'var(--brand)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{(photos[cat.id]||[]).length}</span>}
-        </button>)}
-      </div>
-      {/* Show photos */}
-      <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:14}}>
-        {Object.entries(photos).flatMap(([cat,imgs])=>imgs.map((img,i)=>(
-          <div key={`${cat}-${i}`} style={{position:'relative',width:56,height:56,borderRadius:7,overflow:'hidden',border:'0.5px solid var(--border)'}}>
-            <img src={img} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-            <button onClick={()=>setPhotos(prev=>({...prev,[cat]:prev[cat].filter((_,j)=>j!==i)}))}
-              style={{position:'absolute',top:2,right:2,width:14,height:14,borderRadius:'50%',background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
-          </div>
-        )))}
-      </div>
-
-      <div style={{marginBottom:14}}>
-        <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Additional notes</label>
-        <textarea value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Any additional observations or notes..." rows={3}
-          style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',resize:'vertical',boxSizing:'border-box'}}/>
-      </div>
-
-      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-        <button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
-        <button onClick={saveReport} disabled={!selProp} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:selProp?'pointer':'not-allowed',opacity:selProp?1:0.5}}>Save report</button>
-      </div>
-    </div>}
-
-    {/* Report list */}
-    {reports.length>0&&<>
-      {props.length>1&&<div style={{marginBottom:10}}>
-        <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 12px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',outline:'none'}}>
-          <option value="">All properties</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}
-        </select>
-      </div>}
-      {(selProp?reports.filter(r=>r.propertyName===selProp):reports).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(r=>{
-        const typeLabel={move_in:'Move-in',move_out:'Move-out',periodic:'Periodic',inventory:'Inventory'}[r.type]||r.type
-        const typeColor={move_in:'brand',move_out:'amber',periodic:'grey',inventory:'blue'}[r.type]||'grey'
-        const totalPhotos=Object.values(r.photos||{}).reduce((s,p)=>s+p.length,0)
-        return<div key={r.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px',marginBottom:8}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,marginBottom:8,flexWrap:'wrap'}}>
-            <div>
-              <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:3}}>
-                <span style={{fontSize:13,fontWeight:500}}>{r.propertyName}</span>
-                <Pill type={typeColor}>{typeLabel}</Pill>
-                <span style={{fontSize:11,color:'var(--text-3)'}}>{r.date}</span>
-              </div>
-              <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.7}}>
-                {r.elecMeterReading&&<span style={{marginRight:12}}>Electric: {r.elecMeterReading}</span>}
-                {r.gasMeterReading&&<span style={{marginRight:12}}>Gas: {r.gasMeterReading}</span>}
-                {r.waterMeterReading&&<span style={{marginRight:12}}>Water: {r.waterMeterReading}</span>}
-                {r.keysHanded&&<span style={{marginRight:12}}>Keys: {r.keysHanded}</span>}
-                {r.depositRef&&<span style={{marginRight:12}}>Deposit ref: {r.depositRef}</span>}
-                {totalPhotos>0&&<span>{totalPhotos} photo{totalPhotos!==1?'s':''}</span>}
-              </div>
-            </div>
-          </div>
-          {totalPhotos>0&&<div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-            {Object.entries(r.photos||{}).flatMap(([cat,imgs])=>imgs.slice(0,2).map((img,i)=>(
-              <img key={`${cat}-${i}`} src={img} alt="" style={{width:44,height:44,borderRadius:6,objectFit:'cover',border:'0.5px solid var(--border)',cursor:'pointer'}} onClick={()=>window.open(img)}/>
-            ))).slice(0,8)}
-            {totalPhotos>8&&<div style={{width:44,height:44,borderRadius:6,background:'var(--surface2)',border:'0.5px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'var(--text-3)'}}>+{totalPhotos-8}</div>}
-          </div>}
-          {r.notes&&<div style={{fontSize:11,color:'var(--text-2)',marginTop:8,paddingTop:8,borderTop:'0.5px solid var(--border)',lineHeight:1.6}}>{r.notes}</div>}
-        </div>
-      })}
-    </>}
-    {reports.length===0&&!showForm&&<div style={{textAlign:'center',padding:'32px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}>
-      <div style={{fontSize:13,color:'var(--text-3)'}}>No condition reports yet. Create a move-in report when a new tenant arrives.</div>
     </div>}
   </div>
 }
