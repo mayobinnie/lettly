@@ -1727,9 +1727,15 @@ export default function Dashboard(){
     clearTimeout(saveRef.current)
     saveRef.current=setTimeout(async()=>{
       try{
-        const ok = await savePortfolio(user.id,portfolio)
-        setSaveStatus(ok?'saved':'error')
-        if(!ok) console.error('Portfolio save returned false')
+        // Route through /api/save so service key is used server-side (bypasses RLS reliably)
+        const res = await fetch('/api/save',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({userId:user.id,data:portfolio})
+        })
+        const json = await res.json().catch(()=>({}))
+        setSaveStatus(res.ok?'saved':'error')
+        if(!res.ok) console.error('Portfolio save failed:', res.status, json)
       }catch(e){
         setSaveStatus('error')
         console.error('Portfolio save threw:', e.message)
