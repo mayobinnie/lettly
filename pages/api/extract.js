@@ -82,11 +82,24 @@ export default async function handler(req, res) {
       ? [{ type:'document', source:{ type:'base64', media_type:'application/pdf', data } }, { type:'text', text:PROMPT }]
       : [{ type:'image',    source:{ type:'base64', media_type:safeMediaType, data } }, { type:'text', text:PROMPT }]
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 2048,
-      messages: [{ role:'user', content }],
-    })
+    // Retry up to 3 times on overload (529) or rate limit (529/529)
+    let response
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        response = await client.messages.create({
+          model: 'claude-opus-4-6',
+          max_tokens: 2048,
+          messages: [{ role:'user', content }],
+        })
+        break
+      } catch (retryErr) {
+        if ((retryErr?.status === 529 || retryErr?.status === 529) && attempt < 2) {
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
+          continue
+        }
+        throw retryErr
+      }
+    }
 
     const raw = response.content[0].text.replace(/```json|```/g, '').trim()
     let extracted
@@ -99,10 +112,12 @@ export default async function handler(req, res) {
     console.error('Extract error:', err?.status, msg)
     // Give user a helpful message
     let userMsg = 'Could not read this document.'
-    if (msg.includes('Could not process') || msg.includes('invalid') || msg.includes('corrupt')) {
-      userMsg = 'This file appears to be corrupted or is not a valid PDF. Try re-saving it as a PDF and uploading again.'
+    if (msg.includes('Could not process') || msg.includes('invalid') || msg.includes('corrupt') || msg.includes('not valid')) {
+      userMsg = 'This file could not be read. Try re-saving it as a PDF and uploading again.'
     } else if (msg.includes('too large') || msg.includes('size')) {
       userMsg = 'This file is too large. Try compressing the PDF and uploading again.'
+    } else if (msg.includes('Overloaded') || msg.includes('overloaded') || msg.includes('529')) {
+      userMsg = 'AI service is busy right now. Please try again in a moment.'
     } else if (msg.includes('rate') || msg.includes('limit')) {
       userMsg = 'Too many requests. Please wait a moment and try again.'
     } else if (msg) {
