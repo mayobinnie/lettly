@@ -292,7 +292,7 @@ function FirstTimeLandlordChecklist({nation,checkedItems,onToggle}){
     {/* Checklist items */}
     {open&&checklist[open]&&<div>
       {checklist[open].items.map((item,i)=><div key={item.id} style={{display:'flex',gap:10,alignItems:'flex-start',padding:'9px 0',borderBottom:i<checklist[open].items.length-1?'0.5px solid var(--border)':'none',cursor:'pointer'}} onClick={()=>onToggle(item.id)}>
-        <div style={{width:18,height:18,borderRadius:5,border:border:'1.5px dashed '+(checkedItems[item.id]?'var(--brand)':'var(--border-strong)'),background:checkedItems[item.id]?'var(--brand)':'transparent',flexShrink:0,marginTop:1,display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s'}}>
+        <div style={{width:18,height:18,borderRadius:5,border:'1.5px solid '+(checkedItems[item.id]?'var(--brand)':'var(--border-strong)'),background:checkedItems[item.id]?'var(--brand)':'transparent',flexShrink:0,marginTop:1,display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s'}}>
           {checkedItems[item.id]&&<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}
         </div>
         <div style={{flex:1}}>
