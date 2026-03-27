@@ -49,7 +49,7 @@ export default function BlogPost({ post }) {
           </Link>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
             <Link href="/blog" style={{ fontSize: 13, color: 'var(--text-2)', textDecoration: 'none' }}>All guides</Link>
-            <a href="/sign-up" style={{ background: 'var(--brand)', color: '#fff', fontSize: 13, fontWeight: 500, padding: '7px 18px', borderRadius: 8, textDecoration: 'none' }}>Start free</a>
+            <a href="https://accounts.lettly.co/sign-up" style={{ background: 'var(--brand)', color: '#fff', fontSize: 13, fontWeight: 500, padding: '7px 18px', borderRadius: 8, textDecoration: 'none' }}>Start free</a>
           </div>
         </nav>
 
@@ -91,7 +91,7 @@ export default function BlogPost({ post }) {
           <div style={{ background: 'var(--brand)', borderRadius: 16, padding: 28, marginBottom: 56, textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 300, color: '#fff', marginBottom: 8 }}>{post.cta}</div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: 20, lineHeight: 1.6 }}>14-day free trial - no credit card required. All features included from day one.</p>
-            <a href="/sign-up" style={{ display: 'inline-block', background: '#fff', color: 'var(--brand)', fontSize: 14, fontWeight: 600, padding: '11px 28px', borderRadius: 10, textDecoration: 'none' }}>Get started free</a>
+            <a href="https://accounts.lettly.co/sign-up" style={{ display: 'inline-block', background: '#fff', color: 'var(--brand)', fontSize: 14, fontWeight: 600, padding: '11px 28px', borderRadius: 10, textDecoration: 'none' }}>Get started free</a>
           </div>
 
           {/* Disclaimer */}
