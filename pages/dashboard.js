@@ -1672,7 +1672,40 @@ export default function Dashboard(){
 
   const saveRef=useRef(null)
   const dropRef=useRef(null) // prevents duplicate drop processing
-  useEffect(()=>{if(!user?.id||!loaded)return;clearTimeout(saveRef.current);saveRef.current=setTimeout(()=>savePortfolio(user.id,portfolio),1500);return()=>clearTimeout(saveRef.current)},[portfolio,user?.id,loaded])
+  const[saveStatus,setSaveStatus]=useState('saved') // saved | saving | error
+  const portfolioRef=useRef(portfolio)
+  portfolioRef.current=portfolio
+
+  useEffect(()=>{
+    if(!user?.id||!loaded)return
+    setSaveStatus('saving')
+    clearTimeout(saveRef.current)
+    saveRef.current=setTimeout(async()=>{
+      try{
+        await savePortfolio(user.id,portfolio)
+        setSaveStatus('saved')
+      }catch{
+        setSaveStatus('error')
+      }
+    },800)
+    return()=>clearTimeout(saveRef.current)
+  },[portfolio,user?.id,loaded])
+
+  // Force save before page unload (logout, tab close, refresh)
+  useEffect(()=>{
+    if(!user?.id)return
+    const handleUnload = ()=>{
+      if(portfolioRef.current&&user?.id){
+        // Use sendBeacon for reliable save on unload
+        const data=JSON.stringify({userId:user.id,data:portfolioRef.current})
+        navigator.sendBeacon&&navigator.sendBeacon('/api/save',data)
+        // Also try synchronous fallback
+        savePortfolio(user.id,portfolioRef.current)
+      }
+    }
+    window.addEventListener('beforeunload',handleUnload)
+    return()=>window.removeEventListener('beforeunload',handleUnload)
+  },[user?.id])
 
   function completeWizard(answers){
     setPortfolio(prev=>({...prev,onboarding:answers}))
@@ -1748,7 +1781,13 @@ export default function Dashboard(){
       <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:30,height:30,background:'var(--brand)',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:14,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:17,fontWeight:400}}>Lettly</span></div>
         <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}>{t.label}{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
-        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button><UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/></div>
+        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+          {saveStatus==='saving'&&<span style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
+          {saveStatus==='saved'&&loaded&&<span style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
+          {saveStatus==='error'&&<span style={{fontSize:11,color:'var(--red)'}}>Save failed</span>}
+          <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button>
+          <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/>
+        </div>
       </nav>
       {showDrop&&<div className="fade-in" style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 16px'}}><div style={{maxWidth:700,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact/></div></div>}
       {queue.length>0&&<div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'10px 16px'}}>

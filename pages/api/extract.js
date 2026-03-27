@@ -3,14 +3,23 @@ import { getAuth } from '@clerk/nextjs/server'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const PROMPT = `You are a UK property management document reader. Extract all relevant information from this document and return ONLY a valid JSON object - no markdown, no explanation, no code fences.
+const PROMPT = `You are a UK property management document reader. Extract information about the RENTAL PROPERTY from this document and return ONLY a valid JSON object.
+
+CRITICAL RULES:
+- The property address is the ADDRESS BEING LET OR MANAGED - not the landlord's address, not the solicitor's address, not an agent's office address
+- For completion statements, mortgage offers, tenancy agreements: the property is the one being purchased/mortgaged/let
+- For gas certs, EICRs, EPCs: the property is where the work was carried out
+- For insurance documents: the property is the insured premises (not the policyholder's correspondence address)
+- If you see multiple addresses, pick the one that is clearly the rental property
+- shortName should be concise: "11 Northfield Avenue" not "11 Northfield Avenue, Hessle, East Yorkshire"
+- If you cannot confidently identify the rental property address, omit the property field entirely
 
 Use this exact structure (omit any field you cannot find - do not guess):
 {
   "documentType": "gas_certificate|eicr|insurance|epc_certificate|tenancy_agreement|mortgage_offer|completion_statement|other",
   "property": {
-    "address": "full property address as written",
-    "shortName": "short display name e.g. 7 Tower Hill Mews"
+    "address": "full property address as written in the document",
+    "shortName": "short display name e.g. 11 Northfield Avenue"
   },
   "compliance": {
     "gas": { "date": "DD/MM/YYYY", "due": "DD/MM/YYYY", "engineer": "name", "gasSafeNo": "number" },
@@ -27,7 +36,7 @@ Use this exact structure (omit any field you cannot find - do not guess):
     "purchasePrice": 0, "mortgage": 0, "lender": "name",
     "rate": 0, "fixedEnd": "DD/MM/YYYY", "completionDate": "DD/MM/YYYY", "monthlyPayment": 0
   },
-  "summary": "One plain-English sentence describing what this document is and the key detail found."
+  "summary": "One sentence: what this document is and the key detail (property address, dates, amounts)."
 }
 
 Return ONLY the JSON object. Nothing else.`
