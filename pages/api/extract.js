@@ -90,7 +90,7 @@ Use this exact structure (omit any field you cannot find — but search ALL page
   "summary": "2-3 sentences: what this document is, the property it relates to, and the most critical compliance/financial details found."
 }
 
-Return ONLY the JSON object. Nothing else.\`
+Return ONLY the JSON object. Nothing else.`
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
