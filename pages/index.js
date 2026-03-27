@@ -187,7 +187,7 @@ export default function Landing() {
           </h1>
 
           <p className="section-sub fade-up-3" style={{ maxWidth:580, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
-            Track tenants, rent, and compliance in one simple platform built for UK landlords. Stay fully legal — without paying agent fees.
+            Track tenants, rent, and compliance in one simple platform built for UK landlords. Stay fully legal, without paying agent fees.
           </p>
 
           <div className="cta-row fade-up-3" style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap', marginBottom:22 }}>
@@ -219,7 +219,7 @@ export default function Landing() {
           <div className="grid-4" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:24, maxWidth:900, margin:'0 auto', textAlign:'center' }}>
             {[
               { num:'£2,000', label:'Average annual saving', sub:'vs. a high-street letting agent' },
-              { num:'10–20%', label:'Typical agent fee', sub:'of rent — every single month' },
+              { num:'10–20%', label:'Typical agent fee', sub:'of rent, every single month' },
               { num:'1 place', label:'Everything managed', sub:'documents, rent, compliance' },
               { num:'2 min', label:'To set up', sub:'drop your documents and go' },
             ].map(s => (
@@ -246,7 +246,7 @@ export default function Landing() {
               <div style={{ fontSize:13, fontWeight:600, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:14 }}>Without Lettly</div>
               {[
                 { icon:'💸', title:'Paying 10–20% in agent fees', body:"On a £1,200/month property, that's up to £2,880/year straight out of your pocket." },
-                { icon:'📁', title:'Chasing paperwork', body:'Gas certs, EICRs, EPCs, insurance renewals — all in different places, easy to miss.' },
+                { icon:'📁', title:'Chasing paperwork', body:'Gas certs, EICRs, EPCs, insurance renewals. All in different places, easy to miss.' },
                 { icon:'😰', title:'Risk of missing legal requirements', body:'UK landlord law is changing fast. One missed requirement can mean fines or losing your case.' },
                 { icon:'📱', title:'Managing tenants manually', body:'WhatsApp chains, sticky notes, and spreadsheets that only you understand.' },
               ].map(p => (
@@ -265,10 +265,10 @@ export default function Landing() {
             <div>
               <div style={{ fontSize:13, fontWeight:600, color:'var(--brand)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:14 }}>With Lettly</div>
               {[
-                { icon:'✅', title:'Keep your rent — all of it', body:'Manage yourself and save £1,000–£3,000/year. Lettly costs just £4 per property per month.' },
+                { icon:'✅', title:'Keep your rent, all of it', body:'Manage yourself and save £1,000 to £3,000 per year. Lettly starts at just £8/month for 1-2 properties.' },
                 { icon:'📲', title:'Drop a document, done', body:'Upload your gas cert, EICR or tenancy agreement. Lettly reads it and tracks every date automatically.' },
                 { icon:'🛡️', title:'Stay compliant automatically', body:'Reminders before every deadline. Nation-specific legislation. Never miss a legal requirement again.' },
-                { icon:'📊', title:'One place for everything', body:'Tenants, rent, maintenance, documents — all in your dashboard. No spreadsheets needed.' },
+                { icon:'📊', title:'One place for everything', body:'Tenants, rent, maintenance, documents. All in your dashboard. No spreadsheets needed.' },
               ].map(s => (
                 <div key={s.title} className="pain-card" style={{ marginBottom:10, borderLeft:'3px solid var(--brand-mid)' }}>
                   <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
@@ -301,7 +301,7 @@ export default function Landing() {
             </div>
             <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20 }}>
               {[
-                { num:'1', icon:'📂', title:'Drop your documents', body:'Drag in any PDF or photo — gas certs, EICRs, insurance, tenancy agreements, mortgage offers. Works on phone or computer.' },
+                { num:'1', icon:'📂', title:'Drop your documents', body:'Drag in any PDF or photo: gas certs, EICRs, insurance, tenancy agreements, mortgage offers. Works on your phone or computer.' },
                 { num:'2', icon:'🤖', title:'Lettly reads them instantly', body:'Our AI extracts every date, name and figure automatically. Your property portfolio appears in seconds. No typing required.' },
                 { num:'3', icon:'✅', title:'Stay compliant and in control', body:"Deadlines tracked. Reminders sent. UK legislation explained in plain English. You're always one step ahead." },
               ].map(s => (
@@ -369,7 +369,7 @@ export default function Landing() {
               {[
                 { stat:'£2,000+', label:'Saved per year', body:'Compared to a typical high-street letting agent charging 10–15% of rent.' },
                 { stat:'100%', label:'Control of your property', body:'No middleman. You talk directly to your tenant and make all the decisions.' },
-                { stat:'5 min', label:'To feel the benefit', body:'Upload your first document and your compliance dashboard populates instantly.' },
+                { stat:'2 min', label:'To feel the benefit', body:'Upload your first document and your compliance dashboard populates instantly.' },
               ].map(s => (
                 <div key={s.stat} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'36px 28px', textAlign:'center' }}>
                   <div className="stat-big" style={{ marginBottom:10 }}>{s.stat}</div>
@@ -389,9 +389,9 @@ export default function Landing() {
 
           <div className="grid-2" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:40 }}>
             {[
-              { icon:'🇬🇧', title:'Built in the UK for UK landlords', body:"Every feature is designed around the realities of the UK private rented sector — not a generic international tool adapted for Britain." },
-              { icon:'⚖️', title:'Based on real compliance requirements', body:"Gas safety, EICRs, EPCs, deposit schemes, the Renters' Rights Bill — all the rules that actually affect you, tracked automatically." },
-              { icon:'🌱', title:'Early access — help shape the product', body:"You're joining at the beginning. Your feedback directly shapes what we build next. We respond to every message personally." },
+              { icon:'🇬🇧', title:'Built in the UK for UK landlords', body:"Every feature is designed around the realities of the UK private rented sector, not a generic international tool." },
+              { icon:'⚖️', title:'Based on real compliance requirements', body:"Gas safety, EICRs, EPCs, deposit schemes, the Renters' Rights Bill. All the rules that actually affect you, tracked automatically." },
+              { icon:'🌱', title:'Early access: help shape the product', body:"You're joining at the beginning. Your feedback directly shapes what we build next. We respond to every message personally." },
               { icon:'🔒', title:'Your data is secure and private', body:"Bank-grade authentication. AES-256 encryption. Stored in the EU. We never sell your data to third parties. Ever." },
             ].map(t => (
               <div key={t.title} className="pain-card">
@@ -410,9 +410,9 @@ export default function Landing() {
           <div style={{ background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.15)', borderRadius:20, padding:'36px 32px', textAlign:'center' }}>
             <div style={{ fontSize:32, marginBottom:14 }}>💬</div>
             <div style={{ fontFamily:'var(--display)', fontSize:'clamp(18px,2.5vw,24px)', fontWeight:300, fontStyle:'italic', color:'var(--brand)', marginBottom:12, lineHeight:1.5 }}>
-              "I was paying £180 a month to my letting agent.<br/>Lettly does the same job for £4."
+              "I was paying £180 a month to my letting agent.<br/>Lettly does the same job for £8."
             </div>
-            <div style={{ fontSize:14, color:'var(--text-3)' }}>Early access landlord · 2 properties · Yorkshire</div>
+            <div style={{ fontSize:14, color:'var(--text-3)' }}>Early access landlord · 1-2 properties · Yorkshire</div>
           </div>
         </section>
 
@@ -422,10 +422,10 @@ export default function Landing() {
             <div style={{ textAlign:'center', marginBottom:48 }}>
               <h2 className="section-title" style={{ marginBottom:14 }}>Simple, transparent pricing</h2>
               <p className="section-sub" style={{ maxWidth:480, margin:'0 auto 28px' }}>
-                £4 per property per month. All features included. 14-day free trial. No contract.
+                Starts at £8/month for 1-2 properties. All features included. 14-day free trial. No contract.
               </p>
               <div style={{ display:'inline-block', background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.2)', borderRadius:12, padding:'12px 28px', fontSize:15, fontWeight:600, color:'var(--brand)' }}>
-                Compare to agent fees of £100–£200/month per property
+                Compare to agent fees of £100 to £200/month per property
               </div>
             </div>
 
