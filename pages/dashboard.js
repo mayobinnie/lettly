@@ -780,6 +780,51 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck}){
   </div>
 }
 
+
+/* ---- Rentability Checklist ---- */
+function RentabilityChecklist({prop}){
+  if(!prop) return null
+  const nation = prop.nation||'England'
+  const checks = [
+    {id:'gas',    label:'Gas Safety Certificate', status:prop.gasDue?'done':'missing',   hint:'Annual - Gas Safe registered engineer'},
+    {id:'eicr',   label:'EICR (Electrical)',       status:prop.eicrDue?'done':'missing',  hint:'Every 5 years'},
+    {id:'epc',    label:'EPC certificate',          status:prop.epcRating?(['A','B','C','D','E'].includes(prop.epcRating?.toUpperCase())?'done':'fail'):'missing', hint:'Minimum E (C from 2028)'},
+    {id:'ins',    label:'Landlord insurance',       status:prop.insurer&&prop.insuranceType?.toLowerCase()!=='home'?'done':prop.insurer?'fail':'missing', hint:'Must be landlord policy not home insurance'},
+    {id:'deposit',label:'Deposit scheme',           status:prop.depositScheme?'done':'missing', hint:'Within 30 days of receipt'},
+    ...(nation==='Scotland'?[{id:'scot_reg',label:'Scottish Landlord Register',status:prop.scottishReg?'done':'missing',hint:'Mandatory - register with local council'}]:[]),
+    ...(nation==='Wales'?[{id:'rent_smart',label:'Rent Smart Wales',status:prop.rentSmart?'done':'missing',hint:'Mandatory registration and licence'}]:[]),
+  ]
+  const done = checks.filter(ch=>ch.status==='done').length
+  const total = checks.length
+  const pct = Math.round(done/total*100)
+  const isLettable = checks.every(ch=>ch.status==='done')
+
+  return <div style={{background:isLettable?'var(--green-bg)':'#fce8e6',border:`0.5px solid ${isLettable?'var(--green)':'#E24B4A'}`,borderRadius:12,padding:14,marginBottom:12}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,gap:8}}>
+      <div style={{fontSize:12,fontWeight:600,color:isLettable?'var(--green)':'#791F1F'}}>
+        {isLettable?'Legally lettable':'May not be legally lettable'}
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <div style={{width:60,height:5,borderRadius:3,background:'rgba(0,0,0,0.1)',overflow:'hidden'}}>
+          <div style={{width:pct+'%',height:'100%',background:isLettable?'var(--green)':'#E24B4A',borderRadius:3}}/>
+        </div>
+        <span style={{fontSize:11,fontWeight:500,color:isLettable?'var(--green)':'#791F1F'}}>{pct}%</span>
+      </div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 12px'}}>
+      {checks.map(ch=><div key={ch.id} style={{display:'flex',alignItems:'flex-start',gap:5,padding:'2px 0'}}>
+        <span style={{fontSize:12,flexShrink:0,color:ch.status==='done'?'var(--green)':ch.status==='fail'?'var(--red)':'var(--amber)'}}>
+          {ch.status==='done'?'✓':ch.status==='fail'?'✗':'○'}
+        </span>
+        <div style={{fontSize:11,color:ch.status==='done'?'var(--text-2)':'var(--text)',fontWeight:ch.status!=='done'?500:400,lineHeight:1.4}}>
+          {ch.label}
+          {ch.status!=='done'&&<div style={{fontSize:10,color:'var(--text-3)',fontWeight:400}}>{ch.hint}</div>}
+        </div>
+      </div>)}
+    </div>
+  </div>
+}
+
 /* ---- Properties ---- */
 function Properties({portfolio,onAddDocs,onEdit,onAdd}){
   const props=portfolio.properties||[]
@@ -1463,6 +1508,127 @@ function RentTracker({portfolio, setPortfolio}){
       <div style={{display:'flex',gap:12,marginTop:10,flexWrap:'wrap'}}>
         {Object.entries(statusMeta).map(([k,v]) => <span key={k} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'var(--text-2)'}}><span style={{width:8,height:8,borderRadius:'50%',background:v.color,opacity:k==='unpaid'?0.3:1,flexShrink:0}}/>{v.label}</span>)}
       </div>
+    </div>}
+  </div>
+}
+
+
+/* ---- Condition Report ---- */
+function ConditionReport({portfolio,setPortfolio,userId}){
+  const props=portfolio.properties||[]
+  const reports=portfolio.conditionReports||[]
+  const[showForm,setShowForm]=useState(false)
+  const[selProp,setSelProp]=useState('')
+  const[reportType,setReportType]=useState('move_in')
+  const[photos,setPhotos]=useState({})
+  const[form,setForm]=useState({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
+  const photoRef=useRef(null)
+  const[photoCategory,setPhotoCategory]=useState('general')
+
+  const photoCategories=[
+    {id:'general',label:'General'},{id:'kitchen',label:'Kitchen'},{id:'bathroom',label:'Bathroom'},
+    {id:'lounge',label:'Lounge'},{id:'bedroom',label:'Bedrooms'},{id:'exterior',label:'Exterior'},
+    {id:'meter_elec',label:'Elec meter'},{id:'meter_gas',label:'Gas meter'},
+    {id:'keys',label:'Keys'},{id:'damage',label:'Damage'},
+  ]
+
+  async function handlePhotos(files){
+    const compressed=await Promise.all(Array.from(files).slice(0,4).map(async f=>{
+      const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})
+      return new Promise(res=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,1200/img.width);const cv=document.createElement('canvas');cv.width=img.width*scale;cv.height=img.height*scale;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',0.75))};img.src=b64})
+    }))
+    setPhotos(prev=>({...prev,[photoCategory]:[...(prev[photoCategory]||[]),...compressed].slice(0,8)}))
+  }
+
+  function saveReport(){
+    if(!selProp) return
+    const prop=props.find(p=>p.shortName===selProp||p.id===selProp)
+    const report={id:Math.random().toString(36).slice(2),propertyId:prop?.id,propertyName:selProp,type:reportType,date:new Date().toLocaleDateString('en-GB'),timestamp:new Date().toISOString(),...form,photos,completedBy:userId}
+    setPortfolio(prev=>({...prev,conditionReports:[...(prev.conditionReports||[]),report]}))
+    setShowForm(false);setPhotos({});setForm({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
+  }
+
+  return<div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <div><div style={{fontSize:13,fontWeight:500}}>Condition reports</div><div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Move-in and move-out inspections with photos, meter readings and key handover</div></div>
+      <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>+ New report</button>
+    </div>
+
+    {showForm&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:12}}>
+        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label>
+          <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
+            <option value="">Select property</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}
+          </select></div>
+        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Type</label>
+          <select value={reportType} onChange={e=>setReportType(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
+            <option value="move_in">Move-in</option><option value="move_out">Move-out</option><option value="periodic">Periodic</option><option value="inventory">Inventory</option>
+          </select></div>
+      </div>
+      <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Meter readings</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0 12px',marginBottom:14}}>
+        {[['elecMeterReading','Electric'],['gasMeterReading','Gas'],['waterMeterReading','Water']].map(([key,label])=>(
+          <div key={key} style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder="Reading" style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/></div>
+        ))}
+      </div>
+      <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Keys and deposit</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:14}}>
+        {[['keysHanded','Keys handed to/from'],['depositAmount','Deposit amount (£)'],['depositScheme','Deposit scheme'],['depositRef','Deposit reference']].map(([key,label])=>(
+          <div key={key} style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder={label} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/></div>
+        ))}
+      </div>
+      <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Photos</div>
+      <input ref={photoRef} type="file" accept="image/*" multiple capture="environment" style={{display:'none'}} onChange={e=>handlePhotos(e.target.files)}/>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
+        {photoCategories.map(cat=><button key={cat.id} onClick={()=>{setPhotoCategory(cat.id);setTimeout(()=>photoRef.current?.click(),100)}}
+          style={{padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--border)',background:(photos[cat.id]||[]).length>0?'var(--brand-light)':'var(--surface)',color:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--text-2)',position:'relative'}}>
+          {cat.label}{(photos[cat.id]||[]).length>0&&<span style={{position:'absolute',top:-4,right:-4,width:14,height:14,borderRadius:'50%',background:'var(--brand)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{(photos[cat.id]||[]).length}</span>}
+        </button>)}
+      </div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:14}}>
+        {Object.entries(photos).flatMap(([cat,imgs])=>imgs.map((img,i)=>(
+          <div key={cat+i} style={{position:'relative',width:56,height:56,borderRadius:7,overflow:'hidden',border:'0.5px solid var(--border)'}}>
+            <img src={img} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+            <button onClick={()=>setPhotos(prev=>({...prev,[cat]:prev[cat].filter((_,j)=>j!==i)}))} style={{position:'absolute',top:2,right:2,width:14,height:14,borderRadius:'50%',background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
+          </div>
+        )))}
+      </div>
+      <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Notes</label>
+        <textarea value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Any additional observations..." rows={3} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',resize:'vertical',boxSizing:'border-box'}}/>
+      </div>
+      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+        <button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
+        <button onClick={saveReport} disabled={!selProp} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:selProp?'pointer':'not-allowed',opacity:selProp?1:0.5}}>Save report</button>
+      </div>
+    </div>}
+
+    {reports.length===0&&!showForm&&<div style={{textAlign:'center',padding:'32px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}><div style={{fontSize:13,color:'var(--text-3)'}}>No condition reports yet. Create a move-in report when a tenant arrives.</div></div>}
+    {reports.length>0&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
+      {[...reports].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(r=>{
+        const typeLabel={move_in:'Move-in',move_out:'Move-out',periodic:'Periodic',inventory:'Inventory'}[r.type]||r.type
+        const typeColor={move_in:'brand',move_out:'amber',periodic:'grey',inventory:'blue'}[r.type]||'grey'
+        const totalPhotos=Object.values(r.photos||{}).reduce((s,p)=>s+p.length,0)
+        return<div key={r.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,marginBottom:6,flexWrap:'wrap'}}>
+            <div><div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:2}}><span style={{fontSize:13,fontWeight:500}}>{r.propertyName}</span><Pill type={typeColor}>{typeLabel}</Pill><span style={{fontSize:11,color:'var(--text-3)'}}>{r.date}</span></div>
+              <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.7}}>
+                {r.elecMeterReading&&<span style={{marginRight:10}}>Elec: {r.elecMeterReading}</span>}
+                {r.gasMeterReading&&<span style={{marginRight:10}}>Gas: {r.gasMeterReading}</span>}
+                {r.keysHanded&&<span style={{marginRight:10}}>Keys: {r.keysHanded}</span>}
+                {totalPhotos>0&&<span>{totalPhotos} photo{totalPhotos!==1?'s':''}</span>}
+              </div>
+            </div>
+          </div>
+          {totalPhotos>0&&<div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+            {Object.entries(r.photos||{}).flatMap(([cat,imgs])=>imgs.slice(0,2).map((img,i)=>(
+              <img key={cat+i} src={img} alt="" style={{width:44,height:44,borderRadius:5,objectFit:'cover',cursor:'pointer'}} onClick={()=>window.open(img)}/>
+            ))).slice(0,8)}
+          </div>}
+          {r.notes&&<div style={{fontSize:11,color:'var(--text-2)',marginTop:6,paddingTop:6,borderTop:'0.5px solid var(--border)'}}>{r.notes}</div>}
+        </div>
+      })}
     </div>}
   </div>
 }
