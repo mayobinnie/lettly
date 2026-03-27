@@ -59,21 +59,23 @@ export default async function handler(req, res) {
   if (!data) return res.status(400).json({ error: 'No file data' })
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ success: false, error: 'API key not configured', filename })
 
-  // Normalise media type
+  // Normalise media type - mediaType from client takes priority
+  // PDF.js converts PDFs to JPEG before sending, so mediaType may be image/jpeg even for .pdf files
   const fname = filename?.toLowerCase() || ''
-  const isPDF = mediaType === 'application/pdf' || fname.endsWith('.pdf')
   
-  // Map common media types
+  // Trust the mediaType sent by client first (PDF.js may have converted PDF -> JPEG)
   let safeMediaType = mediaType
-  if (fname.endsWith('.jpg') || fname.endsWith('.jpeg')) safeMediaType = 'image/jpeg'
-  if (fname.endsWith('.png')) safeMediaType = 'image/png'
-  if (fname.endsWith('.webp')) safeMediaType = 'image/webp'
-  if (fname.endsWith('.gif')) safeMediaType = 'image/gif'
-  if (fname.endsWith('.bmp')) safeMediaType = 'image/jpeg' // convert to jpeg type
-  if (fname.endsWith('.heic') || fname.endsWith('.heif')) safeMediaType = 'image/jpeg' // already converted by client
   if (!safeMediaType || safeMediaType === 'application/octet-stream') {
-    safeMediaType = isPDF ? 'application/pdf' : 'image/jpeg'
+    // Fallback to filename detection
+    if (fname.endsWith('.pdf')) safeMediaType = 'application/pdf'
+    else if (fname.endsWith('.png')) safeMediaType = 'image/png'
+    else if (fname.endsWith('.webp')) safeMediaType = 'image/webp'
+    else if (fname.endsWith('.gif')) safeMediaType = 'image/gif'
+    else safeMediaType = 'image/jpeg'
   }
+
+  // isPDF only if the actual data is a PDF (not a converted image)
+  const isPDF = safeMediaType === 'application/pdf'
 
   try {
     const content = isPDF
