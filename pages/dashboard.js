@@ -6,7 +6,91 @@ import { fmt, dueSoon, dueDays, epcColor, mergeDoc, LEGISLATION, LEGISLATION_SCO
 import { getPortfolio, savePortfolio } from '../lib/supabase'
 import { detectNation, NATION_LABELS, getChecklist } from '../lib/nations'
 
-function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file)})}
+// Load PDF.js once and cache it
+async function loadPDFJS() {
+  if (window.pdfjsLib) return window.pdfjsLib
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
+    s.onload = resolve; s.onerror = reject
+    document.head.appendChild(s)
+  })
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+  return window.pdfjsLib
+}
+
+// Convert first page of PDF to JPEG for reliable extraction
+async function pdfToJpeg(file) {
+  try {
+    const pdfjsLib = await loadPDFJS()
+    const arrayBuffer = await file.arrayBuffer()
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+    const page = await pdf.getPage(1)
+    const viewport = page.getViewport({ scale: 2.0 })
+    const canvas = document.createElement('canvas')
+    canvas.width = viewport.width
+    canvas.height = viewport.height
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
+    const jpeg = canvas.toDataURL('image/jpeg', 0.92)
+    return { data: jpeg.split(',')[1], mediaType: 'image/jpeg', pages: pdf.numPages }
+  } catch (e) {
+    console.warn('PDF.js render failed, sending raw:', e)
+    return null
+  }
+}
+
+// Convert file to base64, handling HEIC and PDF rendering
+async function fileToBase64(file) {
+  const fname = file.name.toLowerCase()
+  const ftype = file.type.toLowerCase()
+
+  // HEIC/HEIF: convert to JPEG first
+  if (ftype === 'image/heic' || ftype === 'image/heif' || fname.endsWith('.heic') || fname.endsWith('.heif')) {
+    try {
+      if (!window.heic2any) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script')
+          s.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'
+          s.onload = resolve; s.onerror = reject
+          document.head.appendChild(s)
+        })
+      }
+      const blob = await window.heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 })
+      const converted = new File([blob], fname.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'), { type: 'image/jpeg' })
+      const result = await new Promise((res, rej) => {
+        const r = new FileReader()
+        r.onload = () => res({ data: r.result.split(',')[1], mediaType: 'image/jpeg' })
+        r.onerror = rej
+        r.readAsDataURL(converted)
+      })
+      return result
+    } catch (e) {
+      console.warn('HEIC conversion failed:', e)
+    }
+  }
+
+  // PDF: render first page to JPEG for reliable extraction
+  if (ftype === 'application/pdf' || fname.endsWith('.pdf')) {
+    const rendered = await pdfToJpeg(file)
+    if (rendered) return rendered
+    // Fallback: send raw PDF bytes
+    return new Promise((res, rej) => {
+      const r = new FileReader()
+      r.onload = () => res({ data: r.result.split(',')[1], mediaType: 'application/pdf' })
+      r.onerror = rej
+      r.readAsDataURL(file)
+    })
+  }
+
+  // All other images: send directly
+  return new Promise((res, rej) => {
+    const r = new FileReader()
+    r.onload = () => res({ data: r.result.split(',')[1], mediaType: ftype || 'image/jpeg' })
+    r.onerror = rej
+    r.readAsDataURL(file)
+  })
+}
 
 /* ---- atoms ---- */
 const PILL={red:{bg:'#fce8e6',fg:'#791F1F'},amber:{bg:'#fff8e1',fg:'#633806'},green:{bg:'#e8f5e9',fg:'#1e6e35'},blue:{bg:'#e3f2fd',fg:'#0C447C'},brand:{bg:'#eaf4ee',fg:'#1b5e3b'},grey:{bg:'#f2f0eb',fg:'#6b6860'}}
@@ -20,9 +104,9 @@ const DOC_META={gas_certificate:{label:'Gas cert',icon:'🔥',bg:'#fff8e1',fg:'#
 function DocBadge({type}){const m=DOC_META[type]||DOC_META.other;return<span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,background:m.bg,color:m.fg}}><span style={{fontSize:12}}>{m.icon}</span>{m.label}</span>}
 
 function UpIcon({color,size}){return<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>}
-function DropZone({onFiles,compact}){const[over,setOver]=useState(false);const ref=useRef(null);function drop(e){e.preventDefault();setOver(false);const f=Array.from(e.dataTransfer.files).filter(f=>f.type==='application/pdf'||f.type.startsWith('image/'));if(f.length)onFiles(f)}
-if(compact)return<div onDragOver={e=>{e.preventDefault();setOver(true)}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setOver(false)}} onDrop={drop} onClick={()=>ref.current.click()} style={{border:`1.5px dashed ${over?'var(--brand)':'var(--border-strong)'}`,borderRadius:12,padding:'14px 16px',cursor:'pointer',background:over?'var(--brand-subtle)':'transparent',display:'flex',alignItems:'center',gap:12}}><input ref={ref} type="file" multiple accept=".pdf,image/*" style={{display:'none'}} onChange={e=>{onFiles(Array.from(e.target.files));e.target.value=''}}/><div style={{width:32,height:32,borderRadius:8,background:over?'var(--brand)':'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><UpIcon color={over?'#fff':'var(--brand)'} size={15}/></div><div><div style={{fontSize:12,fontWeight:500}}>Drop documents</div><div style={{fontSize:11,color:'var(--text-3)'}}>Gas cert, EICR, EPC, insurance, tenancy</div></div></div>
-return<div onDragOver={e=>{e.preventDefault();setOver(true)}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setOver(false)}} onDrop={drop} onClick={()=>ref.current.click()} style={{border:`2px dashed ${over?'var(--brand)':'rgba(0,0,0,0.14)'}`,borderRadius:20,padding:'clamp(32px,5vw,48px) clamp(20px,4vw,40px)',textAlign:'center',background:over?'var(--brand-subtle)':'var(--surface)',cursor:'pointer',transition:'all 0.25s'}}><input ref={ref} type="file" multiple accept=".pdf,image/*" style={{display:'none'}} onChange={e=>{onFiles(Array.from(e.target.files));e.target.value=''}}/><div className={over?'':'floating'} style={{width:64,height:64,borderRadius:'50%',margin:'0 auto 16px',background:over?'var(--brand)':'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center'}}><UpIcon color={over?'#fff':'var(--brand)'} size={28}/></div><div style={{fontFamily:'var(--display)',fontSize:'clamp(18px,3vw,24px)',fontWeight:400,marginBottom:8}}>{over?'Release to analyse':'Drop your documents here'}</div><div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.75,marginBottom:18}}>Gas certs, EICRs, Insurance, EPCs, Tenancy agreements, Mortgage offers</div><div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'center',marginBottom:14}}>{Object.values(DOC_META).filter(d=>d.label!=='Document').map(d=><span key={d.label} style={{fontSize:11,padding:'4px 11px',borderRadius:20,background:d.bg,color:d.fg,display:'inline-flex',alignItems:'center',gap:4}}><span style={{fontSize:12}}>{d.icon}</span>{d.label}</span>)}</div><div style={{fontSize:11,color:'var(--text-3)'}}>PDF or image - your data stays private</div></div>}
+function DropZone({onFiles,compact}){const[over,setOver]=useState(false);const ref=useRef(null);function drop(e){e.preventDefault();setOver(false);const f=Array.from(e.dataTransfer.files).filter(f=>{const t=f.type.toLowerCase();const n=f.name.toLowerCase();return t==='application/pdf'||t.startsWith('image/')||n.endsWith('.heic')||n.endsWith('.heif')||n.endsWith('.pdf')});if(f.length)onFiles(f)}
+if(compact)return<div onDragOver={e=>{e.preventDefault();setOver(true)}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setOver(false)}} onDrop={drop} onClick={()=>ref.current.click()} style={{border:`1.5px dashed ${over?'var(--brand)':'var(--border-strong)'}`,borderRadius:12,padding:'14px 16px',cursor:'pointer',background:over?'var(--brand-subtle)':'transparent',display:'flex',alignItems:'center',gap:12}}><input ref={ref} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.bmp,.tiff,.gif,image/*,application/pdf" style={{display:'none'}} onChange={e=>{onFiles(Array.from(e.target.files));e.target.value=''}}/><div style={{width:32,height:32,borderRadius:8,background:over?'var(--brand)':'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><UpIcon color={over?'#fff':'var(--brand)'} size={15}/></div><div><div style={{fontSize:12,fontWeight:500}}>Drop documents</div><div style={{fontSize:11,color:'var(--text-3)'}}>Gas cert, EICR, EPC, insurance, tenancy</div></div></div>
+return<div onDragOver={e=>{e.preventDefault();setOver(true)}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setOver(false)}} onDrop={drop} onClick={()=>ref.current.click()} style={{border:`2px dashed ${over?'var(--brand)':'rgba(0,0,0,0.14)'}`,borderRadius:20,padding:'clamp(32px,5vw,48px) clamp(20px,4vw,40px)',textAlign:'center',background:over?'var(--brand-subtle)':'var(--surface)',cursor:'pointer',transition:'all 0.25s'}}><input ref={ref} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.bmp,.tiff,.gif,image/*,application/pdf" style={{display:'none'}} onChange={e=>{onFiles(Array.from(e.target.files));e.target.value=''}}/><div className={over?'':'floating'} style={{width:64,height:64,borderRadius:'50%',margin:'0 auto 16px',background:over?'var(--brand)':'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center'}}><UpIcon color={over?'#fff':'var(--brand)'} size={28}/></div><div style={{fontFamily:'var(--display)',fontSize:'clamp(18px,3vw,24px)',fontWeight:400,marginBottom:8}}>{over?'Release to analyse':'Drop your documents here'}</div><div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.75,marginBottom:18}}>PDF, JPEG, PNG, HEIC and more — gas certs, EICRs, EPCs, insurance, tenancy agreements</div><div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'center',marginBottom:14}}>{Object.values(DOC_META).filter(d=>d.label!=='Document').map(d=><span key={d.label} style={{fontSize:11,padding:'4px 11px',borderRadius:20,background:d.bg,color:d.fg,display:'inline-flex',alignItems:'center',gap:4}}><span style={{fontSize:12}}>{d.icon}</span>{d.label}</span>)}</div><div style={{fontSize:11,color:'var(--text-3)'}}>PDF, JPEG, PNG, HEIC, WebP — your data stays private</div></div>}
 
 function QueueItem({item}){const done=item.status==='done',err=item.status==='error',working=item.status==='reading'||item.status==='extracting';const ext=item.result?.extracted
 return<div className="scale-in" style={{display:'flex',gap:12,alignItems:'flex-start',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}><div style={{width:38,height:38,borderRadius:9,flexShrink:0,background:done?'var(--brand-light)':err?'var(--red-bg)':'var(--surface2)',display:'flex',alignItems:'center',justifyContent:'center'}}>{done&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}{err&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>}{working&&<div style={{width:18,height:18,borderRadius:'50%',border:'2px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/>}</div><div style={{flex:1,minWidth:0}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:done&&ext?5:0}}><div style={{fontSize:12,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'60%'}}>{item.name}</div><Pill type={done?'green':err?'red':item.status==='extracting'?'amber':'grey'}>{done?'Extracted':err?'Error':item.status==='extracting'?'Analysing':'Reading'}</Pill></div>{done&&ext&&<div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.6}}>{ext.summary}{ext.property?.shortName&&<span style={{marginLeft:6,color:'var(--brand)',fontWeight:500}}>- {ext.property.shortName}</span>}</div>}{done&&ext?.documentType&&<div style={{marginTop:6}}><DocBadge type={ext.documentType}/></div>}{err&&<div style={{fontSize:11,color:'var(--red)',marginTop:3}}>{item.result?.error||'Could not read this file.'}</div>}</div></div>}
@@ -671,6 +755,15 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck}){
 
     {showChecklist&&<FirstTimeLandlordChecklist nation={checklistNation} checkedItems={checklist} onToggle={onToggleCheck||((id)=>{})}/>}
     {showPricingNudge&&<PricingNudge portfolioSize={onboarding?.portfolioSize}/>}
+
+    {/* Contact email for notifications */}
+    {props.length>0&&!portfolio.contactEmail&&<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'12px 16px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+      <div>
+        <div style={{fontSize:13,fontWeight:500,color:'#633806',marginBottom:2}}>Add your email for maintenance alerts</div>
+        <div style={{fontSize:12,color:'#a07030'}}>Get notified when tenants submit issues via their report link</div>
+      </div>
+      <button onClick={()=>{const e=prompt('Your email address for notifications:');if(e&&e.includes('@'))setPortfolio(prev=>({...prev,contactEmail:e}))}} style={{background:'#EF9F27',color:'#fff',border:'none',borderRadius:7,padding:'6px 14px',fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Add email</button>
+    </div>}
 
     {props.length===0?<DropZone onFiles={onAddDocs}/>:<>
       <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
@@ -1377,7 +1470,7 @@ const TABS=[{id:'overview',label:'Overview'},{id:'properties',label:'Properties'
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
   const[tab,setTab]=useState('overview')
-  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null})
+  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:''})
   const[queue,setQueue]=useState([])
   const[showDrop,setShowDrop]=useState(false)
   const[loaded,setLoaded]=useState(false)
@@ -1431,11 +1524,18 @@ export default function Dashboard(){
 
   async function handleFiles(files){
     setShowDrop(false)
-    const valid=files.filter(f=>f.type==='application/pdf'||f.type.startsWith('image/'));if(!valid.length)return
+    const valid=files.filter(f=>{
+      const t=f.type.toLowerCase()
+      const n=f.name.toLowerCase()
+      return t==='application/pdf'||t.startsWith('image/')||
+             n.endsWith('.pdf')||n.endsWith('.jpg')||n.endsWith('.jpeg')||
+             n.endsWith('.png')||n.endsWith('.webp')||n.endsWith('.heic')||
+             n.endsWith('.heif')||n.endsWith('.bmp')||n.endsWith('.tiff')||n.endsWith('.gif')
+    });if(!valid.length)return
     for(const file of valid){
       const id=Math.random().toString(36).slice(2)
       setQueue(q=>[...q,{id,name:file.name,status:'reading'}])
-      try{const b64=await fileToBase64(file);setQueue(q=>q.map(x=>x.id===id?{...x,status:'extracting'}:x));const res=await fetch('/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,data:b64,mediaType:file.type})});const result=await res.json();setQueue(q=>q.map(x=>x.id===id?{...x,status:result.success?'done':'error',result}:x));if(result.success&&result.extracted)setPortfolio(prev=>mergeDoc(prev,result.extracted))}
+      try{const {data:b64,mediaType:detectedType}=await fileToBase64(file);setQueue(q=>q.map(x=>x.id===id?{...x,status:'extracting'}:x));const res=await fetch('/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,data:b64,mediaType:detectedType||file.type})});const result=await res.json();setQueue(q=>q.map(x=>x.id===id?{...x,status:result.success?'done':'error',result}:x));if(result.success&&result.extracted)setPortfolio(prev=>mergeDoc(prev,result.extracted))}
       catch{setQueue(q=>q.map(x=>x.id===id?{...x,status:'error'}:x))}
     }
   }
@@ -1459,7 +1559,7 @@ export default function Dashboard(){
 
     {showWizard&&<OnboardingWizard onComplete={completeWizard} firstName={user?.firstName}/>}
 
-    <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault();setShowDrop(true)}} onDrop={e=>{e.preventDefault();const f=Array.from(e.dataTransfer.files).filter(f=>f.type==='application/pdf'||f.type.startsWith('image/'));if(f.length)handleFiles(f)}}>
+    <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault();setShowDrop(true)}} onDrop={e=>{e.preventDefault();const f=Array.from(e.dataTransfer.files).filter(f=>{const t=f.type.toLowerCase();const n=f.name.toLowerCase();return t==='application/pdf'||t.startsWith('image/')||n.endsWith('.heic')||n.endsWith('.heif')||n.endsWith('.pdf')});if(f.length)handleFiles(f)}}>
       <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:30,height:30,background:'var(--brand)',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:14,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:17,fontWeight:400}}>Lettly</span></div>
         <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}>{t.label}{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>

@@ -59,12 +59,26 @@ export default async function handler(req, res) {
   if (!data) return res.status(400).json({ error: 'No file data' })
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ success: false, error: 'API key not configured', filename })
 
-  const isPDF = mediaType === 'application/pdf' || filename?.toLowerCase().endsWith('.pdf')
+  // Normalise media type
+  const fname = filename?.toLowerCase() || ''
+  const isPDF = mediaType === 'application/pdf' || fname.endsWith('.pdf')
+  
+  // Map common media types
+  let safeMediaType = mediaType
+  if (fname.endsWith('.jpg') || fname.endsWith('.jpeg')) safeMediaType = 'image/jpeg'
+  if (fname.endsWith('.png')) safeMediaType = 'image/png'
+  if (fname.endsWith('.webp')) safeMediaType = 'image/webp'
+  if (fname.endsWith('.gif')) safeMediaType = 'image/gif'
+  if (fname.endsWith('.bmp')) safeMediaType = 'image/jpeg' // convert to jpeg type
+  if (fname.endsWith('.heic') || fname.endsWith('.heif')) safeMediaType = 'image/jpeg' // already converted by client
+  if (!safeMediaType || safeMediaType === 'application/octet-stream') {
+    safeMediaType = isPDF ? 'application/pdf' : 'image/jpeg'
+  }
 
   try {
     const content = isPDF
       ? [{ type:'document', source:{ type:'base64', media_type:'application/pdf', data } }, { type:'text', text:PROMPT }]
-      : [{ type:'image',    source:{ type:'base64', media_type:mediaType||'image/jpeg', data } }, { type:'text', text:PROMPT }]
+      : [{ type:'image',    source:{ type:'base64', media_type:safeMediaType, data } }, { type:'text', text:PROMPT }]
 
     const response = await client.messages.create({
       model: 'claude-opus-4-6',
@@ -79,9 +93,20 @@ export default async function handler(req, res) {
 
     res.status(200).json({ success:true, extracted, filename })
   } catch (err) {
-    const errorMsg = err?.error?.error?.message || err?.message || 'Could not read document'
-    console.error('Extract error:', err?.status, errorMsg)
-    res.status(500).json({ success:false, error:errorMsg, filename })
+    const msg = err?.error?.error?.message || err?.message || ''
+    console.error('Extract error:', err?.status, msg)
+    // Give user a helpful message
+    let userMsg = 'Could not read this document.'
+    if (msg.includes('Could not process') || msg.includes('invalid') || msg.includes('corrupt')) {
+      userMsg = 'This file appears to be corrupted or is not a valid PDF. Try re-saving it as a PDF and uploading again.'
+    } else if (msg.includes('too large') || msg.includes('size')) {
+      userMsg = 'This file is too large. Try compressing the PDF and uploading again.'
+    } else if (msg.includes('rate') || msg.includes('limit')) {
+      userMsg = 'Too many requests. Please wait a moment and try again.'
+    } else if (msg) {
+      userMsg = msg
+    }
+    res.status(500).json({ success:false, error:userMsg, filename })
   }
 }
 

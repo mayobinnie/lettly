@@ -65,6 +65,27 @@ export default async function handler(req, res) {
       const updated = { ...portfolio, maintenance: [...maintenance, newJob] }
       await savePortfolio(parsed.userId, updated)
 
+      // Email landlord notification
+      try {
+        const { sendMaintenanceNotification } = await import('../../lib/emails')
+        // Get landlord email from Clerk using service key
+        // For now use portfolio contact email if stored, otherwise skip
+        const landlordEmail = portfolio.contactEmail
+        if (landlordEmail) {
+          await sendMaintenanceNotification({
+            landlordEmail,
+            landlordName: portfolio.ownerName || 'Landlord',
+            propertyName: prop.shortName,
+            issue: description,
+            tenantName: tenantName || prop.tenantName || 'Your tenant',
+            urgency: urgency || 'Normal',
+          })
+        }
+      } catch (emailErr) {
+        console.warn('Maintenance notification email failed:', emailErr)
+        // Don't fail the request if email fails
+      }
+
       return res.status(200).json({ success: true, jobId: newJob.id })
     } catch (err) {
       console.error('Tenant report error:', err)
