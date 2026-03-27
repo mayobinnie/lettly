@@ -11,7 +11,9 @@ CRITICAL RULES:
 - For gas certs, EICRs, EPCs: the property is where the work was carried out
 - For insurance documents: the property is the insured premises (not the policyholder's correspondence address)
 - If you see multiple addresses, pick the one that is clearly the rental property
-- shortName should be concise: "11 Northfield Avenue" not "11 Northfield Avenue, Hessle, East Yorkshire"
+- shortName MUST start with the house number: "11 Northfield Avenue" not "Northfield Avenue". The number is critical for matching.
+- address MUST include the full address with house number, street, town and postcode if visible
+- If the document covers multiple properties (e.g. a portfolio insurance), extract only the first/primary property
 - If you cannot confidently identify the rental property address, omit the property field entirely
 
 Use this exact structure (omit any field you cannot find - do not guess):
