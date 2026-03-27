@@ -1729,10 +1729,12 @@ export default function Dashboard(){
     clearTimeout(saveRef.current)
     saveRef.current=setTimeout(async()=>{
       try{
-        await savePortfolio(user.id,portfolio)
-        setSaveStatus('saved')
-      }catch{
+        const ok = await savePortfolio(user.id,portfolio)
+        setSaveStatus(ok?'saved':'error')
+        if(!ok) console.error('Portfolio save returned false')
+      }catch(e){
         setSaveStatus('error')
+        console.error('Portfolio save threw:', e.message)
       }
     },800)
     return()=>clearTimeout(saveRef.current)

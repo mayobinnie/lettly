@@ -1,13 +1,27 @@
 -- Run this in your Supabase SQL editor
 
--- Main portfolios table (if not already created)
+-- Main portfolios table
 create table if not exists portfolios (
   user_id text primary key,
   data jsonb,
   updated_at timestamptz default now()
 );
 
--- Legislation alerts from weekly monitor
+-- IMPORTANT: Lettly uses Clerk auth, not Supabase auth
+-- auth.uid() is always null so we use the anon key with open RLS
+-- Security is handled at the API layer (Clerk protects all dashboard routes)
+alter table portfolios enable row level security;
+
+-- Drop old policy if exists
+drop policy if exists "Users own portfolios" on portfolios;
+
+-- Allow anon key to read/write (Clerk handles auth at the app layer)
+create policy "Anon full access portfolios"
+  on portfolios for all
+  using (true)
+  with check (true);
+
+-- Legislation alerts
 create table if not exists legislation_alerts (
   id uuid default gen_random_uuid() primary key,
   topic text,
@@ -18,17 +32,14 @@ create table if not exists legislation_alerts (
   actioned boolean default false
 );
 
--- Row level security
-alter table portfolios enable row level security;
-create policy if not exists "Users own portfolios"
-  on portfolios for all using (user_id = auth.uid()::text);
-
--- Legislation alerts are readable by all authenticated users
 alter table legislation_alerts enable row level security;
-create policy if not exists "Authenticated users read alerts"
-  on legislation_alerts for select using (auth.role() = 'authenticated');
+drop policy if exists "Authenticated users read alerts" on legislation_alerts;
+create policy "Anon read alerts"
+  on legislation_alerts for select using (true);
+create policy "Anon write alerts"
+  on legislation_alerts for all using (true) with check (true);
 
--- Newsletter subscribers table
+-- Newsletter subscribers
 create table if not exists newsletter_subscribers (
   id uuid default gen_random_uuid() primary key,
   email text unique not null,
@@ -39,5 +50,6 @@ create table if not exists newsletter_subscribers (
 );
 
 alter table newsletter_subscribers enable row level security;
-create policy "Service role manages subscribers"
-  on newsletter_subscribers for all using (true);
+drop policy if exists "Service role manages subscribers" on newsletter_subscribers;
+create policy "Anon manages subscribers"
+  on newsletter_subscribers for all using (true) with check (true);
