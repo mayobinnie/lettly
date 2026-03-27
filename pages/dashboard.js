@@ -108,8 +108,11 @@ function DropZone({onFiles,compact}){const[over,setOver]=useState(false);const r
 if(compact)return<div onDragOver={e=>{e.preventDefault();setOver(true)}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setOver(false)}} onDrop={drop} onClick={()=>ref.current.click()} style={{border:`1.5px dashed ${over?'var(--brand)':'var(--border-strong)'}`,borderRadius:12,padding:'14px 16px',cursor:'pointer',background:over?'var(--brand-subtle)':'transparent',display:'flex',alignItems:'center',gap:12}}><input ref={ref} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.bmp,.tiff,.gif,image/*,application/pdf" style={{display:'none'}} onChange={e=>{onFiles(Array.from(e.target.files));e.target.value=''}}/><div style={{width:32,height:32,borderRadius:8,background:over?'var(--brand)':'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><UpIcon color={over?'#fff':'var(--brand)'} size={15}/></div><div><div style={{fontSize:12,fontWeight:500}}>Drop documents</div><div style={{fontSize:11,color:'var(--text-3)'}}>Gas cert, EICR, EPC, insurance, tenancy</div></div></div>
 return<div onDragOver={e=>{e.preventDefault();setOver(true)}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setOver(false)}} onDrop={drop} onClick={()=>ref.current.click()} style={{border:`2px dashed ${over?'var(--brand)':'rgba(0,0,0,0.14)'}`,borderRadius:20,padding:'clamp(32px,5vw,48px) clamp(20px,4vw,40px)',textAlign:'center',background:over?'var(--brand-subtle)':'var(--surface)',cursor:'pointer',transition:'all 0.25s'}}><input ref={ref} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.bmp,.tiff,.gif,image/*,application/pdf" style={{display:'none'}} onChange={e=>{onFiles(Array.from(e.target.files));e.target.value=''}}/><div className={over?'':'floating'} style={{width:64,height:64,borderRadius:'50%',margin:'0 auto 16px',background:over?'var(--brand)':'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center'}}><UpIcon color={over?'#fff':'var(--brand)'} size={28}/></div><div style={{fontFamily:'var(--display)',fontSize:'clamp(18px,3vw,24px)',fontWeight:400,marginBottom:8}}>{over?'Release to analyse':'Drop your documents here'}</div><div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.75,marginBottom:18}}>PDF, JPEG, PNG, HEIC and more — gas certs, EICRs, EPCs, insurance, tenancy agreements</div><div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'center',marginBottom:14}}>{Object.values(DOC_META).filter(d=>d.label!=='Document').map(d=><span key={d.label} style={{fontSize:11,padding:'4px 11px',borderRadius:20,background:d.bg,color:d.fg,display:'inline-flex',alignItems:'center',gap:4}}><span style={{fontSize:12}}>{d.icon}</span>{d.label}</span>)}</div><div style={{fontSize:11,color:'var(--text-3)'}}>PDF, JPEG, PNG, HEIC, WebP — your data stays private</div></div>}
 
-function QueueItem({item}){const done=item.status==='done',err=item.status==='error',working=item.status==='reading'||item.status==='extracting';const ext=item.result?.extracted
-return<div className="scale-in" style={{display:'flex',gap:12,alignItems:'flex-start',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}><div style={{width:38,height:38,borderRadius:9,flexShrink:0,background:done?'var(--brand-light)':err?'var(--red-bg)':'var(--surface2)',display:'flex',alignItems:'center',justifyContent:'center'}}>{done&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}{err&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>}{working&&<div style={{width:18,height:18,borderRadius:'50%',border:'2px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/>}</div><div style={{flex:1,minWidth:0}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:done&&ext?5:0}}><div style={{fontSize:12,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'60%'}}>{item.name}</div><Pill type={done?'green':err?'red':item.status==='extracting'?'amber':'grey'}>{done?'Extracted':err?'Error':item.status==='extracting'?'Analysing':'Reading'}</Pill></div>{done&&ext&&<div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.6}}>{ext.summary}{ext.property?.shortName&&<span style={{marginLeft:6,color:'var(--brand)',fontWeight:500}}>- {ext.property.shortName}</span>}</div>}{done&&ext?.documentType&&<div style={{marginTop:6}}><DocBadge type={ext.documentType}/></div>}{err&&<div style={{fontSize:11,color:'var(--red)',marginTop:3}}>{item.result?.error||'Could not read this file.'}</div>}</div></div>}
+function QueueItem({item,onRetry}){const done=item.status==='done',err=item.status==='error',working=item.status==='reading'||item.status==='extracting';const ext=item.result?.extracted
+return<div className="scale-in" style={{display:'flex',gap:12,alignItems:'flex-start',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}><div style={{width:38,height:38,borderRadius:9,flexShrink:0,background:done?'var(--brand-light)':err?'var(--red-bg)':'var(--surface2)',display:'flex',alignItems:'center',justifyContent:'center'}}>{done&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}{err&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>}{working&&<div style={{width:18,height:18,borderRadius:'50%',border:'2px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/>}</div><div style={{flex:1,minWidth:0}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:done&&ext?5:0}}><div style={{fontSize:12,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'60%'}}>{item.name}</div><Pill type={done?'green':err?'red':item.status==='extracting'?'amber':'grey'}>{done?'Extracted':err?'Error':item.status==='extracting'?'Analysing':'Reading'}</Pill></div>{done&&ext&&<div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.6}}>{ext.summary}{ext.property?.shortName&&<span style={{marginLeft:6,color:'var(--brand)',fontWeight:500}}>- {ext.property.shortName}</span>}</div>}{done&&ext?.documentType&&<div style={{marginTop:6}}><DocBadge type={ext.documentType}/></div>}{err&&<div style={{display:'flex',alignItems:'center',gap:8,marginTop:3,flexWrap:'wrap'}}>
+          <span style={{fontSize:11,color:'var(--red)'}}>{item.result?.error||'Could not read this file.'}</span>
+          {onRetry&&<button onClick={()=>onRetry(item)} style={{fontSize:10,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:5,padding:'2px 8px',cursor:'pointer',whiteSpace:'nowrap'}}>Try again</button>}
+        </div>}</div></div>}
 
 /* ---- Onboarding Wizard ---- */
 function OnboardingWizard({onComplete,firstName}){
@@ -1502,6 +1505,7 @@ export default function Dashboard(){
   },[user?.id])
 
   const saveRef=useRef(null)
+  const dropRef=useRef(null) // prevents duplicate drop processing
   useEffect(()=>{if(!user?.id||!loaded)return;clearTimeout(saveRef.current);saveRef.current=setTimeout(()=>savePortfolio(user.id,portfolio),1500);return()=>clearTimeout(saveRef.current)},[portfolio,user?.id,loaded])
 
   function completeWizard(answers){
@@ -1523,6 +1527,10 @@ export default function Dashboard(){
   function deleteProperty(id){setPortfolio(prev=>({...prev,properties:(prev.properties||[]).filter(p=>p.id!==id)}))}
 
   async function handleFiles(files){
+    // Prevent duplicate processing from multiple drop handlers firing
+    const now = Date.now()
+    if(dropRef.current && now - dropRef.current < 500) return
+    dropRef.current = now
     setShowDrop(false)
     const valid=files.filter(f=>{
       const t=f.type.toLowerCase()
@@ -1532,11 +1540,22 @@ export default function Dashboard(){
              n.endsWith('.png')||n.endsWith('.webp')||n.endsWith('.heic')||
              n.endsWith('.heif')||n.endsWith('.bmp')||n.endsWith('.tiff')||n.endsWith('.gif')
     });if(!valid.length)return
+    // Process sequentially to avoid hammering the API
     for(const file of valid){
       const id=Math.random().toString(36).slice(2)
       setQueue(q=>[...q,{id,name:file.name,status:'reading'}])
-      try{const {data:b64,mediaType:detectedType}=await fileToBase64(file);setQueue(q=>q.map(x=>x.id===id?{...x,status:'extracting'}:x));const res=await fetch('/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,data:b64,mediaType:detectedType||file.type})});const result=await res.json();setQueue(q=>q.map(x=>x.id===id?{...x,status:result.success?'done':'error',result}:x));if(result.success&&result.extracted)setPortfolio(prev=>mergeDoc(prev,result.extracted))}
-      catch{setQueue(q=>q.map(x=>x.id===id?{...x,status:'error'}:x))}
+      try{
+        const {data:b64,mediaType:detectedType}=await fileToBase64(file)
+        setQueue(q=>q.map(x=>x.id===id?{...x,status:'extracting'}:x))
+        const res=await fetch('/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,data:b64,mediaType:detectedType||file.type})})
+        const result=await res.json()
+        setQueue(q=>q.map(x=>x.id===id?{...x,status:result.success?'done':'error',result}:x))
+        if(result.success&&result.extracted)setPortfolio(prev=>mergeDoc(prev,result.extracted))
+        // Small pause between files to avoid rate limits
+        if(valid.indexOf(file)<valid.length-1) await new Promise(r=>setTimeout(r,500))
+      }catch{
+        setQueue(q=>q.map(x=>x.id===id?{...x,status:'error',result:{error:'Could not process this file.'}}:x))
+      }
     }
   }
 
@@ -1559,7 +1578,7 @@ export default function Dashboard(){
 
     {showWizard&&<OnboardingWizard onComplete={completeWizard} firstName={user?.firstName}/>}
 
-    <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false);const f=Array.from(e.dataTransfer.files);if(f.length)handleFiles(f)}}>
+    <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
       <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:30,height:30,background:'var(--brand)',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:14,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:17,fontWeight:400}}>Lettly</span></div>
         <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}>{t.label}{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
@@ -1575,7 +1594,14 @@ export default function Dashboard(){
               <button onClick={()=>setQueue([])} style={{fontSize:11,color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}}>Clear all</button>
             </div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item}/>)}</div>
+          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onRetry={async(failedItem)=>{
+              setQueue(q=>q.map(x=>x.id===failedItem.id?{...x,status:'reading',result:null}:x))
+              try{
+                const file=new File([],failedItem.name)
+                // Re-fetch original file is not possible - show message instead
+                setQueue(q=>q.map(x=>x.id===failedItem.id?{...x,status:'error',result:{error:'Please drop the file again to retry.'}}:x))
+              }catch{}
+            }}/>)}</div>
         </div>
       </div>}
       <div className="dash-content">
