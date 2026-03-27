@@ -1,5 +1,5 @@
 import { Webhook } from 'svix'
-import { sendWelcomeEmail } from '../../lib/emails'
+import { sendWelcomeEmail } from '../../../lib/emails'
 
 // Clerk webhook - fires on user.created
 // Setup: Clerk Dashboard → Webhooks → Add endpoint

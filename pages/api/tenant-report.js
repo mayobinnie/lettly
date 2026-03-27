@@ -67,7 +67,7 @@ export default async function handler(req, res) {
 
       // Email landlord notification
       try {
-        const { sendMaintenanceNotification } = await import('../../lib/emails')
+        const { sendMaintenanceNotification } = await import('../../lib/emails.js')
         // Get landlord email from Clerk using service key
         // For now use portfolio contact email if stored, otherwise skip
         const landlordEmail = portfolio.contactEmail
