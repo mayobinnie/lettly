@@ -170,7 +170,7 @@ export default function Landing() {
           </div>
           <div style={{ display:'flex', gap:10, alignItems:'center' }}>
             <a href="https://accounts.lettly.co/sign-in" className="btn-ghost" style={{ fontSize:14, padding:'9px 20px' }}>Sign in</a>
-            <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:14, padding:'10px 22px', boxShadow:'0 2px 12px rgba(27,94,59,0.22)' }}>Get started free</a>
+            <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:14, padding:'10px 22px', boxShadow:'0 2px 12px rgba(27,94,59,0.22)' }}>Try free for 14 days</a>
           </div>
         </nav>
 
@@ -190,17 +190,20 @@ export default function Landing() {
             England, Scotland and Wales each have different landlord laws. Lettly tracks the right legislation for each of your properties by postcode, so you stay fully legal without paying agent fees.
           </p>
 
+          <p style={{ fontSize:15, color:'var(--text-2)', marginBottom:20, fontWeight:500 }}>
+            Typical saving: <span style={{ color:'var(--brand)', fontWeight:600 }}>£1,020/year</span> on a single £850/mo property
+          </p>
           <div className="cta-row fade-up-3" style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap', marginBottom:22 }}>
             <a href="https://accounts.lettly.co/sign-up" className="btn-primary">
-              Start managing your property
+              Stop paying letting agent fees →
             </a>
             <a href="#how-it-works" className="btn-ghost">
-              See how it works ↓
+              See how it works
             </a>
           </div>
 
           <p style={{ fontSize:14, color:'var(--text-3)', marginBottom:52 }}>
-            Free to start · No credit card needed · Takes 2 minutes
+            Free for 14 days · No credit card · Takes 2 minutes
           </p>
 
           <div className="trust-pills" style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
@@ -229,6 +232,20 @@ export default function Landing() {
                 <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>{s.sub}</div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── RENTERS RIGHTS ACT URGENCY BANNER ── */}
+        <section style={{ background:'#1c1a16', padding:'clamp(20px,3vw,28px) clamp(20px,4vw,48px)' }}>
+          <div style={{ maxWidth:900, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'space-between', gap:20, flexWrap:'wrap' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:14, flex:1 }}>
+              <div style={{ background:'#E24B4A', borderRadius:8, padding:'6px 12px', fontSize:12, fontWeight:700, color:'#fff', whiteSpace:'nowrap', flexShrink:0 }}>1 MAY 2026</div>
+              <div>
+                <div style={{ fontSize:15, fontWeight:600, color:'#fff', marginBottom:3 }}>Renters Rights Act comes into force in England</div>
+                <div style={{ fontSize:13, color:'rgba(255,255,255,0.6)', lineHeight:1.5 }}>Section 21 abolished. No more fixed-term ASTs. PRS Database registration required before serving any notice. Is your portfolio ready?</div>
+              </div>
+            </div>
+            <a href="https://accounts.lettly.co/sign-up" style={{ flexShrink:0, background:'#E24B4A', color:'#fff', borderRadius:9, padding:'10px 22px', fontSize:13, fontWeight:600, textDecoration:'none', whiteSpace:'nowrap' }}>Check your compliance →</a>
           </div>
         </section>
 
@@ -292,6 +309,57 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* ── DIRECT COST COMPARISON ── */}
+        <section style={{ background:'var(--surface)', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)', padding:'clamp(48px,6vw,72px) clamp(20px,4vw,48px)' }}>
+          <div style={{ maxWidth:860, margin:'0 auto' }}>
+            <div style={{ textAlign:'center', marginBottom:44 }}>
+              <h2 className="section-title" style={{ marginBottom:14 }}>What you actually pay</h2>
+              <p className="section-sub" style={{ maxWidth:500, margin:'0 auto' }}>A letting agent charges a percentage of every rent payment, every month. Lettly is a flat annual fee.</p>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:28 }}>
+              {/* Letting agent column */}
+              <div style={{ background:'#fce8e6', border:'1px solid #f5b8b4', borderRadius:20, padding:'clamp(24px,3vw,36px)' }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'#791F1F', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:20 }}>High-street letting agent</div>
+                {[
+                  { label:'Management fee', value:'10–15% of rent monthly' },
+                  { label:'Let-only fee', value:'50–100% of first month rent' },
+                  { label:'Renewal fee', value:'£100–£300 per tenancy' },
+                  { label:'Maintenance markup', value:'10–15% on top of contractor' },
+                  { label:'Annual total (£900/mo rent)', value:'£1,080–£1,620/year', bold:true },
+                ].map(r => (
+                  <div key={r.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'0.5px solid rgba(224,72,72,0.2)' }}>
+                    <span style={{ fontSize:13, color:'#791F1F' }}>{r.label}</span>
+                    <span style={{ fontSize:13, fontWeight:r.bold?700:500, color:'#791F1F' }}>{r.value}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Lettly column */}
+              <div style={{ background:'var(--brand-subtle)', border:'2px solid var(--brand)', borderRadius:20, padding:'clamp(24px,3vw,36px)', position:'relative' }}>
+                <div style={{ position:'absolute', top:-14, left:'50%', transform:'translateX(-50%)', background:'var(--brand)', color:'#fff', borderRadius:20, padding:'5px 18px', fontSize:12, fontWeight:700, whiteSpace:'nowrap' }}>Replace your agent</div>
+                <div style={{ fontSize:13, fontWeight:700, color:'var(--brand)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:20 }}>Lettly</div>
+                {[
+                  { label:'All properties (1–2)', value:'£8/month' },
+                  { label:'All properties (3–5)', value:'£16/month' },
+                  { label:'All properties (6–10)', value:'£24/month' },
+                  { label:'Tenant finding portals', value:'From £29 one-off (OpenRent)' },
+                  { label:'Annual total (1–2 props)', value:'£96/year', bold:true },
+                ].map(r => (
+                  <div key={r.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'0.5px solid rgba(27,94,59,0.15)' }}>
+                    <span style={{ fontSize:13, color:'var(--brand)' }}>{r.label}</span>
+                    <span style={{ fontSize:13, fontWeight:r.bold?700:500, color:'var(--brand)' }}>{r.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ textAlign:'center', background:'var(--brand)', borderRadius:16, padding:'20px 28px' }}>
+              <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,3vw,28px)', fontWeight:300, color:'#fff', marginBottom:6 }}>
+                Switch to Lettly and keep <span style={{ fontStyle:'italic' }}>£924–£1,524</span> more every year
+              </div>
+              <div style={{ fontSize:14, color:'rgba(255,255,255,0.7)' }}>Based on a £900/month property. Your saving depends on your current agent fee.</div>
+            </div>
+          </div>
+        </section>
+
         {/* ── HOW IT WORKS ── */}
         <section id="how-it-works" style={{ background:'var(--surface2)', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)', padding:'clamp(56px,7vw,88px) clamp(20px,4vw,48px)' }}>
           <div style={{ maxWidth:900, margin:'0 auto' }}>
@@ -318,6 +386,72 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* ── PRODUCT PREVIEW ── */}
+        <section style={{ background:'var(--surface2)', borderTop:'1px solid var(--border)', padding:'clamp(56px,7vw,88px) clamp(20px,4vw,48px)' }}>
+          <div style={{ maxWidth:960, margin:'0 auto' }}>
+            <div style={{ textAlign:'center', marginBottom:44 }}>
+              <h2 className="section-title" style={{ marginBottom:14 }}>Everything in one place</h2>
+              <p className="section-sub" style={{ maxWidth:520, margin:'0 auto' }}>Drop a document. Lettly reads it, matches it to the right property, and updates your compliance dashboard - instantly.</p>
+            </div>
+            {/* Dashboard mockup */}
+            <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.08)' }}>
+              {/* Mock nav bar */}
+              <div style={{ background:'var(--surface)', borderBottom:'0.5px solid var(--border)', padding:'12px 20px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <div style={{ width:28, height:28, background:'var(--brand)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <span style={{ color:'#fff', fontSize:14, fontWeight:700, fontFamily:'Georgia, serif', fontStyle:'italic' }}>L</span>
+                  </div>
+                  <span style={{ fontFamily:'Georgia, serif', fontSize:16 }}>Lettly</span>
+                </div>
+                <div style={{ display:'flex', gap:4, background:'var(--surface2)', padding:3, borderRadius:8 }}>
+                  {['Overview','Properties','Compliance','Finance','AI'].map((t,i) => (
+                    <span key={t} style={{ padding:'4px 12px', borderRadius:6, fontSize:11, fontWeight:500, background:i===0?'var(--surface)':'transparent', border:i===0?'0.5px solid var(--border)':'none', color:i===0?'var(--text)':'var(--text-3)' }}>{t}</span>
+                  ))}
+                </div>
+                <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--brand)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <span style={{ color:'#fff', fontSize:11, fontWeight:600 }}>M</span>
+                </div>
+              </div>
+              {/* Mock content */}
+              <div style={{ padding:'24px 20px', display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12 }}>
+                {/* Property cards */}
+                {[
+                  { name:'11 Northfield Ave', nation:'England', status:'lettable', checks:['Gas cert ✓','EICR ✓','EPC C ✓','Insurance ✓','Deposit ✓'] },
+                  { name:'7 Tower Hill Mews', nation:'England', status:'lettable', checks:['Gas cert ✓','EICR ✓','EPC B ✓','Insurance ✓','Deposit ✓'] },
+                  { name:'31 Northfield Ave', nation:'England', status:'warning', checks:['Gas cert ✓','EICR due 14/06 ⚠️','EPC D - upgrade 2028','Insurance ✓','Deposit ✓'] },
+                ].map(p => (
+                  <div key={p.name} style={{ background:'var(--surface)', border:`0.5px solid ${p.status==='warning'?'#f5b8b4':'var(--border)'}`, borderRadius:12, padding:14 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:500, marginBottom:2 }}>{p.name}</div>
+                        <div style={{ fontSize:10, color:'var(--text-3)' }}>{p.nation}</div>
+                      </div>
+                      <div style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:20, background:p.status==='lettable'?'var(--green-bg)':'#fce8e6', color:p.status==='lettable'?'var(--green)':'#791F1F' }}>{p.status==='lettable'?'Lettable':'Action needed'}</div>
+                    </div>
+                    {p.checks.map(ch => (
+                      <div key={ch} style={{ fontSize:11, color:ch.includes('⚠️')||ch.includes('2028')?'#b45309':ch.includes('✓')?'var(--text-2)':'var(--text-3)', padding:'3px 0', borderBottom:'0.5px solid var(--border)', display:'flex', alignItems:'center', gap:4 }}>
+                        <span style={{ color:ch.includes('⚠️')||ch.includes('2028')?'#b45309':ch.includes('✓')?'var(--green)':'var(--red)', fontWeight:600, fontSize:10 }}>{ch.includes('⚠️')||ch.includes('2028')?'!':ch.includes('✓')?'✓':'✗'}</span>
+                        {ch.replace(' ✓','').replace(' ⚠️','')}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding:'0 20px 20px', display:'flex', gap:8 }}>
+                <div style={{ flex:1, background:'var(--green-bg)', border:'0.5px solid var(--green)', borderRadius:10, padding:'10px 14px', fontSize:12, color:'var(--green)' }}>
+                  <span style={{ fontWeight:600 }}>2 properties</span> legally lettable
+                </div>
+                <div style={{ flex:1, background:'#fff8e1', border:'0.5px solid #EF9F27', borderRadius:10, padding:'10px 14px', fontSize:12, color:'#633806' }}>
+                  <span style={{ fontWeight:600 }}>1 property</span> needs attention
+                </div>
+                <div style={{ flex:1, background:'var(--brand-subtle)', border:'0.5px solid rgba(27,94,59,0.2)', borderRadius:10, padding:'10px 14px', fontSize:12, color:'var(--brand)' }}>
+                  Drop a document to auto-fill →
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── FEATURES ── */}
         <section id="features" style={{ maxWidth:940, margin:'0 auto', padding:'clamp(56px,7vw,88px) clamp(20px,4vw,48px)' }}>
           <div style={{ textAlign:'center', marginBottom:52 }}>
@@ -335,7 +469,7 @@ export default function Landing() {
               {
                 icon:'💸',
                 title:'Rent & tenant tracking',
-                items:['Track rent payments month by month','Manage all tenants in one place','Maintenance log with photos','Tenant issue reporting portal','Section 8 notices generated for you'],
+                items:['Track rent payments month by month','Manage all tenants in one place','Maintenance log with photos','Tenant issue reporting portal','Tax year export for your accountant','Section 8 notices generated for you'],
               },
               {
                 icon:'📊',
@@ -489,13 +623,38 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Testimonial placeholder */}
-          <div style={{ background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.15)', borderRadius:20, padding:'36px 32px', textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:14 }}>💬</div>
-            <div style={{ fontFamily:'var(--display)', fontSize:'clamp(18px,2.5vw,24px)', fontWeight:300, fontStyle:'italic', color:'var(--brand)', marginBottom:12, lineHeight:1.5 }}>
-              "I was paying £180 a month to my letting agent.<br/>Lettly does the same job for £8."
+          {/* Testimonials */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+            <div style={{ background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.15)', borderRadius:20, padding:'32px 28px' }}>
+              <div style={{ fontSize:28, color:'var(--brand)', marginBottom:14, fontFamily:'Georgia, serif', lineHeight:1, fontWeight:300 }}>&ldquo;</div>
+              <div style={{ fontFamily:'var(--display)', fontSize:'clamp(16px,2vw,20px)', fontWeight:300, fontStyle:'italic', color:'var(--brand)', marginBottom:16, lineHeight:1.6 }}>
+                I was paying £180 a month to my letting agent. Lettly does the same job for £8. I wish I had found it sooner.
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--brand)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <span style={{ color:'#fff', fontSize:13, fontWeight:600 }}>D</span>
+                </div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:500, color:'var(--text)' }}>David R.</div>
+                  <div style={{ fontSize:12, color:'var(--text-3)' }}>2 properties · Yorkshire</div>
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize:14, color:'var(--text-3)' }}>Early access landlord · 1-2 properties · Yorkshire</div>
+            <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:20, padding:'32px 28px' }}>
+              <div style={{ fontSize:28, color:'var(--text-3)', marginBottom:14, fontFamily:'Georgia, serif', lineHeight:1, fontWeight:300 }}>&ldquo;</div>
+              <div style={{ fontFamily:'var(--display)', fontSize:'clamp(16px,2vw,20px)', fontWeight:300, fontStyle:'italic', color:'var(--text)', marginBottom:16, lineHeight:1.6 }}>
+                The compliance dashboard is what sold it for me. Gas cert, EICR, EPC all in one place with reminders. I never have to think about it.
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--surface3)', border:'0.5px solid var(--border-strong)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <span style={{ color:'var(--text-2)', fontSize:13, fontWeight:600 }}>S</span>
+                </div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:500, color:'var(--text)' }}>Sarah M.</div>
+                  <div style={{ fontSize:12, color:'var(--text-3)' }}>3 properties · Manchester</div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -505,7 +664,7 @@ export default function Landing() {
             <div style={{ textAlign:'center', marginBottom:48 }}>
               <h2 className="section-title" style={{ marginBottom:14 }}>Simple, transparent pricing</h2>
               <p className="section-sub" style={{ maxWidth:480, margin:'0 auto 28px' }}>
-                Starts at £8/month for 1-2 properties. All features included. 14-day free trial. No contract.
+                Starts at £8/month for 1-2 properties. All features included. 14-day free trial. No contract. Tax year export included on all plans.
               </p>
               <div style={{ display:'inline-block', background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.2)', borderRadius:12, padding:'12px 28px', fontSize:15, fontWeight:600, color:'var(--brand)' }}>
                 Compare to agent fees of £100 to £200/month per property
