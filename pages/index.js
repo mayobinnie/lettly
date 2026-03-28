@@ -416,9 +416,9 @@ export default function Landing() {
               <div style={{ padding:'24px 20px', display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12 }}>
                 {/* Property cards */}
                 {[
-                  { name:'11 Northfield Ave', nation:'England', status:'lettable', checks:['Gas cert ✓','EICR ✓','EPC C ✓','Insurance ✓','Deposit ✓'] },
-                  { name:'7 Tower Hill Mews', nation:'England', status:'lettable', checks:['Gas cert ✓','EICR ✓','EPC B ✓','Insurance ✓','Deposit ✓'] },
-                  { name:'31 Northfield Ave', nation:'England', status:'warning', checks:['Gas cert ✓','EICR due 14/06 ⚠️','EPC D - upgrade 2028','Insurance ✓','Deposit ✓'] },
+                  { name:'42 Victoria Road', nation:'England', status:'lettable', checks:['Gas cert ✓','EICR ✓','EPC C ✓','Insurance ✓','Deposit ✓'] },
+                  { name:'8 Maple Close', nation:'England', status:'lettable', checks:['Gas cert ✓','EICR ✓','EPC B ✓','Insurance ✓','Deposit ✓'] },
+                  { name:'14 Ashbrook Lane', nation:'England', status:'warning', checks:['Gas cert ✓','EICR due 14/06 ⚠️','EPC D - upgrade 2028','Insurance ✓','Deposit ✓'] },
                 ].map(p => (
                   <div key={p.name} style={{ background:'var(--surface)', border:`0.5px solid ${p.status==='warning'?'#f5b8b4':'var(--border)'}`, borderRadius:12, padding:14 }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
