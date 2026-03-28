@@ -2282,6 +2282,155 @@ function TaxExportPanel({portfolio}){
 }
 
 
+
+/* ============================================================
+   RESOURCES TAB — Curated landlord resources
+   ============================================================ */
+function ResourcesTab(){
+  const[cat,setCat]=useState('associations')
+  const[search,setSearch]=useState('')
+
+  const RESOURCES = {
+    associations: {
+      label: 'Associations',
+      desc: 'Join a landlord association for legal helplines, template documents, and lobbying on your behalf. Most offer significant discounts vs the cost of a solicitor.',
+      items: [
+        {name:'NRLA',full:'National Residential Landlords Association',url:'https://www.nrla.org.uk',desc:'Largest UK landlord association with 100,000+ members. Legal helpline, template documents, training, lobbying. England and Wales focus.',tag:'England & Wales',tagCol:'blue'},
+        {name:'British Landlords Association',full:'BLA',url:'https://www.thebla.co.uk',desc:'Free and paid membership tiers. Legal advice, tenancy documents, landlord insurance deals.',tag:'UK-wide',tagCol:'green'},
+        {name:'iHowz',full:'iHowz Landlord Association',url:'https://www.ihowz.uk',desc:'Practical guides, legal updates, and a supportive community for independent landlords.',tag:'UK-wide',tagCol:'green'},
+        {name:'Scottish Association of Landlords',full:'SAL',url:'https://www.scottishlandlords.com',desc:'The leading Scottish landlord association. Essential for Scottish PRT compliance, tribunal support and landlord registration guidance.',tag:'Scotland',tagCol:'blue'},
+        {name:'The Landlord Association',full:'TLA',url:'https://www.landlordassociation.org.uk',desc:'Free membership with access to tenancy agreements, legal guides and landlord forums.',tag:'UK-wide',tagCol:'green'},
+        {name:'North West Landlords Association',full:'NWLA',url:'https://www.nwla.org.uk',desc:'Regional association covering the North West. Local council licensing updates and regional networking.',tag:'North West',tagCol:'amber'},
+        {name:'Guild of Residential Landlords',full:'GRL',url:'https://www.grl.co.uk',desc:'UK-wide association offering legal helpline, tenancy documents and rent guarantee insurance partnerships.',tag:'UK-wide',tagCol:'green'},
+        {name:'Westcountry Landlords Association',full:'WLA',url:'https://www.wlainfo.co.uk',desc:'Regional association for landlords in Devon, Cornwall and the South West.',tag:'South West',tagCol:'amber'},
+      ]
+    },
+    publications: {
+      label: 'News & Blogs',
+      desc: 'Stay on top of legislation changes, market trends and landlord news. These publications break stories on rental law changes before they hit mainstream news.',
+      items: [
+        {name:'LandlordZONE',url:'https://www.landlordzone.co.uk',desc:'One of the longest-running landlord news sites. Breaking news on legislation, court cases and policy. Essential reading for compliance updates.',tag:'News',tagCol:'blue'},
+        {name:'Landlord Today',url:'https://www.landlordtoday.co.uk',desc:'Daily news covering UK private rented sector. Good coverage of Renters Rights Act, EPC requirements and tax changes.',tag:'News',tagCol:'blue'},
+        {name:'Property118',url:'https://www.property118.com',desc:'News, analysis and strategy for UK property investors. Strong coverage of tax, Section 24, and incorporation. Active community.',tag:'News & forum',tagCol:'blue'},
+        {name:'Landlord Law Blog',full:'Tessa Shepperson',url:'https://www.landlordlawblog.co.uk',desc:'Written by solicitor Tessa Shepperson. Highly accurate legal analysis of landlord law. One of the most trustworthy sources for compliance guidance.',tag:'Legal',tagCol:'amber'},
+        {name:'LandlordVision Blog',url:'https://www.landlordvision.co.uk/blog',desc:'Practical guides on property management, accounting and compliance for independent landlords.',tag:'Guides',tagCol:'green'},
+        {name:'Property Investment Project',url:'https://www.propertyinvestmentproject.co.uk',desc:'Data-driven analysis of UK property investment. Good for yield calculations, area analysis and investment strategy.',tag:'Investment',tagCol:'green'},
+        {name:'PropertyHawk Blog',url:'https://www.propertyhawk.co.uk/blog',desc:'Practical landlord guides covering compliance, tenancy management and legislation.',tag:'Guides',tagCol:'green'},
+        {name:'Property Investor Today',url:'https://www.propertyinvestortoday.co.uk',desc:'News and analysis for property investors. Covers commercial and residential investment trends.',tag:'Investment',tagCol:'blue'},
+        {name:'Your Property Network Magazine',full:'YPN',url:'https://www.yourpropertynetwork.co.uk',desc:'Monthly magazine for UK property investors. Strategy, case studies and market analysis.',tag:'Magazine',tagCol:'amber'},
+      ]
+    },
+    forums: {
+      label: 'Forums & Communities',
+      desc: 'The most valuable free resource for landlords. Real experiences, peer advice and early warning on legislation changes — often faster than official channels.',
+      items: [
+        {name:'Property118 Forum',url:'https://www.property118.com',desc:'Active forum covering tax strategy, Section 24, lettings law and investment. Frequented by experienced portfolio landlords.',tag:'Tax & strategy',tagCol:'amber'},
+        {name:'LandlordZONE Forum',url:'https://www.landlordzone.co.uk/forum',desc:'High-volume forum with questions on compliance, difficult tenants, deposit disputes and legislation.',tag:'Compliance',tagCol:'blue'},
+        {name:'Property Tribes',url:'https://www.propertytribes.com',desc:'Friendly community covering all aspects of property investment and management. Good for beginner and intermediate landlords.',tag:'Community',tagCol:'green'},
+        {name:'NRLA Member Forum',url:'https://www.nrla.org.uk/forum',desc:'Members-only forum with high-quality moderated advice. Legal team occasionally answers directly.',tag:'Members only',tagCol:'amber'},
+        {name:'Property Forum',url:'https://www.propertyforum.com',desc:'General property discussion covering buy-to-let, development and commercial property.',tag:'General',tagCol:'green'},
+        {name:'Reddit — r/uklandlords',url:'https://www.reddit.com/r/uklandlords',desc:'43,000+ UK landlords. Anonymous and direct. Good for gauging sentiment and finding out what real landlords are worried about.',tag:'Reddit',tagCol:'blue'},
+      ]
+    },
+    podcasts: {
+      label: 'Podcasts',
+      desc: 'Learn while commuting. These cover property investment strategy, legislation and management — most have back catalogues covering everything a new landlord needs.',
+      items: [
+        {name:'The Property Podcast',full:'Rob & Rob',url:'https://www.propertyhub.net/podcast',desc:'The most popular UK property podcast. 500+ episodes covering investment strategy, market analysis and landlord news. Essential for any serious investor.',tag:'Investment',tagCol:'green'},
+        {name:'Listen Up Landlords',full:'NRLA',url:'https://www.nrla.org.uk',desc:'NRLA's official podcast. Deep dives into legislation, compliance and landlord rights. Highly accurate legal content.',tag:'Compliance',tagCol:'blue'},
+        {name:'Inside Property Investing',full:'Mike Stenhouse',url:'https://www.insidepropertyinvesting.com',desc:'Strategy-focused podcast for investors building a portfolio. Case studies from real landlords.',tag:'Strategy',tagCol:'amber'},
+        {name:'The Business of Property Podcast',url:'https://www.businessofproperty.com',desc:'Property as a business — systems, processes and scaling. Good for landlords wanting to professionalise.',tag:'Business',tagCol:'amber'},
+        {name:'Property Magic Podcast',full:'Simon Zutshi',url:'https://www.simonzutshi.com',desc:'Investment strategy, creative deals and portfolio building from one of the UK's most experienced property investors.',tag:'Investment',tagCol:'green'},
+        {name:'This Week in Property',full:'Richard Swan',url:'https://www.thisweekinproperty.com',desc:'Weekly roundup of UK property news, legislation changes and market data. Good for staying current.',tag:'News',tagCol:'blue'},
+        {name:'The Property Rebel Podcast',url:'https://www.thepropertyrebel.co.uk',desc:'Covers unconventional investment strategies, deal sourcing and portfolio growth tactics.',tag:'Strategy',tagCol:'amber'},
+      ]
+    },
+    youtube: {
+      label: 'YouTube',
+      desc: 'Video content for visual learners. These channels cover property investment, management and legislation in depth. Many episodes directly relevant to compliance.',
+      items: [
+        {name:'Succeed In Property',full:'Ranjan Bhattacharya',url:'https://www.youtube.com/@SucceedInProperty',desc:'Practical property investment education. Strong on tax, deal analysis and portfolio strategy. Experienced portfolio landlord.',tag:'Investment',tagCol:'green'},
+        {name:'Property Hub',full:'Rob & Rob',url:'https://www.youtube.com/@PropertyHub',desc:'Companion to The Property Podcast. Market analysis, investment strategies and Q&As. Largest UK property YouTube channel.',tag:'Investment',tagCol:'green'},
+        {name:'Moving Home with Charlie',full:'Charlie Lamdin',url:'https://www.youtube.com/@MovingHomewithCharlie',desc:'Market data and property trends. Less investment-focused — good for understanding buyer and tenant sentiment.',tag:'Market',tagCol:'blue'},
+        {name:'The Property Circle',full:'Ste Hamilton',url:'https://www.youtube.com/@SteHamilton',desc:'Practical property management and investment from a working landlord. Honest and relatable content.',tag:'Management',tagCol:'amber'},
+        {name:'Property Advisor',full:'Danny Valencia',url:'https://www.youtube.com/@DannyValencia',desc:'Investment analysis, deal breakdowns and portfolio strategy. Good data-driven content.',tag:'Investment',tagCol:'green'},
+        {name:'Lettings Agency Growth',full:'Christopher Watkin',url:'https://www.youtube.com/@ChristopherWatkin',desc:'Primarily for letting agents but has useful content on tenant management, legislation and market trends relevant to landlords.',tag:'Industry',tagCol:'blue'},
+      ]
+    }
+  }
+
+  const cats = Object.keys(RESOURCES)
+  const current = RESOURCES[cat]
+  const tagStyles = {
+    blue:  {bg:'#E6F1FB',col:'#0C447C'},
+    green: {bg:'#eaf3de',col:'#27500A'},
+    amber: {bg:'#FAEEDA',col:'#633806'},
+    red:   {bg:'#FCEBEB',col:'#791F1F'},
+  }
+
+  const filtered = search.trim()
+    ? cats.flatMap(k=>RESOURCES[k].items.map(i=>({...i,_cat:k}))).filter(i=>
+        (i.name+i.desc+(i.full||'')+(i.tag||'')).toLowerCase().includes(search.toLowerCase()))
+    : null
+
+  return<div className="fade-up">
+    {/* Header */}
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Landlord resources</div>
+      <div style={{fontSize:12,color:'var(--text-3)',lineHeight:1.6}}>Curated associations, publications, forums, podcasts and YouTube channels for UK landlords. Lettly does not have commercial relationships with any of these — they are here because they are genuinely useful.</div>
+    </div>
+
+    {/* Search */}
+    <div style={{marginBottom:16}}>
+      <input
+        value={search}
+        onChange={e=>setSearch(e.target.value)}
+        placeholder="Search resources..."
+        style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'9px 14px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}
+      />
+    </div>
+
+    {!filtered&&<div style={{display:'flex',gap:6,marginBottom:18,flexWrap:'wrap'}}>
+      {cats.map(k=><button key={k} onClick={()=>setCat(k)} style={{padding:'7px 16px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:cat===k?'var(--brand)':'var(--border)',background:cat===k?'var(--brand-light)':'var(--surface)',color:cat===k?'var(--brand)':'var(--text-2)'}}>{RESOURCES[k].label}</button>)}
+    </div>}
+
+    {filtered
+      ?<>
+        <div style={{fontSize:12,color:'var(--text-3)',marginBottom:12}}>{filtered.length} result{filtered.length!==1?'s':''} for "{search}"</div>
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {filtered.map((item,i)=><ResourceCard key={i} item={item} tagStyles={tagStyles} catLabel={RESOURCES[item._cat]?.label}/>)}
+        </div>
+      </>
+      :<>
+        <div style={{fontSize:12,color:'var(--text-2)',marginBottom:14,lineHeight:1.6}}>{current.desc}</div>
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {current.items.map((item,i)=><ResourceCard key={i} item={item} tagStyles={tagStyles}/>)}
+        </div>
+      </>
+    }
+
+    <div style={{marginTop:20,padding:'12px 14px',background:'var(--surface2)',borderRadius:10,fontSize:11,color:'var(--text-3)',lineHeight:1.7}}>
+      Know a resource that should be here? Email <a href="mailto:hello@lettly.co" style={{color:'var(--brand)'}}>hello@lettly.co</a> and we will review it for inclusion. We only list genuinely useful independent resources.
+    </div>
+  </div>
+}
+
+function ResourceCard({item,tagStyles,catLabel}){
+  const ts=tagStyles[item.tagCol]||tagStyles.green
+  return<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12}}>
+    <div style={{flex:1,minWidth:0}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4,flexWrap:'wrap'}}>
+        <span style={{fontSize:13,fontWeight:500,color:'var(--text)'}}>{item.name}</span>
+        {item.full&&<span style={{fontSize:11,color:'var(--text-3)'}}>{item.full}</span>}
+        {item.tag&&<span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,background:ts.bg,color:ts.col}}>{item.tag}</span>}
+        {catLabel&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:'var(--surface2)',color:'var(--text-3)'}}>{catLabel}</span>}
+      </div>
+      <div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.65}}>{item.desc}</div>
+    </div>
+    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{flexShrink:0,background:'var(--surface2)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 12px',fontSize:11,fontWeight:500,textDecoration:'none',whiteSpace:'nowrap'}}>Visit</a>
+  </div>
+}
+
 /* ============================================================
    TENANTS TAB — Find, check and track applicants
    ============================================================ */
@@ -2995,7 +3144,7 @@ function ConditionReport({portfolio,setPortfolio,userId}){
 }
 
 /* ---- Root ---- */
-const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'tenants',label:'Find & check tenants',short:'Tenants'},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
+const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'tenants',label:'Find & check tenants',short:'Tenants'},{id:'resources',label:'Resources',short:'Links'},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
 
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
@@ -3189,6 +3338,7 @@ export default function Dashboard(){
         {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
         {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
         {tab==='tenants'     &&<TenantsTab    portfolio={portfolio} setPortfolio={setPortfolio}/>}
+        {tab==='resources'   &&<ResourcesTab/>}
         {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='rent'        &&<RentTracker   portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='maintenance' &&<MaintenanceTab portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/>}
