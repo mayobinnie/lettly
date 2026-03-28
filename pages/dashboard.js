@@ -102,9 +102,10 @@ const DOC_META={gas_certificate:{label:'Gas cert',icon:'🔥',bg:'#fff8e1',fg:'#
 function DocBadge({type}){const m=DOC_META[type]||DOC_META.other;return<span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,background:m.bg,color:m.fg}}><span style={{fontSize:12}}>{m.icon}</span>{m.label}</span>}
 
 function UpIcon({color,size}){return<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>}
-function DropZone({onFiles,compact}){
+function DropZone({onFiles,compact,onScan,onManual}){
   const[over,setOver]=useState(false)
   const ref=useRef(null)
+  const hasCamera=typeof navigator!=='undefined'&&!!navigator.mediaDevices?.getUserMedia
   function drop(e){e.preventDefault();e.stopPropagation();setOver(false);const f=Array.from(e.dataTransfer.files);if(f.length)onFiles(f)}
   function dragOver(e){e.preventDefault();setOver(true)}
   function dragLeave(e){if(!e.currentTarget.contains(e.relatedTarget))setOver(false)}
@@ -112,17 +113,27 @@ function DropZone({onFiles,compact}){
   const input=<input ref={ref} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.bmp,.tiff,.gif,image/*,application/pdf" style={{display:'none'}} onChange={e=>{onFiles(Array.from(e.target.files));e.target.value=''}}/>
   if(compact){
     return(
-      <div onDragOver={dragOver} onDragLeave={dragLeave} onDrop={drop} onClick={pickFile}
-        style={{border:'1.5px dashed '+(over?'var(--brand)':'var(--border-strong)'),borderRadius:12,padding:'12px 16px',cursor:'pointer',background:over?'var(--brand-subtle)':'var(--surface)',display:'flex',alignItems:'center',gap:12,transition:'all 0.15s'}}>
-        {input}
-        <div style={{width:30,height:30,borderRadius:8,background:over?'var(--brand)':'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-          <UpIcon color={over?'#fff':'var(--brand)'} size={14}/>
+      <div style={{display:'flex',gap:8,alignItems:'stretch'}}>
+        <div onDragOver={dragOver} onDragLeave={dragLeave} onDrop={drop} onClick={pickFile}
+          style={{flex:1,border:'1.5px dashed '+(over?'var(--brand)':'var(--border-strong)'),borderRadius:12,padding:'12px 16px',cursor:'pointer',background:over?'var(--brand-subtle)':'var(--surface)',display:'flex',alignItems:'center',gap:12,transition:'all 0.15s'}}>
+          {input}
+          <div style={{width:30,height:30,borderRadius:8,background:over?'var(--brand)':'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <UpIcon color={over?'#fff':'var(--brand)'} size={14}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>Drop or click to add documents</div>
+            <div style={{fontSize:11,color:'var(--text-3)'}}>PDF, JPEG, HEIC — gas cert, EICR, EPC, insurance, tenancy</div>
+          </div>
+          <div style={{fontSize:11,color:'var(--brand)',fontWeight:500,flexShrink:0,whiteSpace:'nowrap'}}>{over?'Release':'Browse'}</div>
         </div>
-        <div style={{flex:1}}>
-          <div style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>Drop or click to add documents</div>
-          <div style={{fontSize:11,color:'var(--text-3)'}}>PDF, JPEG, HEIC — gas cert, EICR, EPC, insurance, tenancy</div>
-        </div>
-        <div style={{fontSize:11,color:'var(--brand)',fontWeight:500,flexShrink:0,whiteSpace:'nowrap'}}>{over?'Release to upload':'Browse'}</div>
+        {onScan&&hasCamera&&<button onClick={onScan} style={{flexShrink:0,border:'1.5px solid var(--border-strong)',borderRadius:12,padding:'0 16px',background:'var(--surface)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,transition:'all 0.15s',minWidth:60}} onMouseEnter={e=>{e.currentTarget.style.background='var(--brand-light)';e.currentTarget.style.borderColor='var(--brand)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--surface)';e.currentTarget.style.borderColor='var(--border-strong)'}}>
+          <span style={{fontSize:18}}>📷</span>
+          <span style={{fontSize:10,color:'var(--brand)',fontWeight:500}}>Scan</span>
+        </button>}
+        {onManual&&<button onClick={onManual} style={{flexShrink:0,border:'1.5px solid var(--border-strong)',borderRadius:12,padding:'0 16px',background:'var(--surface)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,transition:'all 0.15s',minWidth:60}} onMouseEnter={e=>{e.currentTarget.style.background='var(--brand-light)';e.currentTarget.style.borderColor='var(--brand)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--surface)';e.currentTarget.style.borderColor='var(--border-strong)'}}>
+          <span style={{fontSize:18}}>✏️</span>
+          <span style={{fontSize:10,color:'var(--brand)',fontWeight:500}}>Manual</span>
+        </button>}
       </div>
     )
   }
@@ -148,10 +159,457 @@ function DropZone({onFiles,compact}){
 }
 
 
-function QueueItem({item,onRetry}){const done=item.status==='done',err=item.status==='error',working=item.status==='reading'||item.status==='extracting';const ext=item.result?.extracted
+
+/* ---- Camera Scanner ---- */
+function CameraScanner({onFiles,onClose}){
+  const videoRef=useRef(null)
+  const canvasRef=useRef(null)
+  const streamRef=useRef(null)
+  const[phase,setPhase]=useState('stream') // stream | preview | processing
+  const[capturedImg,setCapturedImg]=useState(null)
+  const[error,setError]=useState(null)
+  const[torch,setTorch]=useState(false)
+  const[multiShots,setMultiShots]=useState([])
+
+  useEffect(()=>{
+    startCamera()
+    return()=>stopCamera()
+  },[])
+
+  async function startCamera(){
+    try{
+      const constraints={
+        video:{
+          facingMode:{ideal:'environment'},
+          width:{ideal:1920},height:{ideal:1080},
+          advanced:[{torch:false}]
+        }
+      }
+      const stream=await navigator.mediaDevices.getUserMedia(constraints)
+      streamRef.current=stream
+      if(videoRef.current){videoRef.current.srcObject=stream;videoRef.current.play()}
+      setError(null)
+    }catch(e){
+      setError('Camera not available. Please allow camera access or use the file upload instead.')
+    }
+  }
+
+  function stopCamera(){
+    streamRef.current?.getTracks().forEach(t=>t.stop())
+  }
+
+  async function toggleTorch(){
+    const track=streamRef.current?.getVideoTracks()[0]
+    if(!track)return
+    try{
+      await track.applyConstraints({advanced:[{torch:!torch}]})
+      setTorch(t=>!t)
+    }catch{}
+  }
+
+  function capture(){
+    const video=videoRef.current
+    const canvas=canvasRef.current
+    if(!video||!canvas)return
+    canvas.width=video.videoWidth
+    canvas.height=video.videoHeight
+    const ctx=canvas.getContext('2d')
+    // Auto-enhance: slight contrast + brightness boost for documents
+    ctx.filter='contrast(1.12) brightness(1.05)'
+    ctx.drawImage(video,0,0)
+    ctx.filter='none'
+    const dataUrl=canvas.toDataURL('image/jpeg',0.92)
+    setCapturedImg(dataUrl)
+    setPhase('preview')
+  }
+
+  function retake(){
+    setCapturedImg(null)
+    setPhase('stream')
+  }
+
+  function addAnother(){
+    // Add current shot to batch, go back to camera
+    setMultiShots(prev=>[...prev,capturedImg])
+    setCapturedImg(null)
+    setPhase('stream')
+  }
+
+  function confirmAndSend(useBatch=false){
+    setPhase('processing')
+    const shots=useBatch?[...multiShots,capturedImg]:[capturedImg]
+    const files=shots.map((dataUrl,i)=>{
+      const arr=dataUrl.split(',')
+      const mime=arr[0].match(/:(.*?);/)[1]
+      const bstr=atob(arr[1])
+      let n=bstr.length
+      const u8=new Uint8Array(n)
+      while(n--)u8[n]=bstr.charCodeAt(n)
+      const blob=new Blob([u8],{type:mime})
+      return new File([blob],`scan_${Date.now()}_${i+1}.jpg`,{type:'image/jpeg'})
+    })
+    stopCamera()
+    onFiles(files)
+    onClose()
+  }
+
+  const btnBase={border:'none',borderRadius:12,cursor:'pointer',fontFamily:'var(--font)',fontWeight:500,transition:'all 0.15s'}
+
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:1000,background:'#000',display:'flex',flexDirection:'column'}}>
+      {/* Header */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 18px',background:'rgba(0,0,0,0.6)',backdropFilter:'blur(8px)'}}>
+        <div style={{color:'#fff',fontSize:14,fontWeight:600}}>
+          {phase==='stream'?'Scan document':phase==='preview'?'Check scan':'Processing...'}
+        </div>
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          {multiShots.length>0&&<div style={{background:'var(--brand)',color:'#fff',borderRadius:20,padding:'3px 10px',fontSize:12,fontWeight:600}}>{multiShots.length} queued</div>}
+          <button onClick={()=>{stopCamera();onClose()}} style={{...btnBase,background:'rgba(255,255,255,0.15)',color:'#fff',padding:'7px 14px',fontSize:13}}>Cancel</button>
+        </div>
+      </div>
+
+      {/* Viewfinder / Preview */}
+      <div style={{flex:1,position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        {phase==='stream'&&<>
+          <video ref={videoRef} autoPlay playsInline muted style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+          {/* Document guide overlay */}
+          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+            <div style={{width:'85%',maxWidth:500,aspectRatio:'0.707',border:'2px solid rgba(255,255,255,0.5)',borderRadius:8,boxShadow:'0 0 0 9999px rgba(0,0,0,0.35)'}}>
+              <div style={{position:'absolute',top:-1,left:-1,width:20,height:20,borderTop:'3px solid var(--brand)',borderLeft:'3px solid var(--brand)',borderRadius:'8px 0 0 0'}}/>
+              <div style={{position:'absolute',top:-1,right:-1,width:20,height:20,borderTop:'3px solid var(--brand)',borderRight:'3px solid var(--brand)',borderRadius:'0 8px 0 0'}}/>
+              <div style={{position:'absolute',bottom:-1,left:-1,width:20,height:20,borderBottom:'3px solid var(--brand)',borderLeft:'3px solid var(--brand)',borderRadius:'0 0 0 8px'}}/>
+              <div style={{position:'absolute',bottom:-1,right:-1,width:20,height:20,borderBottom:'3px solid var(--brand)',borderRight:'3px solid var(--brand)',borderRadius:'0 0 8px 0'}}/>
+            </div>
+          </div>
+          <div style={{position:'absolute',bottom:100,left:0,right:0,textAlign:'center',color:'rgba(255,255,255,0.6)',fontSize:12}}>
+            Align document within the frame
+          </div>
+        </>}
+
+        {phase==='preview'&&capturedImg&&<>
+          <img src={capturedImg} alt="Captured" style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+          <div style={{position:'absolute',top:14,left:14,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(6px)',borderRadius:8,padding:'6px 12px',color:'#fff',fontSize:12}}>
+            Check clarity — text should be sharp and readable
+          </div>
+        </>}
+
+        {phase==='processing'&&<div style={{textAlign:'center',color:'#fff'}}>
+          <div style={{width:40,height:40,borderRadius:'50%',border:'3px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite',margin:'0 auto 16px'}}/>
+          <div style={{fontSize:15,fontWeight:500}}>Sending to Lettly AI...</div>
+        </div>}
+
+        {error&&<div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32,textAlign:'center'}}>
+          <div style={{fontSize:40,marginBottom:16}}>📷</div>
+          <div style={{color:'#fff',fontSize:14,lineHeight:1.7,marginBottom:24}}>{error}</div>
+          <button onClick={()=>{stopCamera();onClose()}} style={{...btnBase,background:'var(--brand)',color:'#fff',padding:'12px 28px',fontSize:14}}>Use file upload instead</button>
+        </div>}
+      </div>
+
+      {/* Controls */}
+      {!error&&phase!=='processing'&&<div style={{padding:'20px 24px 36px',background:'rgba(0,0,0,0.7)',backdropFilter:'blur(8px)',display:'flex',justifyContent:'center',alignItems:'center',gap:16}}>
+        {phase==='stream'&&<>
+          <button onClick={toggleTorch} style={{...btnBase,background:torch?'#fff3':'rgba(255,255,255,0.1)',color:'#fff',width:48,height:48,borderRadius:'50%',fontSize:20,display:'flex',alignItems:'center',justifyContent:'center'}} title="Torch">
+            {torch?'🔦':'💡'}
+          </button>
+          <button onClick={capture} style={{...btnBase,width:72,height:72,borderRadius:'50%',background:'#fff',border:'4px solid rgba(255,255,255,0.3)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <div style={{width:54,height:54,borderRadius:'50%',background:'var(--brand)'}}/>
+          </button>
+          {multiShots.length>0
+            ?<button onClick={()=>confirmAndSend(false)} style={{...btnBase,background:'var(--brand)',color:'#fff',padding:'12px 16px',fontSize:13,width:48,height:48,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}} title="Done">✓</button>
+            :<div style={{width:48}}/>
+          }
+        </>}
+
+        {phase==='preview'&&<>
+          <button onClick={retake} style={{...btnBase,background:'rgba(255,255,255,0.12)',color:'#fff',padding:'13px 24px',fontSize:14}}>
+            Retake
+          </button>
+          <button onClick={addAnother} style={{...btnBase,background:'rgba(255,255,255,0.12)',color:'#fff',padding:'13px 24px',fontSize:14}}>
+            + Add page
+          </button>
+          <button onClick={()=>confirmAndSend(multiShots.length>0)} style={{...btnBase,background:'var(--brand)',color:'#fff',padding:'13px 28px',fontSize:14,boxShadow:'0 4px 16px rgba(27,94,59,0.4)'}}>
+            {multiShots.length>0?`Send all ${multiShots.length+1}`:'Send to Lettly'}
+          </button>
+        </>}
+      </div>}
+
+      <canvas ref={canvasRef} style={{display:'none'}}/>
+    </div>
+  )
+}
+
+
+/* ---- Manual Entry Modal ---- */
+function ManualEntryModal({portfolio, onMerge, onClose}){
+  const props = portfolio.properties || []
+  const[docType, setDocType] = useState('')
+  const[propId, setPropId] = useState(props[0]?.id || '')
+  const[form, setForm] = useState({})
+  const[saved, setSaved] = useState(false)
+  const set = (k,v) => setForm(prev=>({...prev,[k]:v}))
+
+  const docTypes = [
+    {id:'gas_certificate',  icon:'🔥', label:'Gas Safety Certificate'},
+    {id:'eicr',             icon:'⚡', label:'EICR (Electrical)'},
+    {id:'epc_certificate',  icon:'🌿', label:'EPC Certificate'},
+    {id:'insurance',        icon:'🛡️', label:'Insurance Policy'},
+    {id:'tenancy_agreement',icon:'📄', label:'Tenancy Agreement'},
+    {id:'mortgage_offer',   icon:'🏦', label:'Mortgage / Finance'},
+  ]
+
+  function handleSave(){
+    const prop = props.find(p=>p.id===propId)
+    if(!prop && props.length > 0) return
+
+    // Build an extracted object that matches what mergeDoc expects
+    const extracted = {
+      documentType: docType,
+      property: {
+        address: prop?.address || form.address || '',
+        shortName: prop?.shortName || form.shortName || '',
+      },
+      compliance: {},
+      tenancy: {},
+      finance: {},
+      summary: `Manually entered ${docTypes.find(d=>d.id===docType)?.label||'document'} for ${prop?.shortName||'property'}.`
+    }
+
+    if(docType === 'gas_certificate'){
+      extracted.compliance.gas = {
+        date: form.gasDate || '',
+        due: form.gasDue || '',
+        engineer: form.engineer || '',
+        gasSafeNo: form.gasSafeNo || '',
+        result: 'Pass',
+      }
+    }
+    if(docType === 'eicr'){
+      extracted.compliance.eicr = {
+        date: form.eicrDate || '',
+        due: form.eicrDue || '',
+        result: form.eicrResult || 'Satisfactory',
+        inspector: form.inspector || '',
+      }
+    }
+    if(docType === 'epc_certificate'){
+      extracted.compliance.epc = {
+        rating: form.epcRating || '',
+        expiry: form.epcExpiry || '',
+        score: form.epcScore ? Number(form.epcScore) : undefined,
+      }
+    }
+    if(docType === 'insurance'){
+      extracted.compliance.insurance = {
+        insurer: form.insurer || '',
+        policyNumber: form.policyNo || '',
+        renewal: form.insuranceRenewal || '',
+        type: form.insuranceType || 'Landlord',
+        premium: form.premium ? Number(form.premium) : undefined,
+      }
+    }
+    if(docType === 'tenancy_agreement'){
+      extracted.tenancy = {
+        tenantName: form.tenantName || '',
+        tenantPhone: form.tenantPhone || '',
+        tenantEmail: form.tenantEmail || '',
+        rent: form.rent ? Number(form.rent) : undefined,
+        depositAmount: form.depositAmount ? Number(form.depositAmount) : undefined,
+        depositScheme: form.depositScheme || '',
+        startDate: form.startDate || '',
+        endDate: form.endDate || '',
+      }
+    }
+    if(docType === 'mortgage_offer'){
+      extracted.finance = {
+        mortgage: form.mortgage ? Number(form.mortgage) : undefined,
+        lender: form.lender || '',
+        rate: form.rate ? Number(form.rate) : undefined,
+        fixedEnd: form.fixedEnd || '',
+        monthlyPayment: form.monthlyPayment ? Number(form.monthlyPayment) : undefined,
+      }
+    }
+
+    onMerge(extracted)
+    setSaved(true)
+    setTimeout(()=>onClose(), 1200)
+  }
+
+  const inp = {
+    background:'var(--surface)',border:'0.5px solid var(--border-strong)',
+    borderRadius:8,padding:'9px 12px',fontFamily:'var(--font)',
+    fontSize:13,color:'var(--text)',outline:'none',width:'100%',boxSizing:'border-box'
+  }
+  const lbl = {display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',
+    marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}
+  const field = (label,key,type='text',placeholder='') => (
+    <div style={{marginBottom:14}}>
+      <label style={lbl}>{label}</label>
+      <input type={type} value={form[key]||''} onChange={e=>set(key,e.target.value)}
+        placeholder={placeholder} style={inp}/>
+    </div>
+  )
+  const grid2 = {display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}
+
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
+      <div style={{background:'var(--surface)',borderRadius:'20px 20px 0 0',width:'100%',maxWidth:620,maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 -8px 40px rgba(0,0,0,0.12)'}}>
+
+        {/* Header */}
+        <div style={{padding:'18px 20px 16px',flexShrink:0,borderBottom:'0.5px solid var(--border)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{fontFamily:'var(--display)',fontSize:20,fontWeight:400}}>Enter details manually</div>
+            <button onClick={onClose} style={{background:'var(--surface2)',border:'none',borderRadius:'50%',width:30,height:30,cursor:'pointer',fontSize:16,color:'var(--text-2)',display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
+          </div>
+          <div style={{fontSize:13,color:'var(--text-3)',marginTop:4}}>Type in details from a document, certificate or policy</div>
+        </div>
+
+        <div style={{flex:1,overflowY:'auto',padding:20}}>
+
+          {saved ? (
+            <div style={{textAlign:'center',padding:'40px 20px'}}>
+              <div style={{fontSize:40,marginBottom:12}}>✅</div>
+              <div style={{fontFamily:'var(--display)',fontSize:20,fontWeight:300,color:'var(--brand)'}}>Saved to your portfolio</div>
+            </div>
+          ) : (<>
+
+          {/* Step 1: pick property */}
+          {props.length > 0 && (
+            <div style={{marginBottom:20}}>
+              <label style={lbl}>Which property?</label>
+              <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+                {props.map(p=>(
+                  <button key={p.id} onClick={()=>setPropId(p.id)} style={{padding:'8px 16px',borderRadius:10,fontSize:13,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:propId===p.id?'var(--brand)':'var(--border)',background:propId===p.id?'var(--brand-light)':'var(--surface)',color:propId===p.id?'var(--brand)':'var(--text-2)',transition:'all 0.12s'}}>
+                    {p.shortName}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: pick document type */}
+          <div style={{marginBottom:20}}>
+            <label style={lbl}>Document type</label>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+              {docTypes.map(d=>(
+                <button key={d.id} onClick={()=>{setDocType(d.id);setForm({})}} style={{padding:'10px 8px',borderRadius:10,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:docType===d.id?'var(--brand)':'var(--border)',background:docType===d.id?'var(--brand-light)':'var(--surface)',color:docType===d.id?'var(--brand)':'var(--text-2)',textAlign:'center',transition:'all 0.12s',lineHeight:1.4}}>
+                  <div style={{fontSize:20,marginBottom:4}}>{d.icon}</div>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Step 3: fields for chosen type */}
+          {docType==='gas_certificate'&&<div style={{background:'var(--bg)',borderRadius:12,padding:16}}>
+            <div style={{fontSize:13,fontWeight:500,marginBottom:14,color:'var(--text)'}}>🔥 Gas Safety Certificate</div>
+            <div style={grid2}>
+              <div>{field('Certificate date','gasDate','date')}</div>
+              <div>{field('Next inspection due','gasDue','date')}</div>
+              <div>{field("Engineer's name",'engineer','text','e.g. John Smith')}</div>
+              <div>{field('Gas Safe No.','gasSafeNo','text','e.g. 123456')}</div>
+            </div>
+          </div>}
+
+          {docType==='eicr'&&<div style={{background:'var(--bg)',borderRadius:12,padding:16}}>
+            <div style={{fontSize:13,fontWeight:500,marginBottom:14,color:'var(--text)'}}>⚡ EICR (Electrical Inspection)</div>
+            <div style={grid2}>
+              <div>{field('Inspection date','eicrDate','date')}</div>
+              <div>{field('Next inspection due','eicrDue','date')}</div>
+              <div>{field("Inspector's name",'inspector','text','e.g. Jane Smith')}</div>
+              <div style={{marginBottom:14}}>
+                <label style={lbl}>Result</label>
+                <select value={form.eicrResult||'Satisfactory'} onChange={e=>set('eicrResult',e.target.value)} style={{...inp}}>
+                  <option>Satisfactory</option>
+                  <option>Unsatisfactory</option>
+                </select>
+              </div>
+            </div>
+          </div>}
+
+          {docType==='epc_certificate'&&<div style={{background:'var(--bg)',borderRadius:12,padding:16}}>
+            <div style={{fontSize:13,fontWeight:500,marginBottom:14,color:'var(--text)'}}>🌿 EPC Certificate</div>
+            <div style={grid2}>
+              <div style={{marginBottom:14}}>
+                <label style={lbl}>EPC Rating</label>
+                <select value={form.epcRating||''} onChange={e=>set('epcRating',e.target.value)} style={{...inp}}>
+                  {['','A','B','C','D','E','F','G'].map(r=><option key={r} value={r}>{r||'Select rating'}</option>)}
+                </select>
+              </div>
+              <div>{field('Expiry date','epcExpiry','date')}</div>
+              <div>{field('Energy score (SAP)','epcScore','number','e.g. 72')}</div>
+            </div>
+          </div>}
+
+          {docType==='insurance'&&<div style={{background:'var(--bg)',borderRadius:12,padding:16}}>
+            <div style={{fontSize:13,fontWeight:500,marginBottom:14,color:'var(--text)'}}>🛡️ Insurance Policy</div>
+            <div style={grid2}>
+              <div>{field('Insurer','insurer','text','e.g. LV=')}</div>
+              <div>{field('Policy number','policyNo','text','e.g. POL123456')}</div>
+              <div>{field('Renewal date','insuranceRenewal','date')}</div>
+              <div>{field('Annual premium (£)','premium','number','e.g. 211')}</div>
+              <div style={{marginBottom:14}}>
+                <label style={lbl}>Policy type</label>
+                <select value={form.insuranceType||'Landlord'} onChange={e=>set('insuranceType',e.target.value)} style={{...inp}}>
+                  <option>Landlord</option>
+                  <option>Home</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+          </div>}
+
+          {docType==='tenancy_agreement'&&<div style={{background:'var(--bg)',borderRadius:12,padding:16}}>
+            <div style={{fontSize:13,fontWeight:500,marginBottom:14,color:'var(--text)'}}>📄 Tenancy Agreement</div>
+            <div style={grid2}>
+              <div>{field('Tenant full name','tenantName','text','e.g. Amanda Byrne')}</div>
+              <div>{field('Tenant phone','tenantPhone','text','e.g. 07700 000000')}</div>
+              <div>{field('Tenant email','tenantEmail','email','e.g. tenant@email.com')}</div>
+              <div>{field('Monthly rent (£)','rent','number','e.g. 900')}</div>
+              <div>{field('Tenancy start','startDate','date')}</div>
+              <div>{field('Tenancy end','endDate','date')}</div>
+              <div>{field('Deposit amount (£)','depositAmount','number','e.g. 900')}</div>
+              <div style={{marginBottom:14}}>
+                <label style={lbl}>Deposit scheme</label>
+                <select value={form.depositScheme||''} onChange={e=>set('depositScheme',e.target.value)} style={{...inp}}>
+                  {['','DPS Custodial','DPS Insured','TDS Custodial','TDS Insured','mydeposits','SafeDeposits Scotland'].map(s=><option key={s} value={s}>{s||'Select scheme'}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>}
+
+          {docType==='mortgage_offer'&&<div style={{background:'var(--bg)',borderRadius:12,padding:16}}>
+            <div style={{fontSize:13,fontWeight:500,marginBottom:14,color:'var(--text)'}}>🏦 Mortgage / Finance</div>
+            <div style={grid2}>
+              <div>{field('Lender','lender','text','e.g. Halifax')}</div>
+              <div>{field('Mortgage balance (£)','mortgage','number','e.g. 75000')}</div>
+              <div>{field('Interest rate (%)','rate','number','e.g. 5.24')}</div>
+              <div>{field('Monthly payment (£)','monthlyPayment','number','e.g. 340')}</div>
+              <div>{field('Fixed rate end','fixedEnd','date')}</div>
+            </div>
+          </div>}
+
+          </>)}
+        </div>
+
+        {/* Footer */}
+        {!saved&&<div style={{padding:'14px 20px',borderTop:'0.5px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0,background:'var(--surface)'}}>
+          <button onClick={onClose} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 18px',fontSize:13,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
+          <button onClick={handleSave} disabled={!docType} style={{background:docType?'var(--brand)':'var(--border)',color:'#fff',border:'none',borderRadius:8,padding:'9px 28px',fontSize:13,fontWeight:500,cursor:docType?'pointer':'default',transition:'background 0.15s'}}>
+            Save to portfolio
+          </button>
+        </div>}
+      </div>
+    </div>
+  )
+}
+
+function QueueItem({item,onRetry,onManual}){const done=item.status==='done',err=item.status==='error',working=item.status==='reading'||item.status==='extracting';const ext=item.result?.extracted
 return<div className="scale-in" style={{display:'flex',gap:12,alignItems:'flex-start',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}><div style={{width:38,height:38,borderRadius:9,flexShrink:0,background:done?'var(--brand-light)':err?'var(--red-bg)':'var(--surface2)',display:'flex',alignItems:'center',justifyContent:'center'}}>{done&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}{err&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>}{working&&<div style={{width:18,height:18,borderRadius:'50%',border:'2px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/>}</div><div style={{flex:1,minWidth:0}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:done&&ext?5:0}}><div style={{fontSize:12,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'60%'}}>{item.name}</div><Pill type={done?'green':err?'red':item.status==='extracting'?'amber':'grey'}>{done?'Extracted':err?'Error':item.status==='extracting'?'Analysing':'Reading'}</Pill></div>{done&&ext&&<div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.6}}>{ext.summary}{ext.property?.shortName&&<span style={{marginLeft:6,color:'var(--brand)',fontWeight:500}}>- {ext.property.shortName}</span>}</div>}{done&&ext?.documentType&&<div style={{marginTop:6}}><DocBadge type={ext.documentType}/></div>}{err&&<div style={{display:'flex',alignItems:'center',gap:8,marginTop:3,flexWrap:'wrap'}}>
-          <span style={{fontSize:11,color:'var(--red)'}}>{item.result?.error||'Could not read this file.'}</span>
-          {onRetry&&<button onClick={()=>onRetry(item)} style={{fontSize:10,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:5,padding:'2px 8px',cursor:'pointer',whiteSpace:'nowrap'}}>Try again</button>}
+          <span style={{fontSize:11,color:'var(--red)',lineHeight:1.5,display:'block',marginBottom:4}}>{item.result?.error||'Could not read this file.'}</span>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            {onRetry&&<button onClick={()=>onRetry(item)} style={{fontSize:10,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:5,padding:'3px 9px',cursor:'pointer',whiteSpace:'nowrap'}}>Try again</button>}
+            {onManual&&<button onClick={onManual} style={{fontSize:10,color:'var(--text-2)',background:'var(--surface2)',border:'0.5px solid var(--border)',borderRadius:5,padding:'3px 9px',cursor:'pointer',whiteSpace:'nowrap'}}>Enter manually instead</button>}
+          </div>
         </div>}</div></div>}
 
 /* ---- Onboarding Wizard ---- */
@@ -303,7 +761,7 @@ function FirstTimeLandlordChecklist({nation,checkedItems,onToggle}){
 }
 
 /* ---- Property Form ---- */
-const EMPTY_PROP={shortName:'',address:'',nation:'',ownership:'Personal',purchasePrice:'',currentValue:'',mortgage:'',lender:'',rate:'',fixedEnd:'',monthlyPayment:'',ercRate:'',rent:'',tenantName:'',tenantPhone:'',tenantEmail:'',tenancyStart:'',tenancyEnd:'',depositAmount:'',depositScheme:'',gasDue:'',eicrDue:'',epcRating:'',epcExpiry:'',insurer:'',policyNo:'',insuranceRenewal:'',insuranceType:'',notes:''}
+const EMPTY_PROP={shortName:'',address:'',nation:'',ownership:'Personal',purchasePrice:'',purchaseDate:'',currentValue:'',mortgage:'',lender:'',rate:'',fixedEnd:'',monthlyPayment:'',ercRate:'',rent:'',tenantName:'',tenantPhone:'',tenantEmail:'',tenancyStart:'',tenancyEnd:'',depositAmount:'',depositScheme:'',gasDue:'',eicrDue:'',epcRating:'',epcExpiry:'',insurer:'',policyNo:'',insuranceRenewal:'',insuranceType:'',notes:''}
 function PropertyForm({initial,onSave,onDelete,onClose}){
   const[p,setP]=useState({...EMPTY_PROP,...initial})
   const set=(k,v)=>setP(prev=>({...prev,[k]:v}))
@@ -361,6 +819,7 @@ function PropertyForm({initial,onSave,onDelete,onClose}){
           <Select label="Ownership" value={p.ownership} onChange={v=>set('ownership',v)} options={['Personal','Ltd Company','Joint']}/>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}}>
             <Input label="Purchase price" value={p.purchasePrice} onChange={v=>set('purchasePrice',v)} placeholder="e.g. 95000" type="number"/>
+            <Input label="Purchase date" value={p.purchaseDate} onChange={v=>set('purchaseDate',v)} placeholder="DD/MM/YYYY"/>
             <Input label="Current value (est.)" value={p.currentValue} onChange={v=>set('currentValue',v)} placeholder="e.g. 150000" type="number"/>
           </div>
           {p.currentValue&&p.purchasePrice&&<div style={{fontSize:12,color:'var(--green)',marginBottom:14}}>Estimated gain: {fmt(Number(p.currentValue)-Number(p.purchasePrice))}</div>}
@@ -660,62 +1119,165 @@ function GrowthChartWidget({props}){
 }
 
 function PortfolioScore({props,checklist,urgent}){
-  // Calculate a portfolio health score out of 100
-  const scores = []
-  // Compliance score
-  const complianceItems = ['gasDue','eicrDue','insuranceRenewal']
+  const[open,setOpen]=useState(null) // which section is expanded
+
+  // ── Compliance ──────────────────────────────────────────
+  const complianceItems = []
   const complianceScore = props.length > 0
     ? props.reduce((s,p) => {
         let ps = 0
         if(p.gasDue && dueSoon(p.gasDue) !== 'overdue') ps += 33
+        else complianceItems.push({prop:p.shortName, issue:'Gas Safety Certificate missing or overdue', fix:'Upload your gas cert or enter details manually', icon:'🔥', done:false})
         if(p.eicrDue && dueSoon(p.eicrDue) !== 'overdue') ps += 33
+        else complianceItems.push({prop:p.shortName, issue:'EICR (electrical inspection) missing or overdue', fix:'Upload your EICR or enter the date manually', icon:'⚡', done:false})
         if(p.insurer && p.insuranceType?.toLowerCase() !== 'home') ps += 34
+        else complianceItems.push({prop:p.shortName, issue:p.insurer?'Home insurance detected — must be landlord policy':'No insurance recorded', fix:'Upload your insurance document or enter details manually', icon:'🛡️', done:false})
         return s + ps
       }, 0) / props.length
     : 0
-  scores.push({label:'Compliance', score:Math.round(complianceScore), color:'#1e6e35'})
+  const compliancePct = Math.round(complianceScore)
 
-  // Financial health
+  // What's good in compliance
+  props.forEach(p=>{
+    if(p.gasDue && dueSoon(p.gasDue) !== 'overdue') complianceItems.push({prop:p.shortName, issue:'Gas Safety Certificate valid', fix:'', icon:'✅', done:true})
+    if(p.eicrDue && dueSoon(p.eicrDue) !== 'overdue') complianceItems.push({prop:p.shortName, issue:'EICR valid', fix:'', icon:'✅', done:true})
+    if(p.epcRating) complianceItems.push({prop:p.shortName, issue:`EPC rating ${p.epcRating} recorded`, fix:['F','G'].includes(p.epcRating?.toUpperCase())?'EPC below E — upgrade required before letting':'', icon:['A','B','C'].includes(p.epcRating?.toUpperCase())?'✅':'⚠️', done:['A','B','C','D','E'].includes(p.epcRating?.toUpperCase())})
+    else complianceItems.push({prop:p.shortName, issue:'EPC rating not recorded', fix:'Upload your EPC certificate or enter the rating manually', icon:'🌿', done:false})
+  })
+
+  // ── Financial health ─────────────────────────────────────
   const totalRent = props.reduce((s,p)=>s+(Number(p.rent)||0),0)
   const totalPayment = props.reduce((s,p)=>s+(Number(p.monthlyPayment)||0),0)
   const coverage = totalPayment > 0 ? totalRent / totalPayment : 0
   const finScore = coverage >= 1.5 ? 100 : coverage >= 1.25 ? 75 : coverage >= 1.0 ? 50 : 25
-  scores.push({label:'Financial health', score:finScore, color:'#0C447C'})
+  const finItems = []
+  props.forEach(p=>{
+    if(!p.rent) finItems.push({prop:p.shortName, issue:'Monthly rent not recorded', fix:'Edit this property and add the monthly rent amount', icon:'💸', done:false})
+    else finItems.push({prop:p.shortName, issue:`Rent £${Number(p.rent).toLocaleString()}/mo recorded`, fix:'', icon:'✅', done:true})
+    if(!p.currentValue) finItems.push({prop:p.shortName, issue:'Property value not recorded', fix:'Edit this property and add an estimated current value — needed for yield and equity calculations', icon:'🏠', done:false})
+    else finItems.push({prop:p.shortName, issue:`Value £${Number(p.currentValue).toLocaleString()} recorded`, fix:'', icon:'✅', done:true})
+    if(!p.mortgage && !p.lender) finItems.push({prop:p.shortName, issue:'Mortgage details not recorded', fix:'Upload your mortgage offer or enter balance, lender and rate manually', icon:'🏦', done:false})
+    else finItems.push({prop:p.shortName, issue:`Mortgage with ${p.lender||'lender'} recorded`, fix:'', icon:'✅', done:true})
+    if(p.rent && p.monthlyPayment){
+      const net = Number(p.rent) - Number(p.monthlyPayment)
+      if(net < 0) finItems.push({prop:p.shortName, issue:`Negative cashflow: -£${Math.abs(net)}/mo`, fix:'Review rent level or remortgage to reduce monthly payment', icon:'⚠️', done:false})
+      else finItems.push({prop:p.shortName, issue:`Positive cashflow +£${net}/mo`, fix:'', icon:'✅', done:true})
+    }
+  })
 
-  // Data completeness
-  const fields = ['shortName','address','rent','currentValue','mortgage','tenantName','gasDue','eicrDue','epcRating','insurer']
+  // ── Data completeness ────────────────────────────────────
+  const dataFields = [
+    {key:'shortName',      label:'Property name',       fix:'Edit the property and add a name'},
+    {key:'address',        label:'Full address',         fix:'Edit the property and add the full address with postcode'},
+    {key:'rent',           label:'Monthly rent',         fix:'Edit the property or enter details manually'},
+    {key:'currentValue',   label:'Current value',        fix:'Edit the property and add an estimated value'},
+    {key:'mortgage',       label:'Mortgage balance',     fix:'Upload your mortgage offer or enter manually'},
+    {key:'tenantName',     label:'Tenant name',          fix:'Upload your tenancy agreement or enter tenant details manually'},
+    {key:'gasDue',         label:'Gas cert date',        fix:'Upload your gas certificate or enter manually'},
+    {key:'eicrDue',        label:'EICR date',            fix:'Upload your EICR or enter manually'},
+    {key:'epcRating',      label:'EPC rating',           fix:'Upload your EPC certificate or enter manually'},
+    {key:'insurer',        label:'Insurance details',    fix:'Upload your insurance policy or enter manually'},
+  ]
+  const dataItems = []
+  props.forEach(p=>{
+    dataFields.forEach(f=>{
+      dataItems.push({prop:p.shortName, issue:p[f.key]?`${f.label} recorded`:`${f.label} missing`, fix:p[f.key]?'':f.fix, icon:p[f.key]?'✅':'○', done:!!p[f.key]})
+    })
+  })
   const dataScore = props.length > 0
-    ? Math.round(props.reduce((s,p) => s + fields.filter(f=>p[f]).length/fields.length*100, 0) / props.length)
+    ? Math.round(props.reduce((s,p)=>s+dataFields.filter(f=>p[f.key]).length/dataFields.length*100,0)/props.length)
     : 0
-  scores.push({label:'Data completeness', score:dataScore, color:'#633806'})
 
-  const overall = scores.length > 0 ? Math.round(scores.reduce((s,x)=>s+x.score,0)/scores.length) : 0
+  const overall = props.length > 0 ? Math.round((compliancePct + finScore + dataScore) / 3) : 0
+  const overallColor = overall >= 75 ? 'var(--green)' : overall >= 50 ? '#633806' : 'var(--red)'
+  const overallBg = overall >= 75 ? 'var(--green-bg)' : overall >= 50 ? '#fff8e1' : 'var(--red-bg)'
+
+  const sections = [
+    {id:'compliance', label:'Compliance', score:compliancePct, color:'#1e6e35', items:complianceItems,
+     description:'Gas certs, EICRs, EPC rating, and valid landlord insurance'},
+    {id:'finance',    label:'Financial health', score:finScore, color:'#0C447C', items:finItems,
+     description:'Rent recorded, property value, mortgage details, and cashflow'},
+    {id:'data',       label:'Data completeness', score:dataScore, color:'#633806', items:dataItems,
+     description:'How complete your property records are across all fields'},
+  ]
 
   return <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-      <div style={{fontSize:13,fontWeight:500}}>Portfolio health score</div>
+    {/* Header */}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <div>
+        <div style={{fontSize:13,fontWeight:500,marginBottom:2}}>Portfolio health score</div>
+        <div style={{fontSize:11,color:'var(--text-3)'}}>Click any section to see what to improve</div>
+      </div>
       <div style={{display:'flex',alignItems:'center',gap:8}}>
-        <div style={{width:44,height:44,borderRadius:'50%',background:overall>=75?'var(--green-bg)':overall>=50?'#fff8e1':'var(--red-bg)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <span style={{fontSize:14,fontWeight:700,color:overall>=75?'var(--green)':overall>=50?'#633806':'var(--red)'}}>{overall}</span>
+        <div style={{width:52,height:52,borderRadius:'50%',background:overallBg,display:'flex',alignItems:'center',justifyContent:'center',border:`2px solid ${overallColor}`}}>
+          <span style={{fontSize:16,fontWeight:700,color:overallColor}}>{overall}</span>
         </div>
         <span style={{fontSize:12,color:'var(--text-3)'}}>/100</span>
       </div>
     </div>
-    {scores.map(s=>(
-      <div key={s.label} style={{marginBottom:10}}>
-        <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text-2)',marginBottom:4}}>
-          <span>{s.label}</span><span style={{fontWeight:500}}>{s.score}%</span>
-        </div>
-        <div style={{height:5,borderRadius:3,background:'var(--surface2)',overflow:'hidden'}}>
-          <div style={{width:s.score+'%',height:'100%',background:s.color,borderRadius:3,transition:'width 0.6s ease'}}/>
-        </div>
-      </div>
-    ))}
-    {props.length===0&&<div style={{fontSize:12,color:'var(--text-3)',textAlign:'center',padding:'8px 0'}}>Add properties to see your score</div>}
+
+    {props.length===0
+      ? <div style={{fontSize:12,color:'var(--text-3)',textAlign:'center',padding:'8px 0'}}>Add properties to see your score</div>
+      : sections.map(s=>{
+          const isOpen = open === s.id
+          const missing = s.items.filter(i=>!i.done)
+          return <div key={s.id} style={{marginBottom:8,border:'0.5px solid var(--border)',borderRadius:10,overflow:'hidden'}}>
+            {/* Section header - clickable */}
+            <button onClick={()=>setOpen(isOpen?null:s.id)} style={{width:'100%',background:isOpen?'var(--brand-subtle)':'var(--surface2)',border:'none',padding:'10px 14px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,fontFamily:'var(--font)'}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5}}>
+                  <span style={{fontSize:12,fontWeight:600,color:isOpen?'var(--brand)':'var(--text)'}}>{s.label}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    {missing.length > 0 && <span style={{fontSize:10,background:'var(--red-bg)',color:'var(--red)',borderRadius:20,padding:'1px 7px',fontWeight:500}}>{missing.length} to fix</span>}
+                    <span style={{fontSize:12,fontWeight:600,color:s.color}}>{s.score}%</span>
+                    <span style={{fontSize:10,color:'var(--text-3)',transform:isOpen?'rotate(180deg)':'none',transition:'transform 0.2s',display:'inline-block'}}>▼</span>
+                  </div>
+                </div>
+                <div style={{height:5,borderRadius:3,background:'var(--surface3)',overflow:'hidden'}}>
+                  <div style={{width:s.score+'%',height:'100%',background:s.color,borderRadius:3,transition:'width 0.6s ease'}}/>
+                </div>
+              </div>
+            </button>
+
+            {/* Expanded detail */}
+            {isOpen && <div style={{padding:'12px 14px',background:'var(--bg)',borderTop:'0.5px solid var(--border)'}}>
+              <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10}}>{s.description}</div>
+              {/* Missing items first */}
+              {missing.length > 0 && <>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--red)',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.4px'}}>Action needed</div>
+                {missing.map((item,i)=>(
+                  <div key={i} style={{display:'flex',gap:10,padding:'8px 10px',background:'var(--red-bg)',borderRadius:8,marginBottom:6,alignItems:'flex-start'}}>
+                    <span style={{fontSize:14,flexShrink:0}}>{item.icon}</span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:2}}>{item.prop}: {item.issue}</div>
+                      {item.fix&&<div style={{fontSize:11,color:'var(--text-2)',lineHeight:1.5}}>How to fix: {item.fix}</div>}
+                    </div>
+                  </div>
+                ))}
+              </>}
+              {/* Done items */}
+              {s.items.filter(i=>i.done).length > 0 && <>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--green)',marginBottom:6,marginTop:missing.length>0?10:0,textTransform:'uppercase',letterSpacing:'0.4px'}}>Already in place</div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:4}}>
+                  {s.items.filter(i=>i.done).map((item,i)=>(
+                    <div key={i} style={{display:'flex',gap:6,padding:'5px 8px',background:'var(--green-bg)',borderRadius:6,alignItems:'center'}}>
+                      <span style={{fontSize:12,flexShrink:0}}>{item.icon}</span>
+                      <div style={{fontSize:11,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.prop}: {item.issue}</div>
+                    </div>
+                  ))}
+                </div>
+              </>}
+              {s.score < 100 && <div style={{marginTop:10,padding:'8px 10px',background:'var(--brand-light)',borderRadius:8,fontSize:11,color:'var(--brand)',lineHeight:1.5}}>
+                <strong>To reach 100%:</strong> {s.id==='compliance'?'Every property needs a valid gas cert, EICR, EPC rating, and landlord insurance policy.':s.id==='finance'?'Add rent, current value, and mortgage details to every property. Positive cashflow on all properties scores highest.':'Complete all 10 fields for every property — upload documents or use manual entry.'}
+              </div>}
+            </div>}
+          </div>
+        })
+    }
   </div>
 }
 
-function Overview({portfolio,onAddDocs,user,onToggleCheck,setTab}){
+function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab}){
   const props=portfolio.properties||[]
   const totalRent=props.reduce((s,p)=>s+(Number(p.rent)||0),0)
   const totalPayment=props.reduce((s,p)=>s+(Number(p.monthlyPayment)||0),0)
@@ -809,9 +1371,9 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck,setTab}){
     </div>}
 
     {props.length===0
-      ?<DropZone onFiles={onAddDocs}/>
+      ?<DropZone onFiles={onAddDocs} onScan={onScan} onManual={onManual}/>
       :<>
-        <DropZone onFiles={onAddDocs} compact/>
+        <DropZone onFiles={onAddDocs} compact onScan={onScan} onManual={onManual}/>
       <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
           <div style={{fontSize:13,fontWeight:500}}>Compliance timeline</div>
@@ -869,12 +1431,12 @@ function RentabilityChecklist({prop}){
 }
 
 /* ---- Properties ---- */
-function Properties({portfolio,onAddDocs,onEdit,onAdd}){
+function Properties({portfolio,onAddDocs,onScan,onManual,onEdit,onAdd}){
   const props=portfolio.properties||[]
   const col=s=>s==='valid'?'var(--green)':s==='due-soon'?'var(--amber)':s==='overdue'?'var(--red)':'var(--text-3)'
   return<div className="fade-up">
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div style={{fontSize:13,color:'var(--text-2)'}}>{props.length} propert{props.length===1?'y':'ies'}</div><button onClick={onAdd} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add property</button></div>
-    <DropZone onFiles={onAddDocs} compact/>
+    <DropZone onFiles={onAddDocs} compact onScan={onScan} onManual={onManual}/>
     <div style={{marginBottom:12}}/>
     {props.length===0?null:props.map(p=>{
       const gasC=dueSoon(p.gasDue),eicrC=dueSoon(p.eicrDue),insC=dueSoon(p.insuranceRenewal)
@@ -908,7 +1470,7 @@ function Properties({portfolio,onAddDocs,onEdit,onAdd}){
         {p.nation==='Wales'&&<div style={{background:'#fce8ec',border:'0.5px solid #C8102E',borderRadius:9,padding:'8px 12px',fontSize:11,color:'#8b0000',lineHeight:1.5,marginBottom:12}}>Welsh property: ensure you are registered with Rent Smart Wales. Use an Occupation Contract, not an AST.</div>}
         {(equity||grossYield||ltv)&&<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:16}}>{equity&&<div style={{background:'var(--brand-subtle)',borderRadius:9,padding:'10px 12px'}}><div style={{fontSize:10,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>Equity</div><div style={{fontSize:15,fontWeight:600,fontFamily:'var(--mono)',color:'var(--brand)'}}>{fmt(equity)}</div></div>}{ltv&&<div style={{background:'var(--surface2)',borderRadius:9,padding:'10px 12px'}}><div style={{fontSize:10,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>LTV</div><div style={{fontSize:15,fontWeight:600,fontFamily:'var(--mono)'}}>{ltv}%</div></div>}{grossYield&&<div style={{background:'var(--surface2)',borderRadius:9,padding:'10px 12px'}}><div style={{fontSize:10,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>Gross yield</div><div style={{fontSize:15,fontWeight:600,fontFamily:'var(--mono)'}}>{grossYield}%</div></div>}{netYield&&<div style={{background:'var(--green-bg)',borderRadius:9,padding:'10px 12px'}}><div style={{fontSize:10,color:'var(--green)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>Net yield</div><div style={{fontSize:15,fontWeight:600,fontFamily:'var(--mono)',color:'var(--green)'}}>{netYield}%</div></div>}</div>}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
-          <div>{p.tenantName&&<Row label="Tenant" value={p.tenantName}/>}{p.tenantPhone&&<Row label="Phone" value={p.tenantPhone}/>}{p.tenancyStart&&<Row label="Start" value={p.tenancyStart}/>}{p.depositAmount&&<Row label="Deposit" value={fmt(Number(p.depositAmount))}/>}{p.lender&&<Row label="Lender" value={p.lender}/>}{p.mortgage&&<Row label="Mortgage" value={fmt(Number(p.mortgage))}/>}{p.rate&&<Row label="Rate" value={`${p.rate}%`}/>}{p.fixedEnd&&<Row label="Fixed until" value={p.fixedEnd}/>}</div>
+          <div>{p.tenantName&&<Row label="Tenant" value={p.tenantName}/>}{p.tenantPhone&&<Row label="Phone" value={p.tenantPhone}/>}{p.tenancyStart&&<Row label="Start" value={p.tenancyStart}/>}{p.depositAmount&&<Row label="Deposit" value={fmt(Number(p.depositAmount))}/>}{p.purchaseDate&&<Row label="Purchased" value={p.purchaseDate}/>}{p.purchasePrice&&<Row label="Purchase price" value={fmt(Number(p.purchasePrice))}/>}{p.lender&&<Row label="Lender" value={p.lender}/>}{p.mortgage&&<Row label="Mortgage" value={fmt(Number(p.mortgage))}/>}{p.rate&&<Row label="Rate" value={`${p.rate}%`}/>}{p.fixedEnd&&<Row label="Fixed until" value={p.fixedEnd}/>}</div>
           <div>{p.gasDue&&<Row label="Gas due" value={p.gasDue} valueColor={col(gasC)}/>}{p.eicrDue&&<Row label="EICR due" value={p.eicrDue} valueColor={col(eicrC)}/>}{p.epcRating&&<Row label="EPC" value={`${p.epcRating}${p.epcExpiry?' - exp '+p.epcExpiry:''}`} valueColor={epcColor(p.epcRating)}/>}{!p.epcRating&&<Row label="EPC rating" value="Unknown - drop EPC cert" valueColor="var(--amber)"/>}{p.insurer&&<Row label="Insurer" value={p.insurer}/>}{p.insuranceRenewal&&<Row label="Ins. renew" value={p.insuranceRenewal} valueColor={col(insC)}/>}{p.notes&&<Row label="Notes" value={p.notes}/>}</div>
         </div>
         {p.insuranceType?.toLowerCase()==='home'&&<div style={{marginTop:10,fontSize:11,color:'var(--red)',background:'var(--red-bg)',borderRadius:7,padding:'7px 10px',lineHeight:1.6}}>Home insurance detected - you need a landlord policy.</div>}
@@ -1743,6 +2305,8 @@ export default function Dashboard(){
   const saveRef=useRef(null)
   const dropRef=useRef(null) // prevents duplicate drop processing
   const[saveStatus,setSaveStatus]=useState('saved') // saved | saving | error
+  const[showCamera,setShowCamera]=useState(false)
+  const[showManual,setShowManual]=useState(false)
   const portfolioRef=useRef(portfolio)
   portfolioRef.current=portfolio
 
@@ -1837,6 +2401,8 @@ export default function Dashboard(){
   }
 
   if(!isLoaded||!isSignedIn)return<div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{width:28,height:28,borderRadius:'50%',border:'2.5px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/></div>
+  // Camera scanner overlay
+  if(showCamera)return<CameraScanner onFiles={f=>{handleFiles(f)}} onClose={()=>setShowCamera(false)}/>
 
   // Pass toggleCheck down to Overview via portfolio context
   const portfolioWithToggle={...portfolio,_toggleCheck:toggleCheck}
@@ -1867,7 +2433,7 @@ export default function Dashboard(){
           <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/>
         </div>
       </nav>
-      {showDrop&&<div className="fade-in" style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 16px'}}><div style={{maxWidth:700,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact/></div></div>}
+      {showDrop&&<div className="fade-in" style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 16px'}}><div style={{maxWidth:700,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)}/></div></div>}
       {queue.length>0&&<div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'10px 16px'}}>
         <div style={{maxWidth:700,margin:'0 auto'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
@@ -1884,12 +2450,12 @@ export default function Dashboard(){
                 // Re-fetch original file is not possible - show message instead
                 setQueue(q=>q.map(x=>x.id===failedItem.id?{...x,status:'error',result:{error:'Please drop the file again to retry.'}}:x))
               }catch{}
-            }}/>)}</div>
+            }} onManual={()=>setShowManual(true)}/>)}</div>
         </div>
       </div>}
       <div className="dash-content">
         {tab==='overview'&&<div style={{marginBottom:18}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(22px,4vw,28px)',fontWeight:300,marginBottom:3}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:13,color:'var(--text-3)'}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} saved`}</p></div>}
-        {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
+        {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
         {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
         {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='rent'        &&<RentTracker   portfolio={portfolio} setPortfolio={setPortfolio}/> }
@@ -1901,6 +2467,7 @@ export default function Dashboard(){
       </div>
     </div>
     {formProp!==null&&<PropertyForm initial={formProp} onSave={updateProperty} onDelete={deleteProperty} onClose={()=>setFormProp(null)}/>}
+    {showManual&&<ManualEntryModal portfolio={portfolio} onMerge={extracted=>{setPortfolio(prev=>mergeDoc(prev,extracted))}} onClose={()=>setShowManual(false)}/>}
   </>
 }
 function getGreeting(){const h=new Date().getHours();return h<12?'morning':h<18?'afternoon':'evening'}

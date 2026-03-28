@@ -13,6 +13,9 @@ CRITICAL RULES:
 - For insurance: property = the insured premises (not the policyholder's correspondence address)
 - shortName MUST start with house number: "11 Northfield Avenue" not "Northfield Avenue"
 - address MUST include full address with house number, street, town, postcode
+- CRITICAL: Do NOT create a property for access roads, rights of way, easements, or ancillary land described in title documents. Only extract a property if it is the PRIMARY dwelling being purchased, let, or managed.
+- CRITICAL: If a document describes "access via X road" or "right of way over X" — X is NOT the property address. The property is the main dwelling the document is fundamentally about.
+- If you cannot identify a specific house/flat number for the property, omit the property field entirely rather than guessing a road name.
 - Extract EVERY date, certificate number, reference, name, amount — do not skip anything
 - For compliance docs: extract engineer/inspector name, registration numbers, test results, observations, and any defects noted
 - For tenancy agreements: extract ALL tenant names, ALL clauses about obligations, break clauses, permitted use
@@ -119,6 +122,17 @@ export default async function handler(req, res) {
   if (!data) return res.status(400).json({ error: 'No file data' })
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ success: false, error: 'API key not configured', filename })
 
+  // Check file size - base64 is ~1.33x the original, so 20MB base64 = ~15MB file
+  const approxBytes = (data.length * 3) / 4
+  const approxMB = approxBytes / (1024 * 1024)
+  if (approxMB > 14) {
+    return res.status(400).json({
+      success: false,
+      error: `This file is ${approxMB.toFixed(0)}MB — too large to process. Try compressing the PDF or splitting it into smaller files (max 14MB).`,
+      filename
+    })
+  }
+
   // Normalise media type - mediaType from client takes priority
   // PDF.js converts PDFs to JPEG before sending, so mediaType may be image/jpeg even for .pdf files
   const fname = filename?.toLowerCase() || ''
@@ -172,14 +186,16 @@ export default async function handler(req, res) {
     console.error('Extract error:', err?.status, msg)
     // Give user a helpful message
     let userMsg = 'Could not read this document.'
-    if (msg.includes('Could not process') || msg.includes('invalid') || msg.includes('corrupt') || msg.includes('not valid')) {
-      userMsg = 'This file could not be read. Try re-saving it as a PDF and uploading again.'
-    } else if (msg.includes('too large') || msg.includes('size')) {
-      userMsg = 'This file is too large. Try compressing the PDF and uploading again.'
+    if (msg.includes('Could not process') || msg.includes('invalid') || msg.includes('corrupt') || msg.includes('not valid') || msg.includes('Unable to')) {
+      userMsg = 'This PDF could not be read — it may be password-protected, digitally signed, or in a format we cannot process. Try printing it to PDF and re-uploading, or use manual entry instead.'
+    } else if (msg.includes('too large') || msg.includes('size') || msg.includes('maximum')) {
+      userMsg = 'This file is too large to process. Try compressing the PDF or use manual entry instead.'
     } else if (msg.includes('Overloaded') || msg.includes('overloaded') || msg.includes('529')) {
       userMsg = 'AI service is busy right now. Please try again in a moment.'
     } else if (msg.includes('rate') || msg.includes('limit')) {
       userMsg = 'Too many requests. Please wait a moment and try again.'
+    } else if (msg.includes('timeout') || msg.includes('timed out')) {
+      userMsg = 'This document took too long to process — it may be very large. Try a smaller file or use manual entry.'
     } else if (msg) {
       userMsg = msg
     }

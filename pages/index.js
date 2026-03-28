@@ -187,7 +187,7 @@ export default function Landing() {
           </h1>
 
           <p className="section-sub fade-up-3" style={{ maxWidth:580, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
-            Track tenants, rent, and compliance in one simple platform built for UK landlords. Stay fully legal, without paying agent fees.
+            England, Scotland and Wales each have different landlord laws. Lettly tracks the right legislation for each of your properties by postcode, so you stay fully legal without paying agent fees.
           </p>
 
           <div className="cta-row fade-up-3" style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap', marginBottom:22 }}>
@@ -206,7 +206,7 @@ export default function Landing() {
           <div className="trust-pills" style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
             {[
               { icon:'🇬🇧', text:'Built for UK landlords' },
-              { icon:'⚖️', text:'Designed around UK compliance' },
+              { icon:'🏴‍', text:'England, Scotland and Wales covered' },
               { icon:'🔒', text:'Your data stays private' },
             ].map(t => (
               <span key={t.text} className="trust-pill"><span>{t.icon}</span>{t.text}</span>
@@ -247,7 +247,7 @@ export default function Landing() {
               {[
                 { icon:'💸', title:'Paying 10–20% in agent fees', body:"On a £1,200/month property, that's up to £2,880/year straight out of your pocket." },
                 { icon:'📁', title:'Chasing paperwork', body:'Gas certs, EICRs, EPCs, insurance renewals. All in different places, easy to miss.' },
-                { icon:'😰', title:'Risk of missing legal requirements', body:'UK landlord law is changing fast. One missed requirement can mean fines or losing your case.' },
+                { icon:'😰', title:'Three different sets of landlord law', body:'England, Scotland and Wales each have different rules. Section 21 is gone in Scotland, occupation contracts in Wales, Renters Rights Act in England. One missed requirement can mean fines or losing your case.' },
                 { icon:'📱', title:'Managing tenants manually', body:'WhatsApp chains, sticky notes, and spreadsheets that only you understand.' },
               ].map(p => (
                 <div key={p.title} className="pain-card" style={{ marginBottom:10, borderLeft:'3px solid #fce8e6' }}>
@@ -267,7 +267,7 @@ export default function Landing() {
               {[
                 { icon:'✅', title:'Keep your rent, all of it', body:'Manage yourself and save £1,000 to £3,000 per year. Lettly starts at just £8/month for 1-2 properties.' },
                 { icon:'📲', title:'Drop a document, done', body:'Upload your gas cert, EICR or tenancy agreement. Lettly reads it and tracks every date automatically.' },
-                { icon:'🛡️', title:'Stay compliant automatically', body:'Reminders before every deadline. Nation-specific legislation. Never miss a legal requirement again.' },
+                { icon:'🛡️', title:'Stay compliant automatically', body:'Lettly reads your property postcode and applies the right law for England, Scotland or Wales. Reminders before every deadline. Never miss a requirement again.' },
                 { icon:'📊', title:'One place for everything', body:'Tenants, rent, maintenance, documents. All in your dashboard. No spreadsheets needed.' },
               ].map(s => (
                 <div key={s.title} className="pain-card" style={{ marginBottom:10, borderLeft:'3px solid var(--brand-mid)' }}>
@@ -303,7 +303,7 @@ export default function Landing() {
               {[
                 { num:'1', icon:'📂', title:'Drop your documents', body:'Drag in any PDF or photo: gas certs, EICRs, insurance, tenancy agreements, mortgage offers. Works on your phone or computer.' },
                 { num:'2', icon:'🤖', title:'Lettly reads them instantly', body:'Our AI extracts every date, name and figure automatically. Your property portfolio appears in seconds. No typing required.' },
-                { num:'3', icon:'✅', title:'Stay compliant and in control', body:"Deadlines tracked. Reminders sent. UK legislation explained in plain English. You're always one step ahead." },
+                { num:'3', icon:'✅', title:'Stay compliant and in control', body:"Lettly detects your property's postcode and applies the right law. England, Scotland and Wales each have different rules. All tracked automatically, explained in plain English." },
               ].map(s => (
                 <div key={s.num} className="feature-block">
                   <div style={{ width:46, height:46, background:'var(--brand)', borderRadius:13, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:22 }}>
@@ -330,7 +330,7 @@ export default function Landing() {
               {
                 icon:'🧾',
                 title:'Compliance made simple',
-                items:['Gas safety certificate tracking','EICR electrical inspection alerts','EPC rating and 2028 upgrade guide','Email reminders before every deadline','Never miss a legal requirement'],
+                items:['Gas safety certificate tracking','EICR electrical inspection alerts','EPC rating and 2028 upgrade guide','Nation-specific rules by property postcode','Email reminders before every deadline'],
               },
               {
                 icon:'💸',
@@ -356,6 +356,89 @@ export default function Landing() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── NATIONS LEGISLATION ── */}
+        <section style={{ background:'var(--brand)', padding:'clamp(56px,7vw,88px) clamp(20px,4vw,48px)' }}>
+          <div style={{ maxWidth:900, margin:'0 auto' }}>
+            <div style={{ textAlign:'center', marginBottom:48 }}>
+              <h2 style={{ fontFamily:'var(--display)', fontSize:'clamp(28px,4vw,44px)', fontWeight:300, color:'#fff', lineHeight:1.18, marginBottom:14 }}>
+                England, Scotland and Wales<br/>each have different landlord laws
+              </h2>
+              <p style={{ fontSize:'clamp(15px,1.8vw,17px)', color:'rgba(255,255,255,0.75)', lineHeight:1.8, maxWidth:560, margin:'0 auto' }}>
+                Lettly detects your property postcode and applies the correct legislation automatically. No guessing. No getting it wrong.
+              </p>
+            </div>
+
+            <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+              {[
+                {
+                  flag:'🏴‍',
+                  nation:'England',
+                  color:'rgba(255,255,255,0.12)',
+                  items:[
+                    { urgent:true,  text:"Renters Rights Act — Section 21 abolished 1 May 2026" },
+                    { urgent:true,  text:"All tenancies become periodic — no more fixed terms" },
+                    { urgent:true,  text:"PRS Database registration required before serving notice" },
+                    { urgent:false, text:"Awaab's Law — damp and mould response within 14 days" },
+                    { urgent:false, text:"EPC minimum C required for new lets from 2028" },
+                    { urgent:false, text:"Decent Homes Standard extended to private rented sector" },
+                  ]
+                },
+                {
+                  flag:'🏴‍',
+                  nation:'Scotland',
+                  color:'rgba(255,255,255,0.12)',
+                  items:[
+                    { urgent:true,  text:"Private Residential Tenancy — ASTs no longer valid" },
+                    { urgent:true,  text:"Mandatory landlord registration with local council" },
+                    { urgent:true,  text:"No fixed-term tenancies — tenants can leave anytime" },
+                    { urgent:false, text:"Repairing Standard — mandatory property condition rules" },
+                    { urgent:false, text:"SafeDeposits Scotland — different deposit scheme rules" },
+                    { urgent:false, text:"Rent control zones in some local authority areas" },
+                  ]
+                },
+                {
+                  flag:'🏴‍',
+                  nation:'Wales',
+                  color:'rgba(255,255,255,0.12)',
+                  items:[
+                    { urgent:true,  text:"Occupation Contracts — ASTs replaced since Dec 2022" },
+                    { urgent:true,  text:"Rent Smart Wales — mandatory registration and licence" },
+                    { urgent:true,  text:"29 fitness standards apply throughout every tenancy" },
+                    { urgent:false, text:"6-month occupation period before notice can be served" },
+                    { urgent:false, text:"Different deposit rules — max 1 month rent" },
+                    { urgent:false, text:"Carbon monoxide alarm rules differ from England" },
+                  ]
+                },
+              ].map(n => (
+                <div key={n.nation} style={{ background:n.color, borderRadius:16, padding:'24px 20px', border:'1px solid rgba(255,255,255,0.15)' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18 }}>
+                    <span style={{ fontSize:24 }}>{n.flag}</span>
+                    <div style={{ fontFamily:'var(--display)', fontSize:20, fontWeight:400, color:'#fff' }}>{n.nation}</div>
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                    {n.items.map((item,i) => (
+                      <div key={i} style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
+                        <span style={{ flexShrink:0, fontSize:11, marginTop:2, color:item.urgent?'#ffd166':'rgba(255,255,255,0.5)' }}>
+                          {item.urgent ? '⚠' : '○'}
+                        </span>
+                        <span style={{ fontSize:13, color:item.urgent?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.65)', lineHeight:1.5, fontWeight:item.urgent?500:400 }}>
+                          {item.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign:'center', marginTop:36 }}>
+              <div style={{ display:'inline-block', background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:12, padding:'14px 28px', fontSize:14, color:'rgba(255,255,255,0.9)', lineHeight:1.6, maxWidth:560 }}>
+                Lettly applies the right rules for each nation automatically based on postcode. Add a property in Aberdeen and you get Scottish law. Add one in Cardiff and you get Welsh law.
+              </div>
+            </div>
           </div>
         </section>
 
@@ -389,7 +472,7 @@ export default function Landing() {
 
           <div className="grid-2" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:40 }}>
             {[
-              { icon:'🇬🇧', title:'Built in the UK for UK landlords', body:"Every feature is designed around the realities of the UK private rented sector, not a generic international tool." },
+              { icon:'🇬🇧', title:'England, Scotland and Wales all covered', body:"Lettly uses your property postcode to apply the right legislation automatically. England has the Renters Rights Act. Scotland has the PRT regime. Wales has Occupation Contracts. All three are different." },
               { icon:'⚖️', title:'Based on real compliance requirements', body:"Gas safety, EICRs, EPCs, deposit schemes, the Renters' Rights Bill. All the rules that actually affect you, tracked automatically." },
               { icon:'🌱', title:'Early access: help shape the product', body:"You're joining at the beginning. Your feedback directly shapes what we build next. We respond to every message personally." },
               { icon:'🔒', title:'Your data is secure and private', body:"Bank-grade authentication. AES-256 encryption. Stored in the EU. We never sell your data to third parties. Ever." },
