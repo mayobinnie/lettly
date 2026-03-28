@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 
-const LAST_UPDATED = '26 March 2026'
+const LAST_UPDATED = '28 March 2026'
 
 function Section({ title, children }) {
   return (
@@ -38,8 +38,9 @@ export default function Terms() {
             <p style={{ fontSize: 13, color: 'var(--text-3)' }}>Last updated: {LAST_UPDATED} · By using Lettly you agree to these terms</p>
           </div>
 
-          <div style={{ background: '#fff8e1', border: '0.5px solid #EF9F27', borderRadius: 12, padding: '14px 18px', marginBottom: 36, fontSize: 13, color: '#633806', lineHeight: 1.7 }}>
-            Important: Lettly is an information and management tool, not a source of legal advice. Always consult a qualified solicitor for legal guidance specific to your situation.
+          <div style={{ background: '#fce8e6', border: '1px solid #E24B4A', borderRadius: 12, padding: '18px 20px', marginBottom: 36, lineHeight: 1.75 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#791F1F', marginBottom: 8 }}>Important: Lettly is a management tool, not a legal adviser</div>
+            <div style={{ fontSize: 13, color: '#791F1F' }}>Nothing in Lettly constitutes legal advice, financial advice, or professional compliance advice. You remain solely responsible for complying with all landlord obligations under English, Scottish, and Welsh law. Always consult a qualified solicitor for legal guidance and a qualified accountant for financial guidance before acting on any information provided by Lettly.</div>
           </div>
 
           <Section title="1. Who we are">
@@ -47,14 +48,16 @@ export default function Terms() {
           </Section>
 
           <Section title="2. What Lettly is">
-            <P>Lettly is a property portfolio management tool that helps UK landlords organise compliance documents, track deadlines, manage maintenance, and understand landlord legislation.</P>
-            <P>Lettly is not:</P>
+            <P>Lettly is a property portfolio management and information tool. It helps UK landlords organise compliance documents, track deadlines, manage maintenance, understand landlord legislation, and generate draft documents.</P>
+            <P>Lettly is not, and does not hold itself out to be:</P>
             <UL items={[
-              'A law firm or source of legal advice',
-              'A financial adviser or source of financial advice',
+              'A law firm, solicitor, or regulated legal services provider',
+              'A financial adviser, accountant, or regulated financial services provider',
               'A letting agent or property management company',
-              'Responsible for the accuracy of legislation information (laws change - always verify with a qualified professional)',
+              'An authorised compliance adviser',
+              'A substitute for professional legal or financial advice',
             ]} />
+            <P>All information, guidance, legislation summaries, AI responses, document templates, and financial calculations provided by Lettly are for general informational purposes only. They reflect our understanding at the time of writing and may not reflect the most recent legislative changes. Laws change frequently. You must verify all information with a qualified professional before acting on it.</P>
           </Section>
 
           <Section title="3. Your account">
@@ -69,7 +72,7 @@ export default function Terms() {
           </Section>
 
           <Section title="5. Subscription and payments">
-            <P>Lettly offers paid subscription plans. All plans include a 14-day free trial. Payment is processed by Stripe. You can cancel at any time — cancellation takes effect at the end of your current billing period.</P>
+            <P>Lettly offers paid subscription plans. All plans include a 14-day free trial. Payment is processed by Stripe. You can cancel at any time. Cancellation takes effect at the end of your current billing period.</P>
             <P>We reserve the right to change pricing with 30 days notice to existing subscribers.</P>
             <P>Refunds are considered on a case-by-case basis. Contact hello@lettly.co.</P>
           </Section>
@@ -86,10 +89,31 @@ export default function Terms() {
             ]} />
           </Section>
 
-          <Section title="7. Not legal or financial advice">
-            <P>All legislation information, compliance guidance, document templates, AI responses, and financial calculations provided by Lettly are for general information only. They do not constitute legal advice, financial advice, or any form of professional advice.</P>
-            <P>Landlord law is complex and changes frequently. Always verify legal information with a qualified solicitor. Always verify financial information with a qualified accountant or financial adviser.</P>
-            <P>Lettly Ltd accepts no liability for any loss or damage arising from reliance on information provided by Lettly, including AI-generated content.</P>
+          <Section title="7. No legal or financial advice — landlord responsibility">
+            <P><strong>Lettly provides information and tools. It does not provide legal or financial advice.</strong></P>
+            <P>Specifically:</P>
+            <UL items={[
+              'Legislation summaries and compliance checklists are for general guidance only. They do not constitute legal advice and may not reflect the most current law. Always verify with a qualified solicitor.',
+              'Document templates (including tenancy agreements, Section 8 notices, and all other generated documents) are draft starting points only. They must be reviewed by a qualified solicitor before use. Lettly does not warrant that any generated document is legally valid, complete, or appropriate for your specific circumstances.',
+              'AI-generated responses and advice are generated by a language model and may contain errors, inaccuracies, or outdated information. Never rely solely on AI-generated content for legal or compliance decisions.',
+              'Financial calculations (yield, P&L, Section 24 tax estimates, valuation estimates) are indicative only. They are not professional financial advice. Always consult a qualified accountant or financial adviser.',
+              'Compliance reminders and deadline tracking are provided as a convenience. You remain solely responsible for meeting all legal compliance deadlines. Missing a reminder notification from Lettly does not transfer any legal responsibility to Lettly.',
+              'Land Registry valuation estimates are based on comparable sold prices and are indicative only. They are not a formal valuation and should not be used for mortgage, insurance, or legal purposes.',
+              'Legislation monitoring alerts are provided on a best-efforts basis. Lettly does not warrant that all legislative changes will be detected or communicated to you promptly.',
+            ]} />
+            <P>You, as the landlord, are solely and entirely responsible for:</P>
+            <UL items={[
+              'Complying with all applicable landlord legislation in England, Scotland, and Wales',
+              'Ensuring all tenancy documents are legally valid and appropriate for your circumstances',
+              'Meeting all compliance deadlines (gas certificates, EICRs, EPCs, deposit protection, etc.)',
+              'Verifying the immigration status of all tenants (Right to Rent)',
+              'Registering with all relevant authorities (Rent Smart Wales, Scottish Landlord Register, PRS Database)',
+              'Declaring all rental income to HMRC and complying with your tax obligations',
+              'Maintaining your property in a safe and habitable condition',
+              'Any consequences arising from non-compliance with landlord law',
+            ]} />
+            <P>Using Lettly does not discharge, reduce, or transfer any of your legal obligations as a landlord.</P>
+            <P>Lettly Ltd accepts no liability for any loss, damage, penalty, fine, prosecution, or other consequence arising from your reliance on any information, document, reminder, or guidance provided by Lettly.</P>
           </Section>
 
           <Section title="8. Service availability">
@@ -97,25 +121,43 @@ export default function Terms() {
           </Section>
 
           <Section title="9. Limitation of liability">
-            <P>To the maximum extent permitted by law, Lettly Ltd shall not be liable for:</P>
+            <P>To the maximum extent permitted by applicable law, Lettly Ltd shall not be liable for:</P>
             <UL items={[
-              'Any indirect, incidental, or consequential loss',
-              'Loss of data, profits, revenue, or business',
-              'Any loss arising from reliance on AI-generated content or legislation information',
-              'Any loss arising from third-party service failures (Supabase, Clerk, Vercel, Stripe, Anthropic)',
+              'Any indirect, incidental, special, or consequential loss or damage',
+              'Loss of data, profits, revenue, business, goodwill, or anticipated savings',
+              'Any loss arising from reliance on AI-generated content, legislation information, compliance guidance, or document templates',
+              'Any loss arising from a failure to comply with landlord legislation, whether or not Lettly provided information about that legislation',
+              'Any loss arising from missed deadlines, even where Lettly provides compliance reminders',
+              'Any loss arising from inaccurate, incomplete, or outdated information provided by Lettly',
+              'Any loss arising from third-party service failures (including Supabase, Clerk, Vercel, Stripe, and Anthropic)',
+              'Any fines, penalties, or enforcement action taken against you as a landlord',
+              'Any claims brought by tenants against you',
             ]} />
-            <P>Our total liability to you in any 12-month period shall not exceed the amount you have paid us in that period.</P>
+            <P>Our total aggregate liability to you under or in connection with these terms shall not exceed the greater of: (a) the total amount you have paid to Lettly in the 12 months preceding the claim; or (b) £100.</P>
+            <P>Nothing in these terms limits our liability for death or personal injury caused by our negligence, fraud, or any other liability that cannot be excluded or limited by English law.</P>
           </Section>
 
-          <Section title="10. Governing law">
+          <Section title="10. AI-generated content">
+            <P>Lettly uses artificial intelligence (Claude by Anthropic) for document extraction, document generation, legislative chat, and compliance guidance. You acknowledge that:</P>
+            <UL items={[
+              'AI-generated content may contain errors, inaccuracies, hallucinations, or outdated information',
+              'AI document extraction may miss information or extract it incorrectly — always verify extracted data against the original document',
+              'AI-generated tenancy agreements, notices, and letters are drafts only — they require review by a qualified solicitor before use',
+              'AI chat responses are not legal advice and should not be treated as such',
+              'Anthropic processes documents transiently for AI extraction — see our Privacy Policy for details',
+            ]} />
+            <P>You use AI-generated content entirely at your own risk. Lettly Ltd accepts no liability for any consequence of relying on AI-generated content.</P>
+          </Section>
+
+          <Section title="11. Governing law">
             <P>These terms are governed by the laws of England and Wales. Any disputes shall be subject to the exclusive jurisdiction of the courts of England and Wales.</P>
           </Section>
 
-          <Section title="11. Changes to these terms">
+          <Section title="12. Changes to these terms">
             <P>We will notify active users by email of any material changes to these terms with at least 14 days notice. Continued use of Lettly after that notice period constitutes acceptance of the new terms.</P>
           </Section>
 
-          <Section title="12. Contact">
+          <Section title="13. Contact">
             <P>For any questions about these terms: <strong>hello@lettly.co</strong></P>
           </Section>
         </div>

@@ -101,7 +101,7 @@ export default function Security() {
             <Provider name="Supabase" role="Database and storage" location="AWS eu-west-1, Ireland" cert="SOC 2 Type II"/>
             <Provider name="Vercel" role="Application hosting" location="Edge network, EU preference" cert="SOC 2 Type II"/>
             <Provider name="Clerk" role="Authentication" location="EU data centres" cert="SOC 2 Type II"/>
-            <Provider name="Anthropic" role="AI document processing" location="API — data not retained" cert="Enterprise API agreement"/>
+            <Provider name="Anthropic" role="AI document processing" location="API : data not retained" cert="Enterprise API agreement"/>
             <Provider name="Stripe" role="Payment processing" location="EU data centres" cert="PCI DSS Level 1"/>
             <Provider name="Resend" role="Email delivery" location="EU data centres" cert="SOC 2"/>
           </div>
@@ -133,7 +133,7 @@ export default function Security() {
 
           <div style={{ background: 'var(--brand-subtle)', border: '0.5px solid rgba(27,94,59,0.2)', borderRadius: 12, padding: '18px 20px', textAlign: 'center' }}>
             <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--brand)', marginBottom: 6 }}>Questions about security?</div>
-            <div style={{ fontSize: 13, color: 'var(--text-2)' }}>Email us at <strong>security@lettly.co</strong> — we respond to all security enquiries within 48 hours.</div>
+            <div style={{ fontSize: 13, color: 'var(--text-2)' }}>Email us at <strong>security@lettly.co</strong>. We respond to all security enquiries within 48 hours.</div>
           </div>
         </div>
 

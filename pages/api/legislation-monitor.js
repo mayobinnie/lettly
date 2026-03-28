@@ -1,83 +1,132 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 
-// This runs as a Vercel cron job every Monday at 8am
-// Add to vercel.json: { "crons": [{ "path": "/api/legislation-monitor", "schedule": "0 8 * * 1" }] }
+// Runs as a Vercel cron job every Monday at 8am UK time
+// vercel.json already has: { "path": "/api/legislation-monitor", "schedule": "0 8 * * 1" }
+// Also add CRON_SECRET to Vercel env vars for security
 
 const MONITORED_TOPICS = [
-  'Renters Rights Act 2025 England implementation updates',
-  'EPC minimum C requirement 2028 England Wales updates',
-  'Scottish Private Residential Tenancy law changes',
-  'Renting Homes Wales Act updates',
-  'UK landlord legislation changes',
-  'Section 24 mortgage interest tax UK landlord',
+  { id: 'rrb',       query: 'Renters Rights Act 2025 England commencement date implementation', urgencyDefault: 'HIGH' },
+  { id: 'epc',       query: 'EPC minimum C energy efficiency private rented sector 2028 England Wales', urgencyDefault: 'HIGH' },
+  { id: 'scotland',  query: 'Scotland private residential tenancy landlord law changes 2025 2026', urgencyDefault: 'MEDIUM' },
+  { id: 'wales',     query: 'Renting Homes Wales Act Occupation Contracts landlord changes 2025 2026', urgencyDefault: 'MEDIUM' },
+  { id: 'section24', query: 'Section 24 mortgage interest tax relief landlord UK 2025', urgencyDefault: 'MEDIUM' },
+  { id: 'deposit',   query: 'tenancy deposit scheme rules changes UK landlord 2025', urgencyDefault: 'LOW' },
+  { id: 'prs_db',    query: 'Private Rented Sector Database registration England landlord 2026', urgencyDefault: 'HIGH' },
+  { id: 'awaab',     query: "Awaab's Law private rented sector implementation date 2026", urgencyDefault: 'MEDIUM' },
+]
+
+// URLs to check directly for official announcements
+const GOV_SOURCES = [
+  'https://www.gov.uk/government/collections/renters-reform-bill',
+  'https://www.legislation.gov.uk/ukpga/2025',
 ]
 
 export default async function handler(req, res) {
-  // Verify this is called by Vercel cron (or manually by admin)
+  // Allow GET for manual testing, require auth for automated cron
+  const isManual = req.method === 'GET'
   const authHeader = req.headers.authorization
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && req.method !== 'GET') {
+  if (!isManual && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorised' })
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'API key not configured' })
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' })
   }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const today = new Date().toLocaleDateString('en-GB')
+  const alerts = []
 
   try {
-    const today = new Date().toLocaleDateString('en-GB')
-    const prompt = `You are a UK property law monitor. Today is ${today}.
+    // Use Claude with web search tool to check each topic
+    for (const topic of MONITORED_TOPICS) {
+      try {
+        const response = await client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 512,
+          tools: [{
+            type: 'web_search_20250305',
+            name: 'web_search',
+          }],
+          messages: [{
+            role: 'user',
+            content: `Search the web for recent UK government announcements about: "${topic.query}"
+            
+Focus on GOV.UK, parliamentary news, and official sources from the last 30 days.
 
-Review the following UK landlord legislation topics and identify any significant changes, announcements, or developments that have occurred in the past 7 days:
+Return a JSON object only:
+{
+  "status": "CHANGED" | "PENDING_CHANGE" | "NO_CHANGE",
+  "summary": "one sentence describing any change or announcement found, or null",
+  "urgency": "HIGH" | "MEDIUM" | "LOW",
+  "source": "URL of the most relevant source found, or null"
+}
 
-${MONITORED_TOPICS.map((t, i) => `${i + 1}. ${t}`).join('\n')}
+If nothing significant found in the last 30 days, return NO_CHANGE with null summary.
+Return ONLY the JSON object, nothing else.`
+          }]
+        })
 
-For each topic, respond with:
-- Status: CHANGED, PENDING_CHANGE, or NO_CHANGE
-- Summary: one sentence if changed, otherwise skip
-- Urgency: HIGH, MEDIUM, or LOW if changed
+        // Extract text from response (may include tool use blocks)
+        const textBlock = response.content.find(b => b.type === 'text')
+        if (!textBlock) continue
 
-Format as JSON array:
-[{"topic": "...", "status": "...", "summary": "...", "urgency": "...", "date": "${today}"}]
+        const raw = textBlock.text.replace(/```json|```/g, '').trim()
+        let result
+        try { result = JSON.parse(raw) } catch { continue }
 
-Base your response on your knowledge up to your training cutoff. If you are uncertain about recent changes, mark as NO_CHANGE.
-Return ONLY the JSON array.`
+        if (result.status === 'CHANGED' || result.status === 'PENDING_CHANGE') {
+          alerts.push({
+            topic: topic.query,
+            topicId: topic.id,
+            status: result.status,
+            summary: result.summary,
+            urgency: result.urgency || topic.urgencyDefault,
+            source: result.source,
+            checked_at: new Date().toISOString(),
+            actioned: false,
+          })
+        }
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    })
+        // Small delay to avoid rate limits
+        await new Promise(r => setTimeout(r, 1000))
 
-    const raw = response.content[0].text.replace(/```json|```/g, '').trim()
-    let updates = []
-    try { updates = JSON.parse(raw) } catch { updates = [] }
-
-    const changed = updates.filter(u => u.status === 'CHANGED' || u.status === 'PENDING_CHANGE')
-
-    // Save to Supabase if changes found
-    if (changed.length > 0 && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
-      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
-      await supabase.from('legislation_alerts').insert(
-        changed.map(u => ({
-          topic: u.topic,
-          status: u.status,
-          summary: u.summary,
-          urgency: u.urgency,
-          checked_at: new Date().toISOString(),
-          actioned: false,
-        }))
-      )
+      } catch (topicErr) {
+        console.error(`Error checking topic ${topic.id}:`, topicErr?.message)
+      }
     }
 
+    // Save alerts to Supabase
+    if (alerts.length > 0 && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_KEY
+      )
+      const { error } = await supabase
+        .from('legislation_alerts')
+        .insert(alerts.map(a => ({
+          topic: a.topic,
+          status: a.status,
+          summary: a.summary,
+          urgency: a.urgency,
+          checked_at: a.checked_at,
+          actioned: false,
+        })))
+      if (error) console.error('Supabase insert error:', error.message)
+    }
+
+    // Log a "checked" record even if no changes, so we know it ran
+    console.log(`Legislation monitor ran: ${MONITORED_TOPICS.length} topics checked, ${alerts.length} alerts`)
+
     return res.status(200).json({
-      checked: updates.length,
-      changes: changed.length,
-      alerts: changed,
+      checked: MONITORED_TOPICS.length,
+      changes: alerts.length,
+      alerts,
       checkedAt: today,
+      note: alerts.length === 0 ? 'No significant changes found this week' : `${alerts.length} alert(s) saved to dashboard`,
     })
+
   } catch (err) {
     console.error('Legislation monitor error:', err?.message)
     return res.status(500).json({ error: err?.message })

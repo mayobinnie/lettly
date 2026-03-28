@@ -53,9 +53,9 @@ export default function Privacy() {
             <P>We collect the following categories of personal data:</P>
             <UL items={[
               'Account data: your name and email address, collected when you sign up via Clerk (our authentication provider)',
-              'Portfolio data: property addresses, tenancy details, tenant names and contact information, financial figures, compliance certificate dates — all entered by you or extracted from documents you upload',
+              'Portfolio data: property addresses, tenancy details, tenant names and contact information, financial figures, compliance certificate dates. All entered by you or extracted from documents you upload',
               'Documents: PDFs and images you upload for AI extraction. These are processed and then the extracted data is stored. Raw document files are not stored on our servers.',
-              'Usage data: pages visited, features used, session information — collected anonymously via Vercel Analytics',
+              'Usage data: pages visited, features used, session information, collected anonymously via Vercel Analytics',
               'Payment data: handled entirely by Stripe. We never see or store your card details.',
             ]} />
           </Section>
@@ -68,7 +68,7 @@ export default function Privacy() {
               'To send compliance reminder emails you request',
               'To provide AI-powered document extraction and chat features',
               'To process your subscription payments via Stripe',
-              'To improve Lettly — we may analyse anonymised, aggregated usage patterns',
+              'To improve Lettly: we may analyse anonymised, aggregated usage patterns',
             ]} />
             <P>We do not use your data for advertising. We do not sell your data to any third party. Ever.</P>
           </Section>
@@ -76,12 +76,12 @@ export default function Privacy() {
           <Section title="Who we share data with">
             <P>We use a small number of trusted third-party services to operate Lettly. Each acts as a data processor on our behalf:</P>
             <UL items={[
-              'Supabase (supabase.com) — database storage, hosted in EU West (Ireland). Your portfolio data lives here.',
-              'Clerk (clerk.com) — authentication and user accounts. Stores your name and email.',
-              'Anthropic (anthropic.com) — AI processing for document extraction and chat. Documents are processed transiently and not retained by Anthropic.',
-              'Vercel (vercel.com) — hosting and deployment. Based in the EU when possible.',
-              'Resend (resend.com) — email delivery for compliance reminders.',
-              'Stripe (stripe.com) — payment processing. We never see your card details.',
+              'Supabase (supabase.com): database storage, hosted in EU West (Ireland). Your portfolio data lives here.',
+              'Clerk (clerk.com): authentication and user accounts. Stores your name and email.',
+              'Anthropic (anthropic.com): AI processing for document extraction and chat. Documents are processed transiently and not retained by Anthropic.',
+              'Vercel (vercel.com): hosting and deployment. Based in the EU when possible.',
+              'Resend (resend.com): email delivery for compliance reminders.',
+              'Stripe (stripe.com): payment processing. We never see your card details.',
             ]} />
             <P>We do not share your data with any other third parties, including letting agents, mortgage brokers, insurance providers, or advertisers.</P>
           </Section>
@@ -120,7 +120,7 @@ export default function Privacy() {
             <UL items={[
               'Authentication cookies: set by Clerk to keep you logged in during a session',
               'Session cookies: set by Next.js for application state',
-              'Analytics cookies: anonymised, set by Vercel Analytics — no personal data collected',
+              'Analytics cookies: anonymised, set by Vercel Analytics, no personal data collected',
             ]} />
             <P>We do not use advertising cookies, tracking cookies, or third-party marketing cookies. You can disable cookies in your browser settings, but this will prevent you from logging in.</P>
           </Section>

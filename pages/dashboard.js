@@ -70,8 +70,8 @@ async function fileToBase64(file) {
     }
   }
 
-  // PDF: send raw PDF bytes — preserves ALL pages for deep extraction
-  // (Previously rendered page 1 only to JPEG — that's why extraction was shallow)
+  // PDF: send raw PDF bytes : preserves ALL pages for deep extraction
+  // (Previously rendered page 1 only to JPEG : that was why extraction was shallow)
   if (ftype === 'application/pdf' || fname.endsWith('.pdf')) {
     return new Promise((res, rej) => {
       const r = new FileReader()
@@ -122,7 +122,7 @@ function DropZone({onFiles,compact,onScan,onManual}){
           </div>
           <div style={{flex:1}}>
             <div style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>Drop or click to add documents</div>
-            <div style={{fontSize:11,color:'var(--text-3)'}}>PDF, JPEG, HEIC — gas cert, EICR, EPC, insurance, tenancy</div>
+            <div style={{fontSize:11,color:'var(--text-3)'}}>PDF, JPEG, HEIC: gas cert, EICR, EPC, insurance, tenancy</div>
           </div>
           <div style={{fontSize:11,color:'var(--brand)',fontWeight:500,flexShrink:0,whiteSpace:'nowrap'}}>{over?'Release':'Browse'}</div>
         </div>
@@ -145,7 +145,7 @@ function DropZone({onFiles,compact,onScan,onManual}){
         <UpIcon color={over?'#fff':'var(--brand)'} size={28}/>
       </div>
       <div style={{fontFamily:'var(--display)',fontSize:'clamp(18px,3vw,24px)',fontWeight:400,marginBottom:8}}>{over?'Release to analyse':'Drop your documents here'}</div>
-      <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.75,marginBottom:18}}>PDF, JPEG, PNG, HEIC and more — gas certs, EICRs, EPCs, insurance, tenancy agreements</div>
+      <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.75,marginBottom:18}}>PDF, JPEG, PNG, HEIC and more: gas certs, EICRs, EPCs, insurance, tenancy agreements</div>
       <div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'center',marginBottom:14}}>
         {Object.values(DOC_META).filter(d=>d.label!=='Document').map(d=>(
           <span key={d.label} style={{fontSize:11,padding:'4px 11px',borderRadius:20,background:d.bg,color:d.fg,display:'inline-flex',alignItems:'center',gap:4}}>
@@ -153,7 +153,7 @@ function DropZone({onFiles,compact,onScan,onManual}){
           </span>
         ))}
       </div>
-      <div style={{fontSize:11,color:'var(--text-3)'}}>PDF, JPEG, PNG, HEIC, WebP — your data stays private</div>
+      <div style={{fontSize:11,color:'var(--text-3)'}}>PDF, JPEG, PNG, HEIC, WebP. Your data stays private.</div>
     </div>
   )
 }
@@ -289,7 +289,7 @@ function CameraScanner({onFiles,onClose}){
         {phase==='preview'&&capturedImg&&<>
           <img src={capturedImg} alt="Captured" style={{width:'100%',height:'100%',objectFit:'contain'}}/>
           <div style={{position:'absolute',top:14,left:14,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(6px)',borderRadius:8,padding:'6px 12px',color:'#fff',fontSize:12}}>
-            Check clarity — text should be sharp and readable
+            Check clarity. Text should be sharp and readable.
           </div>
         </>}
 
@@ -761,7 +761,7 @@ function FirstTimeLandlordChecklist({nation,checkedItems,onToggle}){
 }
 
 /* ---- Property Form ---- */
-const EMPTY_PROP={shortName:'',address:'',nation:'',ownership:'Personal',purchasePrice:'',purchaseDate:'',currentValue:'',mortgage:'',lender:'',rate:'',fixedEnd:'',monthlyPayment:'',ercRate:'',rent:'',tenantName:'',tenantPhone:'',tenantEmail:'',tenancyStart:'',tenancyEnd:'',depositAmount:'',depositScheme:'',gasDue:'',eicrDue:'',epcRating:'',epcExpiry:'',insurer:'',policyNo:'',insuranceRenewal:'',insuranceType:'',notes:''}
+const EMPTY_PROP={shortName:'',address:'',nation:'',ownership:'Personal',purchasePrice:'',purchaseDate:'',currentValue:'',mortgage:'',lender:'',rate:'',fixedEnd:'',monthlyPayment:'',ercRate:'',rent:'',rentReviewDate:'',tenantName:'',tenantPhone:'',tenantEmail:'',tenancyStart:'',tenancyEnd:'',depositAmount:'',depositScheme:'',rightToRentChecked:'',rightToRentDocType:'',rightToRentExpiry:'',rightToRentNotes:'',gasDue:'',eicrDue:'',epcRating:'',epcExpiry:'',insurer:'',policyNo:'',insuranceRenewal:'',insuranceType:'',notes:''}
 
 /* ---- Valuation Widget ---- */
 function ValuationWidget({address, currentValue, onAccept}){
@@ -918,7 +918,7 @@ function PropertyForm({initial,onSave,onDelete,onClose}){
             {p.nation&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:6}}>
               {p.nation==='Scotland'&&'Scottish law applies - Private Residential Tenancy (not AST). Mandatory landlord registration required.'}
               {p.nation==='Wales'&&'Welsh law applies - Occupation Contract (not AST). Rent Smart Wales registration required.'}
-              {p.nation==='England'&&'English law applies - Renters Rights Act from 1 May 2026. PRS Database registration coming.'}
+              {p.nation==='England'&&'English law applies. Renters Rights Act in force from 1 May 2026 for new tenancies. Section 21 abolished. PRS Database registration required before serving notices.'}
             </div>}
           </div>
           <Select label="Ownership" value={p.ownership} onChange={v=>set('ownership',v)} options={['Personal','Ltd Company','Joint']}/>
@@ -962,6 +962,21 @@ function PropertyForm({initial,onSave,onDelete,onClose}){
           </div>
           <div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#633806',lineHeight:1.6}}>
             {p.nation==='Wales'?'Wales: maximum deposit is 1 months rent. Must be protected in approved scheme within 30 days.':p.nation==='Scotland'?'Scotland: maximum deposit is 2 months rent. Must be lodged within 30 working days.':'England: maximum deposit is 5 weeks rent. Must be protected within 30 days.'}
+          </div>
+          <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid var(--border)'}}>
+            <div style={{fontSize:12,fontWeight:500,marginBottom:10,color:'var(--text)'}}>Right to Rent check</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}}>
+              <Input label="Date checked" value={p.rightToRentChecked} onChange={v=>set('rightToRentChecked',v)} placeholder="DD/MM/YYYY"/>
+              <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Document type seen</label><select value={p.rightToRentDocType||''} onChange={e=>set('rightToRentDocType',e.target.value)} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">Select document</option><option>UK/Irish passport</option><option>UK birth certificate + NI number</option><option>Biometric Residence Permit</option><option>Share code (online check)</option><option>EU Settlement Scheme</option><option>Visa/entry clearance</option><option>Other</option></select></div>
+              <Input label="Expiry (if time-limited)" value={p.rightToRentExpiry} onChange={v=>set('rightToRentExpiry',v)} placeholder="DD/MM/YYYY or N/A"/>
+              <Input label="Notes" value={p.rightToRentNotes} onChange={v=>set('rightToRentNotes',v)} placeholder="e.g. Copies taken, stored securely"/>
+            </div>
+            {p.nation==='Scotland'&&<div style={{fontSize:11,color:'#003090',background:'#e0ecf8',borderRadius:7,padding:'7px 10px',lineHeight:1.5}}>Right to Rent checks are NOT required in Scotland. This is an England-only legal requirement.</div>}
+            {p.nation==='Wales'&&<div style={{fontSize:11,color:'#333',background:'var(--surface2)',borderRadius:7,padding:'7px 10px',lineHeight:1.5}}>Right to Rent checks currently apply in England only. Wales is not covered by the scheme, though verifying tenant identity is still best practice.</div>}
+            {p.rightToRentExpiry&&p.rightToRentExpiry!=='N/A'&&<div style={{marginTop:8,fontSize:11,color:'#633806',background:'#fff8e1',borderRadius:7,padding:'7px 10px',lineHeight:1.5}}>Time-limited right to rent. You must recheck before expiry: {p.rightToRentExpiry}</div>}
+          </div>
+          <div style={{marginTop:14,paddingTop:14,borderTop:'0.5px solid var(--border)'}}>
+            <Input label="Annual rent review date" value={p.rentReviewDate} onChange={v=>set('rentReviewDate',v)} placeholder="DD/MM/YYYY: when can rent next be reviewed"/>
           </div>
         </>}
         {tab==='compliance'&&<>
@@ -1237,7 +1252,7 @@ function PortfolioScore({props,checklist,urgent}){
         if(p.eicrDue && dueSoon(p.eicrDue) !== 'overdue') ps += 33
         else complianceItems.push({prop:p.shortName, issue:'EICR (electrical inspection) missing or overdue', fix:'Upload your EICR or enter the date manually', icon:'⚡', done:false})
         if(p.insurer && p.insuranceType?.toLowerCase() !== 'home') ps += 34
-        else complianceItems.push({prop:p.shortName, issue:p.insurer?'Home insurance detected — must be landlord policy':'No insurance recorded', fix:'Upload your insurance document or enter details manually', icon:'🛡️', done:false})
+        else complianceItems.push({prop:p.shortName, issue:p.insurer?'Home insurance detected. Must be a landlord policy.':'No insurance recorded', fix:'Upload your insurance document or enter details manually', icon:'🛡️', done:false})
         return s + ps
       }, 0) / props.length
     : 0
@@ -1247,7 +1262,7 @@ function PortfolioScore({props,checklist,urgent}){
   props.forEach(p=>{
     if(p.gasDue && dueSoon(p.gasDue) !== 'overdue') complianceItems.push({prop:p.shortName, issue:'Gas Safety Certificate valid', fix:'', icon:'✅', done:true})
     if(p.eicrDue && dueSoon(p.eicrDue) !== 'overdue') complianceItems.push({prop:p.shortName, issue:'EICR valid', fix:'', icon:'✅', done:true})
-    if(p.epcRating) complianceItems.push({prop:p.shortName, issue:`EPC rating ${p.epcRating} recorded`, fix:['F','G'].includes(p.epcRating?.toUpperCase())?'EPC below E — upgrade required before letting':'', icon:['A','B','C'].includes(p.epcRating?.toUpperCase())?'✅':'⚠️', done:['A','B','C','D','E'].includes(p.epcRating?.toUpperCase())})
+    if(p.epcRating) complianceItems.push({prop:p.shortName, issue:`EPC rating ${p.epcRating} recorded`, fix:['F','G'].includes(p.epcRating?.toUpperCase())?'EPC below E. Upgrade required before letting.':'', icon:['A','B','C'].includes(p.epcRating?.toUpperCase())?'✅':'⚠️', done:['A','B','C','D','E'].includes(p.epcRating?.toUpperCase())})
     else complianceItems.push({prop:p.shortName, issue:'EPC rating not recorded', fix:'Upload your EPC certificate or enter the rating manually', icon:'🌿', done:false})
   })
 
@@ -1260,7 +1275,7 @@ function PortfolioScore({props,checklist,urgent}){
   props.forEach(p=>{
     if(!p.rent) finItems.push({prop:p.shortName, issue:'Monthly rent not recorded', fix:'Edit this property and add the monthly rent amount', icon:'💸', done:false})
     else finItems.push({prop:p.shortName, issue:`Rent £${Number(p.rent).toLocaleString()}/mo recorded`, fix:'', icon:'✅', done:true})
-    if(!p.currentValue) finItems.push({prop:p.shortName, issue:'Property value not recorded', fix:'Edit this property and add an estimated current value — needed for yield and equity calculations', icon:'🏠', done:false})
+    if(!p.currentValue) finItems.push({prop:p.shortName, issue:'Property value not recorded', fix:'Edit this property and add an estimated current value: needed for yield and equity calculations', icon:'🏠', done:false})
     else finItems.push({prop:p.shortName, issue:`Value £${Number(p.currentValue).toLocaleString()} recorded`, fix:'', icon:'✅', done:true})
     if(!p.mortgage && !p.lender) finItems.push({prop:p.shortName, issue:'Mortgage details not recorded', fix:'Upload your mortgage offer or enter balance, lender and rate manually', icon:'🏦', done:false})
     else finItems.push({prop:p.shortName, issue:`Mortgage with ${p.lender||'lender'} recorded`, fix:'', icon:'✅', done:true})
@@ -1374,7 +1389,7 @@ function PortfolioScore({props,checklist,urgent}){
                 </div>
               </>}
               {s.score < 100 && <div style={{marginTop:10,padding:'8px 10px',background:'var(--brand-light)',borderRadius:8,fontSize:11,color:'var(--brand)',lineHeight:1.5}}>
-                <strong>To reach 100%:</strong> {s.id==='compliance'?'Every property needs a valid gas cert, EICR, EPC rating, and landlord insurance policy.':s.id==='finance'?'Add rent, current value, and mortgage details to every property. Positive cashflow on all properties scores highest.':'Complete all 10 fields for every property — upload documents or use manual entry.'}
+                <strong>To reach 100%:</strong> {s.id==='compliance'?'Every property needs a valid gas cert, EICR, EPC rating, and landlord insurance policy.':s.id==='finance'?'Add rent, current value, and mortgage details to every property. Positive cashflow on all properties scores highest.':'Complete all 10 fields for every property . Upload documents or use manual entry.'}
               </div>}
             </div>}
           </div>
@@ -1399,9 +1414,13 @@ function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab
     if(gas==='overdue')urgent.push(`${p.shortName} - Gas certificate overdue`)
     if(eicr==='overdue')urgent.push(`${p.shortName} - EICR overdue`)
     if(p.epcRating&&['D','E','F','G'].includes(p.epcRating?.toUpperCase()))urgent.push(`${p.shortName} - EPC ${p.epcRating} needs upgrading by 2028`)
+    if(!p.rightToRentChecked&&p.tenantName&&(p.nation!=='Scotland'))urgent.push(`${p.shortName} - Right to Rent check not logged`)
+    if(p.rightToRentExpiry&&p.rightToRentExpiry!=='N/A'&&dueSoon(p.rightToRentExpiry)==='due-soon')urgent.push(`${p.shortName} - Right to Rent expiring ${p.rightToRentExpiry} : recheck required`)
     if(gas==='due-soon')upcoming.push({text:`${p.shortName} - Gas cert due ${p.gasDue}`,days:dueDays(p.gasDue)})
     if(eicr==='due-soon')upcoming.push({text:`${p.shortName} - EICR due ${p.eicrDue}`,days:dueDays(p.eicrDue)})
     if(ins==='due-soon')upcoming.push({text:`${p.shortName} - Insurance renews ${p.insuranceRenewal}`,days:dueDays(p.insuranceRenewal)})
+    if(p.rentReviewDate&&dueSoon(p.rentReviewDate)==='due-soon')upcoming.push({text:`${p.shortName} - Rent review date ${p.rentReviewDate}`,days:dueDays(p.rentReviewDate)})
+    if(p.rentReviewDate&&dueSoon(p.rentReviewDate)==='overdue')urgent.push(`${p.shortName} - Rent review date ${p.rentReviewDate} has passed`)
   })
   upcoming.sort((a,b)=>(a.days||999)-(b.days||999))
   const[emailSent,setEmailSent]=useState(false),[sending,setSending]=useState(false)
@@ -1607,7 +1626,7 @@ function Properties({portfolio,onAddDocs,onScan,onManual,onEdit,onAdd}){
           {p.insuranceExclusions&&<div style={{marginTop:6,fontSize:11,color:'var(--red)',background:'var(--red-bg)',borderRadius:6,padding:'5px 8px',lineHeight:1.5}}><span style={{fontWeight:500}}>Exclusions: </span>{p.insuranceExclusions}</div>}
           {p.insuranceBroker&&<div style={{marginTop:4,fontSize:11,color:'var(--text-3)'}}>Broker: {p.insuranceBroker}</div>}
         </div>}
-        {p.epcRating&&['D','E','F','G'].includes(p.epcRating.toUpperCase())&&<div style={{marginTop:10,background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#633806',lineHeight:1.6}}>EPC {p.epcRating}: Upgrade to C needed for new lets from 2028. Cost: {p.epcRating==='D'?'£3,000-£8,000':'£5,000-£15,000'}.</div>}
+        {p.epcRating&&['D','E','F','G'].includes(p.epcRating.toUpperCase())&&<div style={{marginTop:10,background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#633806',lineHeight:1.6}}>EPC {p.epcRating}: Minimum C required for new lets from 2028, all lets from 2030. Estimated upgrade cost: {p.epcRating==='D'?'£3,000-£8,000':'£5,000-£15,000'}.</div>}
       </div>
     })}
   </div>
@@ -1701,10 +1720,10 @@ function FinanceTab({portfolio,setPortfolio}){
         const noMortgage=props.filter(p=>p.lender&&!p.monthlyPayment)
         const noRent=props.filter(p=>!p.rent)
         const noRate=props.filter(p=>p.mortgage&&!p.rate)
-        if(noValue.length>0) missing.push({icon:'🏠',text:`Property value missing on ${noValue.map(p=>p.shortName).join(', ')} — needed for yield, equity and LTV`,action:'Use Land Registry estimate in Edit property',key:'value'})
-        if(noRent.length>0) missing.push({icon:'💸',text:`Monthly rent missing on ${noRent.map(p=>p.shortName).join(', ')} — needed for yield and net income`,action:'Edit property and add the monthly rent',key:'rent'})
-        if(noMortgage.length>0) missing.push({icon:'🏦',text:`Monthly mortgage payment missing on ${noMortgage.map(p=>p.shortName).join(', ')} — needed for net yield and cashflow`,action:'Edit property and add the monthly payment amount',key:'mortgage'})
-        if(noRate.length>0) missing.push({icon:'📊',text:`Interest rate missing on ${noRate.map(p=>p.shortName).join(', ')} — needed for interest coverage ratio`,action:'Edit property and add the interest rate',key:'rate'})
+        if(noValue.length>0) missing.push({icon:'🏠',text:`Property value missing on ${noValue.map(p=>p.shortName).join(', ')} : needed for yield, equity and LTV`,action:'Use Land Registry estimate in Edit property',key:'value'})
+        if(noRent.length>0) missing.push({icon:'💸',text:`Monthly rent missing on ${noRent.map(p=>p.shortName).join(', ')} : needed for yield and net income`,action:'Edit property and add the monthly rent',key:'rent'})
+        if(noMortgage.length>0) missing.push({icon:'🏦',text:`Monthly mortgage payment missing on ${noMortgage.map(p=>p.shortName).join(', ')} : needed for net yield and cashflow`,action:'Edit property and add the monthly payment amount',key:'mortgage'})
+        if(noRate.length>0) missing.push({icon:'📊',text:`Interest rate missing on ${noRate.map(p=>p.shortName).join(', ')} : needed for interest coverage ratio`,action:'Edit property and add the interest rate',key:'rate'})
         if(missing.length===0) return null
         return<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'12px 16px',marginBottom:16}}>
           <div style={{fontSize:12,fontWeight:600,color:'#633806',marginBottom:8}}>To unlock all metrics, add the following:</div>
@@ -1791,8 +1810,8 @@ function FinanceTab({portfolio,setPortfolio}){
 
       {/* Remortgage alerts */}
       {remortgageProps.length>0&&<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'12px 14px',marginBottom:14,fontSize:12,color:'#633806',lineHeight:1.7}}>
-        <div style={{fontWeight:600,marginBottom:4}}>Remortgage window — {remortgageProps.length} propert{remortgageProps.length===1?'y':'ies'} coming off fixed rate</div>
-        {remortgageProps.map(p=><div key={p.id}>- {p.shortName}: fixed rate ends {p.fixedEnd} — book now to avoid SVR</div>)}
+        <div style={{fontWeight:600,marginBottom:4}}>Remortgage window : {remortgageProps.length} propert{remortgageProps.length===1?'y':'ies'} coming off fixed rate</div>
+        {remortgageProps.map(p=><div key={p.id}>- {p.shortName}: fixed rate ends {p.fixedEnd} . Book now to avoid SVR.</div>)}
       </div>}
     </>}
 
@@ -1901,7 +1920,7 @@ function FinanceTab({portfolio,setPortfolio}){
       </div>
       {props.filter(p=>p.ownership==='Personal'&&p.mortgage).length===0
         ?<div style={{fontSize:12,color:'var(--text-3)',padding:'8px 0'}}>Add personal properties with mortgage details to use this calculator.</div>
-        :<div style={{fontSize:12,color:'var(--text-2)',marginBottom:8}}>{props.filter(p=>p.ownership==='Personal').length} personal propert{props.filter(p=>p.ownership==='Personal').length===1?'y':'ies'} — {props.filter(p=>p.ownership==='Ltd Company').length} Ltd Company</div>
+        :<div style={{fontSize:12,color:'var(--text-2)',marginBottom:8}}>{props.filter(p=>p.ownership==='Personal').length} personal propert{props.filter(p=>p.ownership==='Personal').length===1?'y':'ies'}  and {props.filter(p=>p.ownership==='Ltd Company').length} Ltd Company</div>
       }
       {s24Result&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,fontSize:12,lineHeight:1.8,whiteSpace:'pre-wrap',color:'var(--text-2)',marginTop:8}}>{s24Result}</div>}
     </div>}
@@ -1983,7 +2002,268 @@ function MaintenanceTab({portfolio,setPortfolio,userId}){
 }
 
 /* ---- Tools ---- */
-function ToolsTab({portfolio}){
+
+/* ---- Void Tracker Panel ---- */
+function VoidTrackerPanel({portfolio,setPortfolio}){
+  const props = portfolio.properties||[]
+  const voids = portfolio.voids||[]
+  const[selProp,setSelProp]=useState(props[0]?.id||'')
+  const[form,setForm]=useState({propId:'',startDate:'',endDate:'',reason:'',notes:''})
+  const[showForm,setShowForm]=useState(false)
+  const set=(k,v)=>setForm(prev=>({...prev,[k]:v}))
+
+  function addVoid(){
+    if(!form.propId||!form.startDate)return
+    const updated={...portfolio,voids:[...voids,{...form,id:Math.random().toString(36).slice(2)}]}
+    setPortfolio(updated)
+    setForm({propId:'',startDate:'',endDate:'',reason:'',notes:''})
+    setShowForm(false)
+  }
+  function deleteVoid(id){setPortfolio({...portfolio,voids:voids.filter(v=>v.id!==id)})}
+
+  function voidCost(v){
+    const prop=props.find(p=>p.id===v.propId)
+    const rent=Number(prop?.rent)||0
+    if(!rent||!v.startDate||!v.endDate)return null
+    const start=new Date(v.startDate.split('/').reverse().join('-'))
+    const end=new Date(v.endDate.split('/').reverse().join('-'))
+    const days=Math.max(0,Math.round((end-start)/(1000*60*60*24)))
+    return Math.round((rent/30)*days)
+  }
+
+  const totalVoidCost=voids.reduce((s,v)=>{const c=voidCost(v);return s+(c||0)},0)
+  const currentVoids=voids.filter(v=>!v.endDate||!v.endDate.trim())
+
+  const inp={background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',width:'100%'}
+
+  return<div className="fade-up">
+    {currentVoids.length>0&&<div style={{background:'var(--red-bg)',border:'0.5px solid var(--red)',borderRadius:12,padding:'12px 14px',marginBottom:14,fontSize:12,color:'var(--red)',lineHeight:1.8}}>
+      <div style={{fontWeight:600,marginBottom:4}}>{currentVoids.length} propert{currentVoids.length===1?'y':'ies'} currently void</div>
+      {currentVoids.map(v=>{const p=props.find(pp=>pp.id===v.propId);return<div key={v.id}>- {p?.shortName||'Unknown'}: void since {v.startDate}{p?.rent&&<> , costing approximately {fmt(Number(p.rent))} per month in lost rent</>}</div>})}
+    </div>}
+
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:500,marginBottom:2}}>Void period tracker</div>
+          <div style={{fontSize:12,color:'var(--text-3)'}}>Log periods when properties are empty between tenancies</div>
+        </div>
+        <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'6px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Log void</button>
+      </div>
+
+      {showForm&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,marginBottom:14}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+          <div style={{marginBottom:14,gridColumn:'1/-1'}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label><select value={form.propId} onChange={e=>set('propId',e.target.value)} style={inp}><option value="">Select property</option>{props.map(p=><option key={p.id} value={p.id}>{p.shortName}</option>)}</select></div>
+          <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Void start date</label><input type="date" value={form.startDate?form.startDate.split('/').reverse().join('-'):''} onChange={e=>{const p=e.target.value.split('-');set('startDate',p[2]+'/'+p[1]+'/'+p[0])}} style={inp}/></div>
+          <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Void end date (leave blank if ongoing)</label><input type="date" value={form.endDate?form.endDate.split('/').reverse().join('-'):''} onChange={e=>{const p=e.target.value.split('-');set('endDate',p[2]+'/'+p[1]+'/'+p[0])}} style={inp}/></div>
+          <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Reason</label><select value={form.reason} onChange={e=>set('reason',e.target.value)} style={inp}><option value="">Select reason</option><option>Between tenancies</option><option>Refurbishment</option><option>Unable to let</option><option>Awaiting probate / legal</option><option>Other</option></select></div>
+          <div style={{marginBottom:14,gridColumn:'1/-1'}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Notes</label><input value={form.notes} onChange={e=>set('notes',e.target.value)} placeholder="e.g. New boiler being fitted" style={inp}/></div>
+        </div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+          <button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
+          <button onClick={addVoid} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Save void period</button>
+        </div>
+      </div>}
+
+      {voids.length===0
+        ?<div style={{fontSize:12,color:'var(--text-3)',textAlign:'center',padding:'20px 0'}}>No void periods logged yet. Log empty periods to track lost income and inform yield calculations.</div>
+        :<><table style={{width:'100%',borderCollapse:'collapse',fontSize:12,marginBottom:10}}>
+          <thead><tr style={{borderBottom:'0.5px solid var(--border)',background:'var(--surface2)'}}>{['Property','Start','End','Days','Lost income','Reason',''].map(h=><th key={h} style={{textAlign:'left',padding:'7px 8px',fontSize:11,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px'}}>{h}</th>)}</tr></thead>
+          <tbody>{voids.map(v=>{
+            const prop=props.find(p=>p.id===v.propId)
+            const cost=voidCost(v)
+            const start=v.startDate?new Date(v.startDate.split('/').reverse().join('-')):null
+            const end=v.endDate?new Date(v.endDate.split('/').reverse().join('-')):new Date()
+            const days=start?Math.round((end-start)/(1000*60*60*24)):null
+            return<tr key={v.id} style={{borderBottom:'0.5px solid var(--border)'}} >
+              <td style={{padding:'8px'}}><div style={{fontWeight:500}}>{prop?.shortName||'Unknown'}</div></td>
+              <td style={{padding:'8px',fontFamily:'var(--mono)'}}>{v.startDate}</td>
+              <td style={{padding:'8px',fontFamily:'var(--mono)'}}>{v.endDate||<span style={{color:'var(--red)',fontWeight:500}}>Ongoing</span>}</td>
+              <td style={{padding:'8px',fontFamily:'var(--mono)'}}>{days!=null?days+' days':'-'}</td>
+              <td style={{padding:'8px',fontFamily:'var(--mono)',color:'var(--red)'}}>{cost?fmt(cost):'-'}</td>
+              <td style={{padding:'8px',color:'var(--text-2)'}}>{v.reason||'-'}</td>
+              <td style={{padding:'8px'}}><button onClick={()=>deleteVoid(v.id)} style={{color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',fontSize:14}}>x</button></td>
+            </tr>
+          })}</tbody>
+        </table>
+        {totalVoidCost>0&&<div style={{background:'var(--red-bg)',border:'0.5px solid var(--red)',borderRadius:9,padding:'10px 14px',fontSize:12,color:'var(--red)'}}>Total lost income from voids: <strong>{fmt(totalVoidCost)}</strong></div>}
+        </>
+      }
+    </div>
+
+    {props.length>0&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>Void cost per property</div>
+      <div style={{display:'flex',flexDirection:'column',gap:8}}>
+        {props.map(p=>{
+          const propVoids=voids.filter(v=>v.id&&v.propId===p.id)
+          const totalCost=propVoids.reduce((s,v)=>{const c=voidCost(v);return s+(c||0)},0)
+          const totalDays=propVoids.reduce((s,v)=>{
+            const start=v.startDate?new Date(v.startDate.split('/').reverse().join('-')):null
+            const end=v.endDate?new Date(v.endDate.split('/').reverse().join('-')):new Date()
+            return s+(start?Math.round((end-start)/(1000*60*60*24)):0)
+          },0)
+          const voidYield=p.rent&&totalDays>0?((totalCost/(Number(p.rent)*12))*100).toFixed(1):null
+          return<div key={p.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 10px',background:'var(--surface2)',borderRadius:8}}>
+            <div style={{fontSize:12,fontWeight:500}}>{p.shortName}</div>
+            <div style={{display:'flex',gap:16,fontSize:12,color:'var(--text-2)'}}>
+              <span>{propVoids.length} period{propVoids.length!==1?'s':''}</span>
+              <span>{totalDays} days total</span>
+              {totalCost>0&&<span style={{color:'var(--red)',fontWeight:500}}>{fmt(totalCost)} lost</span>}
+              {voidYield&&<span style={{color:'var(--amber)'}}>-{voidYield}% yield impact</span>}
+            </div>
+          </div>
+        })}
+      </div>
+    </div>}
+  </div>
+}
+
+/* ---- Tax Export Panel ---- */
+function TaxExportPanel({portfolio}){
+  const props=portfolio.properties||[]
+  const expenses=portfolio.expenses||[]
+  const rentLedger=portfolio.rentLedger||{}
+  const now=new Date()
+  const[taxYear,setTaxYear]=useState(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1)
+
+  // UK tax year: 6 April to 5 April
+  const yearStart=new Date(taxYear,3,6) // April 6
+  const yearEnd=new Date(taxYear+1,3,5)  // April 5 next year
+
+  // Calculate rent received per property from rent ledger
+  const rentIncome=props.map(p=>{
+    const months=Object.keys(rentLedger[p.id]||{}).filter(k=>k.match(/^\d{4}-\d{2}$/))
+    const received=months.reduce((s,monthKey)=>{
+      const status=rentLedger[p.id]?.[monthKey]
+      const amount=rentLedger[p.id]?.[monthKey+'_amount']
+      if(status==='paid')return s+(amount?Number(amount):Number(p.rent)||0)
+      if(status==='partial')return s+(Number(amount)||0)
+      return s
+    },0)
+    // Fallback: if no ledger data, estimate from monthly rent
+    const fallback=(Number(p.rent)||0)*12
+    return{prop:p,received:received||fallback,isEstimate:!received}
+  })
+
+  const totalRentIncome=rentIncome.reduce((s,r)=>s+r.received,0)
+
+  // Expenses in tax year
+  const yearExpenses=expenses.filter(e=>{
+    if(!e.date)return true
+    const parts=e.date.split('/')
+    if(parts.length<3)return true
+    const d=new Date(parts[2],parts[1]-1,parts[0])
+    return d>=yearStart&&d<=yearEnd
+  })
+  const totalExpenses=yearExpenses.reduce((s,e)=>s+(Number(e.amount)||0),0)
+  const totalMortgageInterest=props.reduce((s,p)=>{
+    const rate=Number(p.rate)||0
+    const balance=Number(p.mortgage)||0
+    return s+(rate/100*balance)
+  },0)
+  const netProfit=totalRentIncome-totalExpenses
+  const taxableProfit=netProfit // Section 24: mortgage interest not deductible for personal ownership
+
+  const bycat={}
+  yearExpenses.forEach(e=>{bycat[e.category]=(bycat[e.category]||0)+Number(e.amount||0)})
+
+  function copyReport(){
+    const lines=[
+      `LETTLY TAX YEAR SUMMARY`,
+      `Tax year: ${taxYear}/${taxYear+1} (6 April ${taxYear} to 5 April ${taxYear+1})`,
+      `Generated: ${new Date().toLocaleDateString('en-GB')}`,
+      ``,
+      `RENTAL INCOME`,
+      ...rentIncome.map(r=>`  ${r.prop.shortName}: £${r.received.toLocaleString('en-GB')}${r.isEstimate?' (estimated)':''}`),
+      `  TOTAL RENTAL INCOME: £${totalRentIncome.toLocaleString('en-GB')}`,
+      ``,
+      `ALLOWABLE EXPENSES`,
+      ...Object.entries(bycat).map(([cat,amt])=>`  ${cat}: £${amt.toLocaleString('en-GB')}`),
+      `  TOTAL EXPENSES: £${totalExpenses.toLocaleString('en-GB')}`,
+      ``,
+      `MORTGAGE INTEREST (Section 24 note)`,
+      `  Estimated annual interest: £${Math.round(totalMortgageInterest).toLocaleString('en-GB')}`,
+      `  Note: Under Section 24, mortgage interest is NOT deductible for personal ownership.`,
+      `  A 20% basic rate tax credit applies instead.`,
+      ``,
+      `NET PROFIT: £${netProfit.toLocaleString('en-GB')}`,
+      ``,
+      `PROPERTY BREAKDOWN`,
+      ...props.map(p=>`  ${p.shortName} (${p.nation||'England'}): Rent £${p.rent?Number(p.rent)*12:0}/yr, Mortgage £${p.mortgage||0} at ${p.rate||0}%`),
+      ``,
+      `This summary is for guidance only. Please confirm all figures with your accountant.`,
+      `Prepared using Lettly: lettly.co`
+    ]
+    navigator.clipboard.writeText(lines.join('
+'))
+    alert('Report copied to clipboard')
+  }
+
+  return<div className="fade-up">
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:500,marginBottom:2}}>Tax year summary</div>
+          <div style={{fontSize:12,color:'var(--text-3)'}}>Accountant-ready income and expense summary</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <select value={taxYear} onChange={e=>setTaxYear(Number(e.target.value))} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 11px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',outline:'none'}}>
+            {[2025,2024,2023,2022].map(y=><option key={y} value={y}>{y}/{y+1}</option>)}
+          </select>
+          <button onClick={copyReport} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Copy for accountant</button>
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+        <div style={{background:'var(--green-bg)',border:'0.5px solid var(--green)',borderRadius:10,padding:'12px 14px'}}>
+          <div style={{fontSize:11,color:'var(--green)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>Total rental income</div>
+          <div style={{fontSize:22,fontWeight:600,fontFamily:'var(--mono)',color:'var(--green)'}}>{fmt(totalRentIncome)}</div>
+          <div style={{fontSize:11,color:'var(--green)',opacity:0.7,marginTop:2}}>Tax year {taxYear}/{taxYear+1}</div>
+        </div>
+        <div style={{background:'var(--red-bg)',border:'0.5px solid var(--red)',borderRadius:10,padding:'12px 14px'}}>
+          <div style={{fontSize:11,color:'var(--red)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>Total expenses</div>
+          <div style={{fontSize:22,fontWeight:600,fontFamily:'var(--mono)',color:'var(--red)'}}>{fmt(totalExpenses)}</div>
+          <div style={{fontSize:11,color:'var(--red)',opacity:0.7,marginTop:2}}>{yearExpenses.length} items</div>
+        </div>
+        <div style={{background:netProfit>=0?'var(--brand-subtle)':'var(--red-bg)',border:'0.5px solid '+(netProfit>=0?'rgba(27,94,59,0.2)':'var(--red)'),borderRadius:10,padding:'12px 14px'}}>
+          <div style={{fontSize:11,color:netProfit>=0?'var(--brand)':'var(--red)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:4}}>Net profit</div>
+          <div style={{fontSize:22,fontWeight:600,fontFamily:'var(--mono)',color:netProfit>=0?'var(--brand)':'var(--red)'}}>{fmt(netProfit)}</div>
+          <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Before tax</div>
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14}}>
+        <div>
+          <div style={{fontSize:12,fontWeight:500,marginBottom:10}}>Rental income by property</div>
+          {rentIncome.map(r=><div key={r.prop.id} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'0.5px solid var(--border)',fontSize:12}}>
+            <span style={{color:'var(--text-2)'}}>{r.prop.shortName}</span>
+            <span style={{fontFamily:'var(--mono)',fontWeight:500}}>{fmt(r.received)}{r.isEstimate&&<span style={{fontSize:10,color:'var(--text-3)',marginLeft:4}}>est.</span>}</span>
+          </div>)}
+        </div>
+        <div>
+          <div style={{fontSize:12,fontWeight:500,marginBottom:10}}>Expenses by category</div>
+          {Object.keys(bycat).length===0
+            ?<div style={{fontSize:12,color:'var(--text-3)'}}>No expenses logged for this tax year. Add expenses in the Finance tab.</div>
+            :Object.entries(bycat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=><div key={cat} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'0.5px solid var(--border)',fontSize:12}}>
+              <span style={{color:'var(--text-2)'}}>{cat}</span>
+              <span style={{fontFamily:'var(--mono)',fontWeight:500,color:'var(--red)'}}>{fmt(amt)}</span>
+            </div>)
+          }
+        </div>
+      </div>
+
+      <div style={{background:'var(--surface2)',border:'0.5px solid var(--border)',borderRadius:10,padding:'10px 14px',marginBottom:10}}>
+        <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.6}}>This summary is for guidance only and does not constitute tax or financial advice. All figures should be verified with your accountant before filing your Self Assessment. Rental income figures are based on data you have entered and may not be complete.</div>
+      </div>
+      <div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:10,padding:'12px 14px'}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#633806',marginBottom:6}}>Section 24 note</div>
+        <div style={{fontSize:12,color:'#7a5000',lineHeight:1.7}}>Estimated mortgage interest this year: {fmt(Math.round(totalMortgageInterest))}. Under Section 24, this is NOT deductible for personal ownership. You receive a 20% basic rate tax credit instead. If you pay higher rate tax, Section 24 significantly increases your tax bill. Ask your accountant about moving to a limited company structure.</div>
+      </div>
+    </div>
+  </div>
+}
+
+function ToolsTab({portfolio,setPortfolio}){
   const props=portfolio.properties||[]
   const[tool,setTool]=useState('remortgage')
   const[docType,setDocType]=useState('section8')
@@ -1998,7 +2278,7 @@ function ToolsTab({portfolio}){
   const equity=rp&&rp.currentValue&&rp.mortgage?Number(rp.currentValue)-Number(rp.mortgage):null
   const maxRelease=rp&&rp.currentValue?Math.floor(Number(rp.currentValue)*0.75)-Number(rp.mortgage||0):null
   return<div className="fade-up">
-    <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>{[{id:'remortgage',label:'Remortgage planner'},{id:'documents',label:'Document generator'},{id:'report',label:'Portfolio report'}].map(t=><button key={t.id} onClick={()=>{setTool(t.id);setGenerated('')}} style={{padding:'7px 16px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:tool===t.id?'var(--brand)':'var(--border)',background:tool===t.id?'var(--brand-light)':'var(--surface)',color:tool===t.id?'var(--brand)':'var(--text-2)'}}>{t.label}</button>)}</div>
+    <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>{[{id:'remortgage',label:'Remortgage planner'},{id:'documents',label:'Document generator'},{id:'voids',label:'Void tracker'},{id:'taxexport',label:'Tax export'},{id:'report',label:'Portfolio report'}].map(t=><button key={t.id} onClick={()=>{setTool(t.id);setGenerated('')}} style={{padding:'7px 16px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:tool===t.id?'var(--brand)':'var(--border)',background:tool===t.id?'var(--brand-light)':'var(--surface)',color:tool===t.id?'var(--brand)':'var(--text-2)'}}>{t.label}</button>)}</div>
     {tool==='remortgage'&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
       <div style={{fontSize:13,fontWeight:500,marginBottom:14}}>Remortgage planner</div>
       <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Select property</label><select value={remProp} onChange={e=>setRemProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">Choose a property</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}</select></div>
@@ -2018,17 +2298,20 @@ function ToolsTab({portfolio}){
     {tool==='documents'&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
       <div style={{fontSize:13,fontWeight:500,marginBottom:14}}>Document generator</div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:14}}>
-        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Document type</label><select value={docType} onChange={e=>{setDocType(e.target.value);setExtra({});setGenerated('')}} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="section8">Section 8 Notice (England)</option><option value="inspection">Inspection report</option><option value="letter_rent_increase">Rent increase letter</option><option value="letter_entry">Right of entry notice</option></select></div>
+        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Document type</label><select value={docType} onChange={e=>{setDocType(e.target.value);setExtra({});setGenerated('')}} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="ast">Assured Shorthold Tenancy (England)</option><option value="section8">Section 8 Notice (England)</option><option value="inspection">Inspection report</option><option value="letter_rent_increase">Rent increase letter</option><option value="letter_entry">Right of entry notice</option><option value="right_to_rent_letter">Right to Rent check letter</option></select></div>
         <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label><select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">Select property</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName} {p.nation?`(${p.nation})`:''}</option>)}</select></div>
       </div>
       {(() => {const sp=props.find(p=>p.id===selProp||p.shortName===selProp);return sp?.nation==='Scotland'?<div style={{background:'#e0ecf8',border:'0.5px solid #005EB8',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#003090',lineHeight:1.6,marginBottom:14}}>Scottish property: Section 8 does not apply in Scotland. Use the First-tier Tribunal for Scotland repossession process instead.</div>:sp?.nation==='Wales'?<div style={{background:'#fce8ec',border:'0.5px solid #C8102E',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#8b0000',lineHeight:1.6,marginBottom:14}}>Welsh property: This property uses an Occupation Contract. Different possession rules apply under the Renting Homes (Wales) Act.</div>:null})()}
+      {docType==='ast'&&<div style={{background:'#e8f5e9',border:'0.5px solid #a5d6a7',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#1b5e3b',lineHeight:1.6,marginBottom:14}}>Important: From 1 May 2026, the Renters Rights Act means new tenancies in England cannot be fixed-term ASTs. All new tenancies become periodic tenancies. This draft AST includes periodic tenancy terms. Always have complex agreements reviewed by a solicitor.</div>}
       {docType==='section8'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}><Input label="Grounds" value={extra.grounds||''} onChange={v=>setExtra(p=>({...p,grounds:v}))} placeholder="e.g. Ground 8 - rent arrears"/><Input label="Arrears amount" value={extra.arrears||''} onChange={v=>setExtra(p=>({...p,arrears:v}))} placeholder="e.g. £1,200"/></div>}
       {docType==='inspection'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}><Input label="Inspection date" value={extra.date||''} onChange={v=>setExtra(p=>({...p,date:v}))} placeholder="DD/MM/YYYY"/><Input label="Inspector name" value={extra.inspector||''} onChange={v=>setExtra(p=>({...p,inspector:v}))} placeholder="Your name"/><div style={{gridColumn:'1/-1'}}><Input label="Condition notes" value={extra.notes||''} onChange={v=>setExtra(p=>({...p,notes:v}))} placeholder="Specific items to include"/></div></div>}
       {docType==='letter_rent_increase'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}><Input label="New rent (£/mo)" value={extra.newRent||''} onChange={v=>setExtra(p=>({...p,newRent:v}))} placeholder="e.g. 900" type="number"/><Input label="Effective date" value={extra.effectiveDate||''} onChange={v=>setExtra(p=>({...p,effectiveDate:v}))} placeholder="DD/MM/YYYY"/></div>}
       {docType==='letter_entry'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}><Input label="Proposed visit date" value={extra.visitDate||''} onChange={v=>setExtra(p=>({...p,visitDate:v}))} placeholder="DD/MM/YYYY"/><Input label="Reason for visit" value={extra.reason||''} onChange={v=>setExtra(p=>({...p,reason:v}))} placeholder="e.g. Annual inspection"/></div>}
       <button onClick={generateDoc} disabled={generating} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'9px 22px',fontSize:13,fontWeight:500,cursor:generating?'not-allowed':'pointer',opacity:generating?0.6:1,marginBottom:generating||generated?14:0}}>{generating?'Generating...':'Generate document'}</button>
-      {generated&&<div style={{background:'var(--surface2)',borderRadius:10,padding:16,fontSize:12,lineHeight:1.9,whiteSpace:'pre-wrap',color:'var(--text-2)',fontFamily:'var(--mono)'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div style={{fontSize:12,fontWeight:500,color:'var(--text)',fontFamily:'var(--font)'}}>Generated document</div><button onClick={()=>navigator.clipboard.writeText(generated)} style={{fontSize:11,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:6,padding:'4px 10px',cursor:'pointer'}}>Copy</button></div>{generated}</div>}
+      {generated&&<><div style={{background:'#fce8e6',border:'0.5px solid #E24B4A',borderRadius:8,padding:'10px 14px',marginBottom:8,fontSize:11,color:'#791F1F',lineHeight:1.6}}><strong>Important:</strong> This is a draft document for reference only. It does not constitute legal advice. Review with a qualified solicitor before use. You remain solely responsible for ensuring any document is legally valid and appropriate for your circumstances.</div><div style={{background:'var(--surface2)',borderRadius:10,padding:16,fontSize:12,lineHeight:1.9,whiteSpace:'pre-wrap',color:'var(--text-2)',fontFamily:'var(--mono)'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div style={{fontSize:12,fontWeight:500,color:'var(--text)',fontFamily:'var(--font)'}}>Generated document</div><button onClick={()=>navigator.clipboard.writeText(generated)} style={{fontSize:11,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:6,padding:'4px 10px',cursor:'pointer'}}>Copy</button></div>{generated}</div></> }
     </div>}
+    {tool==='voids'&&<VoidTrackerPanel portfolio={portfolio} setPortfolio={setPortfolio}/>}
+    {tool==='taxexport'&&<TaxExportPanel portfolio={portfolio}/>}
     {tool==='report'&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
       <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Portfolio report</div>
       <div style={{fontSize:12,color:'var(--text-3)',marginBottom:16}}>Summary for sharing with advisors or accountants</div>
@@ -2068,7 +2351,7 @@ function LegislationTab({portfolio}){
     </div>
     {/* Nation info banner */}
     <div style={{background:nl.bg,border:`0.5px solid ${nl.color}40`,borderRadius:10,padding:'10px 14px',marginBottom:16,fontSize:12,color:nl.color,lineHeight:1.7}}>
-      {nation==='England'&&'England: Renters Rights Act in force from 1 May 2026. Section 21 abolished. All tenancies become periodic. PRS Database registration required.'}
+      {nation==='England'&&'England: Renters Rights Act in force from 1 May 2026. Section 21 abolished for new tenancies. All tenancies become periodic. Fixed-term ASTs no longer available for new tenancies. PRS Database registration required before serving any notice.'}
       {nation==='Scotland'&&'Scotland: Private Residential Tenancies (PRTs) in force since 2017. No-fault evictions already abolished. Mandatory landlord registration with local council required.'}
       {nation==='Wales'&&'Wales: Renting Homes (Wales) Act in force since Dec 2022. Occupation Contracts replace ASTs. Rent Smart Wales registration mandatory.'}
     </div>
@@ -2090,7 +2373,7 @@ function AITab({portfolio}){
   const props=portfolio.properties||[]
   const nations=[...new Set(props.map(p=>p.nation||'England'))]
   const n=props.length
-  const[messages,setMessages]=useState([{role:'assistant',content:n>0?`I can see your portfolio of ${n} propert${n===1?'y':'ies'} across ${nations.join(', ')}. Ask me anything about compliance, legislation, finances, or remortgage strategy.`:`Welcome to Lettly AI. Add properties first and I can give specific advice for your portfolio.`}])
+  const[messages,setMessages]=useState([{role:'assistant',content:n>0?`I can see your portfolio of ${n} propert${n===1?'y':'ies'} across ${nations.join(', ')}. Ask me anything about compliance, legislation, finances, or remortgage strategy.\n\nNote: I provide general information and guidance only, not legal or financial advice. Always verify important decisions with a qualified solicitor or accountant.`:`Welcome to Lettly AI. Add properties first and I can give specific advice for your portfolio.\n\nNote: I provide general information and guidance only, not legal or financial advice. Always verify important decisions with a qualified solicitor or accountant.`}])
   const[input,setInput]=useState(''),[loading,setLoading]=useState(false)
   const scrollRef=useRef(null)
   useEffect(()=>{if(scrollRef.current)scrollRef.current.scrollTop=scrollRef.current.scrollHeight},[messages])
@@ -2430,7 +2713,7 @@ const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
   const[tab,setTab]=useState('overview')
-  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:''})
+  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:'',voids:[]})
   const[queue,setQueue]=useState([])
   const[showDrop,setShowDrop]=useState(false)
   const[loaded,setLoaded]=useState(false)
@@ -2446,7 +2729,7 @@ export default function Dashboard(){
       // Only show wizard after Supabase confirms no onboarding data
       getPortfolio(user.id).then(data=>{
         const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
-        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[]}
+        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[]}
         setPortfolio(pSafe)
         setLoaded(true)
         if(!p.onboarding){setShowWizard(true)}
@@ -2454,7 +2737,7 @@ export default function Dashboard(){
     } else {
       getPortfolio(user.id).then(data=>{
         const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
-        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[]}
+        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[]}
         setPortfolio(pSafe)
         setLoaded(true)
       })
@@ -2621,10 +2904,14 @@ export default function Dashboard(){
         {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='rent'        &&<RentTracker   portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='maintenance' &&<MaintenanceTab portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/>}
-        {tab==='tools'       &&<ToolsTab      portfolio={portfolio}/> }
+        {tab==='tools'       &&<ToolsTab      portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='conditions'  &&<div className='fade-up'><ConditionReport portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/></div>}
         {tab==='legislation' &&<LegislationTab portfolio={portfolio}/>}
         {tab==='ai'          &&<AITab         portfolio={portfolio}/>}
+        <div style={{marginTop:32,paddingTop:16,borderTop:'0.5px solid var(--border)',fontSize:11,color:'var(--text-3)',lineHeight:1.7,textAlign:'center'}}>
+          Lettly provides information and tools to help you manage your properties. Nothing on this platform constitutes legal, financial, or compliance advice. You remain solely responsible for complying with all landlord obligations. Always consult a qualified solicitor or accountant before making legal or financial decisions.
+          {' '}<a href="/terms" style={{color:'var(--text-3)',textDecoration:'underline'}}>Terms of Service</a>
+        </div>
       </div>
     </div>
     {formProp!==null&&<PropertyForm initial={formProp} onSave={updateProperty} onDelete={deleteProperty} onClose={()=>setFormProp(null)}/>}

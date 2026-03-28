@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
   try {
     // Get all user emails from Supabase portfolios
-    // (They are stored via Clerk user ID — we need emails from Clerk)
+    // (They are stored via Clerk user ID : we need emails from Clerk)
     // For now, use a test email or get from request body
     let subscribers = []
 

@@ -6,27 +6,27 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const PROMPT = `You are a UK property management compliance expert. READ EVERY PAGE OF THIS DOCUMENT thoroughly. Extract ALL information relevant to property management and return ONLY a valid JSON object.
 
 CRITICAL RULES:
-- READ ALL PAGES — do not stop at page 1. Every page may contain critical compliance data, dates, or obligations.
-- The property address is the ADDRESS BEING LET OR MANAGED — not the landlord's address, not the solicitor's, not an agent's office
+- READ ALL PAGES. Do not stop at page 1. Every page may contain critical compliance data, dates, or obligations.
+- The property address is the ADDRESS BEING LET OR MANAGED : not the landlord's address, not the solicitor's, not an agent's office
 - For completion statements, mortgage offers, tenancy agreements: property = the one being purchased/mortgaged/let
 - For gas certs, EICRs, EPCs: property = where the work was carried out
 - For insurance: property = the insured premises (not the policyholder's correspondence address)
 - shortName MUST start with house number: "11 Northfield Avenue" not "Northfield Avenue"
 - address MUST include full address with house number, street, town, postcode
 - CRITICAL: Do NOT create a property for access roads, rights of way, easements, or ancillary land described in title documents. Only extract a property if it is the PRIMARY dwelling being purchased, let, or managed.
-- CRITICAL: If a document describes "access via X road" or "right of way over X" — X is NOT the property address. The property is the main dwelling the document is fundamentally about.
+- CRITICAL: If a document describes "access via X road" or "right of way over X" : X is NOT the property address. The property is the main dwelling the document is fundamentally about.
 - If you cannot identify a specific house/flat number for the property, omit the property field entirely rather than guessing a road name.
 - NEVER use a document type as a property name. shortName must NEVER be "Rental Contract", "Tenancy Agreement", "Lease", "Document", "Contract", "Mortgage", "Unknown", or any variation of these. If you cannot identify a real street address with a house number, omit the property field entirely.
 - A valid shortName looks like: "11 Northfield Avenue" or "7 Tower Hill Mews" or "602 Hotham Road South". It starts with a number and ends with a street name.
 - If the document is a generic template, a terms of business document, or does not refer to a specific identifiable property address with a house number, omit the property field entirely.
-- Extract EVERY date, certificate number, reference, name, amount — do not skip anything
+- Extract EVERY date, certificate number, reference, name, amount . Do not skip anything.
 - For compliance docs: extract engineer/inspector name, registration numbers, test results, observations, and any defects noted
 - For tenancy agreements: extract ALL tenant names, ALL clauses about obligations, break clauses, permitted use
 - For insurance: extract ALL covered risks, exclusions, excess amounts, and any special conditions
 - For leases: extract lease length, ground rent, service charge, review dates, landlord covenants, tenant covenants
-- Do not guess. Omit fields you cannot find. But look hard — the data is there across multiple pages.
+- Do not guess. Omit fields you cannot find. But look hard: the data is there across multiple pages.
 
-Use this exact structure (omit any field you cannot find — but search ALL pages before omitting):
+Use this exact structure (omit any field you cannot find : but search ALL pages before omitting):
 {
   "documentType": "gas_certificate|eicr|insurance|epc_certificate|tenancy_agreement|mortgage_offer|completion_statement|lease|section_notice|inventory|other",
   "property": {
@@ -62,15 +62,15 @@ Use this exact structure (omit any field you cannot find — but search ALL page
       "excess": 0,
       "voluntaryExcess": 0,
       "compulsoryExcess": 0,
-      "cover": "full list of covers included — buildings, contents, liability, loss of rent, legal, etc",
+      "cover": "full list of covers included : buildings, contents, liability, loss of rent, legal, etc",
       "lossOfRentCover": 0,
       "lossOfRentPeriod": "max period covered e.g. 12 months",
       "legalExpensesCover": 0,
       "emergencyCover": "yes/no and what is covered",
       "floodCover": "yes/no",
       "subsidence": "yes/no",
-      "accidentalDamage": "yes/no — buildings",
-      "accidentalDamagContents": "yes/no — contents",
+      "accidentalDamage": "yes/no : buildings",
+      "accidentalDamagContents": "yes/no : contents",
       "maliciousDamage": "yes/no",
       "theftCover": "yes/no",
       "unoccupancyClause": "any unoccupancy restrictions e.g. 30 consecutive days",
@@ -159,7 +159,7 @@ export default async function handler(req, res) {
   if (approxMB > 28) {
     return res.status(400).json({
       success: false,
-      error: `This file is ${approxMB.toFixed(0)}MB — too large to process. Try compressing the PDF or splitting it into smaller files (max 28MB).`,
+      error: `This file is ${approxMB.toFixed(0)}MB . Too large to process. Try compressing the PDF or splitting it into smaller files (max 28MB).`,
       filename
     })
   }
@@ -218,7 +218,7 @@ export default async function handler(req, res) {
     // Give user a helpful message
     let userMsg = 'Could not read this document.'
     if (msg.includes('Could not process') || msg.includes('invalid') || msg.includes('corrupt') || msg.includes('not valid') || msg.includes('Unable to')) {
-      userMsg = 'This PDF could not be read — it may be password-protected, digitally signed, or in a format we cannot process. Try printing it to PDF and re-uploading, or use manual entry instead.'
+      userMsg = 'This PDF could not be read . It may be password-protected, digitally signed, or in a format we cannot process. Try printing it to PDF and re-uploading, or use manual entry instead.'
     } else if (msg.includes('too large') || msg.includes('size') || msg.includes('maximum')) {
       userMsg = 'This file is too large to process. Try compressing the PDF or use manual entry instead.'
     } else if (msg.includes('Overloaded') || msg.includes('overloaded') || msg.includes('529')) {
@@ -226,7 +226,7 @@ export default async function handler(req, res) {
     } else if (msg.includes('rate') || msg.includes('limit')) {
       userMsg = 'Too many requests. Please wait a moment and try again.'
     } else if (msg.includes('timeout') || msg.includes('timed out')) {
-      userMsg = 'This document took too long to process — it may be very large. Try a smaller file or use manual entry.'
+      userMsg = 'This document took too long to process . It may be very large. Try a smaller file or use manual entry.'
     } else if (msg) {
       userMsg = msg
     }

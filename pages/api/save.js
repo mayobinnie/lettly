@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Handles two callers:
 // 1. fetch() with JSON body (dashboard auto-save)
-// 2. navigator.sendBeacon on page unload — sends raw JSON string
+// 2. navigator.sendBeacon on page unload : sends raw JSON string
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
   try {

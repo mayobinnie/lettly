@@ -11,6 +11,31 @@ export default async function handler(req, res) {
   const { type, property, portfolio, extra } = req.body
 
   const prompts = {
+    ast: `You are a UK legal expert specialising in residential tenancy law. Draft a comprehensive Assured Shorthold Tenancy Agreement (AST) for England.
+
+Property: ${property?.address}
+Landlord: ${property?.ownerName || 'The Landlord'}
+Tenant(s): ${property?.tenantName}
+Monthly rent: £${property?.rent}
+Tenancy start: ${property?.tenancyStart || 'To be confirmed'}
+Initial fixed term: 12 months
+Deposit: £${property?.depositAmount || property?.rent}
+Deposit scheme: ${property?.depositScheme || 'DPS Custodial'}
+
+Draft a complete AST including: parties, property address, term, rent, deposit, tenant obligations, landlord obligations, repair responsibilities, access rights, break clause, periodic tenancy continuation, notice periods, and standard clauses for the Renters Rights Act 2025. Format with numbered clauses. End with signature blocks for landlord and all tenants.
+
+Note: This is a draft for review. Always advise the landlord to have complex situations reviewed by a solicitor.`,
+
+    right_to_rent_letter: `You are a UK property professional. Draft a formal Right to Rent check completion letter for England.
+
+Property: ${property?.address}
+Tenant: ${property?.tenantName}
+Check date: ${property?.rightToRentChecked || new Date().toLocaleDateString('en-GB')}
+Document type seen: ${property?.rightToRentDocType || 'UK Passport'}
+Expiry: ${property?.rightToRentExpiry || 'N/A - unlimited right to rent'}
+
+Draft a letter confirming the Right to Rent check was completed, what documents were seen, copies were taken and retained, and the outcome. Include any follow-up recheck dates if time-limited.`,
+
     section8: `You are a UK landlord legal assistant. Draft a formal Section 8 Notice to Quit for the following property. Use clear, professional language. Include all required legal grounds. Format with proper headings.
 
 Property: ${property?.address}

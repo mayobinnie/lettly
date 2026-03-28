@@ -378,10 +378,10 @@ export default function Landing() {
                   nation:'England',
                   color:'rgba(255,255,255,0.12)',
                   items:[
-                    { urgent:true,  text:"Renters Rights Act — Section 21 abolished 1 May 2026" },
-                    { urgent:true,  text:"All tenancies become periodic — no more fixed terms" },
+                    { urgent:true,  text:"Renters Rights Act: Section 21 abolished from 1 May 2026 for new tenancies" },
+                    { urgent:true,  text:"Fixed-term ASTs no longer available for new tenancies from 1 May 2026" },
                     { urgent:true,  text:"PRS Database registration required before serving notice" },
-                    { urgent:false, text:"Awaab's Law — damp and mould response within 14 days" },
+                    { urgent:false, text:"Awaab's Law: damp and mould response within 14 days" },
                     { urgent:false, text:"EPC minimum C required for new lets from 2028" },
                     { urgent:false, text:"Decent Homes Standard extended to private rented sector" },
                   ]
@@ -391,11 +391,11 @@ export default function Landing() {
                   nation:'Scotland',
                   color:'rgba(255,255,255,0.12)',
                   items:[
-                    { urgent:true,  text:"Private Residential Tenancy — ASTs no longer valid" },
+                    { urgent:true,  text:"Private Residential Tenancy (PRT) replaced ASTs in Scotland from December 2017" },
                     { urgent:true,  text:"Mandatory landlord registration with local council" },
-                    { urgent:true,  text:"No fixed-term tenancies — tenants can leave anytime" },
-                    { urgent:false, text:"Repairing Standard — mandatory property condition rules" },
-                    { urgent:false, text:"SafeDeposits Scotland — different deposit scheme rules" },
+                    { urgent:true,  text:"No fixed-term tenancies. Tenants can leave anytime." },
+                    { urgent:false, text:"Repairing Standard: mandatory property condition rules" },
+                    { urgent:false, text:"SafeDeposits Scotland: different deposit scheme rules" },
                     { urgent:false, text:"Rent control zones in some local authority areas" },
                   ]
                 },
@@ -404,11 +404,11 @@ export default function Landing() {
                   nation:'Wales',
                   color:'rgba(255,255,255,0.12)',
                   items:[
-                    { urgent:true,  text:"Occupation Contracts — ASTs replaced since Dec 2022" },
-                    { urgent:true,  text:"Rent Smart Wales — mandatory registration and licence" },
+                    { urgent:true,  text:"Occupation Contracts replaced ASTs in Wales from 1 December 2022" },
+                    { urgent:true,  text:"Rent Smart Wales: mandatory registration and licence" },
                     { urgent:true,  text:"29 fitness standards apply throughout every tenancy" },
                     { urgent:false, text:"6-month occupation period before notice can be served" },
-                    { urgent:false, text:"Different deposit rules — max 1 month rent" },
+                    { urgent:false, text:"Different deposit rules: max 1 month rent" },
                     { urgent:false, text:"Carbon monoxide alarm rules differ from England" },
                   ]
                 },

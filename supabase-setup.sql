@@ -25,12 +25,18 @@ create policy "Anon full access portfolios"
 create table if not exists legislation_alerts (
   id uuid default gen_random_uuid() primary key,
   topic text,
+  topic_id text,
   status text,
   summary text,
   urgency text,
+  source text,
   checked_at timestamptz default now(),
   actioned boolean default false
 );
+
+-- Add columns if table already exists
+alter table legislation_alerts add column if not exists topic_id text;
+alter table legislation_alerts add column if not exists source text;
 
 alter table legislation_alerts enable row level security;
 drop policy if exists "Authenticated users read alerts" on legislation_alerts;
