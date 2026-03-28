@@ -550,7 +550,9 @@ function ManualEntryModal({portfolio, onMerge, onClose}){
               <div style={{marginBottom:14}}>
                 <label style={lbl}>Policy type</label>
                 <select value={form.insuranceType||'Landlord'} onChange={e=>set('insuranceType',e.target.value)} style={{...inp}}>
-                  <option>Landlord</option>
+                  <option>Landlord (buildings + liability)</option>
+                  <option>Landlord buildings only</option>
+                  <option>Landlord liability only</option>
                   <option>Home</option>
                   <option>Other</option>
                 </select>
@@ -761,7 +763,7 @@ function FirstTimeLandlordChecklist({nation,checkedItems,onToggle}){
 }
 
 /* ---- Property Form ---- */
-const EMPTY_PROP={shortName:'',address:'',nation:'',ownership:'Personal',purchasePrice:'',purchaseDate:'',currentValue:'',mortgage:'',lender:'',rate:'',fixedEnd:'',monthlyPayment:'',ercRate:'',rent:'',rentReviewDate:'',tenantName:'',tenantPhone:'',tenantEmail:'',tenancyStart:'',tenancyEnd:'',depositAmount:'',depositScheme:'',rightToRentChecked:'',rightToRentDocType:'',rightToRentExpiry:'',rightToRentNotes:'',gasDue:'',eicrDue:'',epcRating:'',epcExpiry:'',insurer:'',policyNo:'',insuranceRenewal:'',insuranceType:'',notes:''}
+const EMPTY_PROP={shortName:'',address:'',nation:'',ownership:'Personal',isHMO:false,hmoLicence:'',hmoLicenceExpiry:'',selectiveLicence:'',purchasePrice:'',purchaseDate:'',currentValue:'',mortgage:'',lender:'',rate:'',fixedEnd:'',monthlyPayment:'',ercRate:'',rent:'',rentReviewDate:'',tenantName:'',tenantPhone:'',tenantEmail:'',tenancyStart:'',tenancyEnd:'',depositAmount:'',depositScheme:'',rightToRentChecked:'',rightToRentDocType:'',rightToRentExpiry:'',rightToRentNotes:'',gasDue:'',eicrDue:'',epcRating:'',epcExpiry:'',insurer:'',policyNo:'',insuranceRenewal:'',insuranceType:'',notes:''}
 
 /* ---- Valuation Widget ---- */
 function ValuationWidget({address, currentValue, onAccept}){
@@ -922,6 +924,17 @@ function PropertyForm({initial,onSave,onDelete,onClose}){
             </div>}
           </div>
           <Select label="Ownership" value={p.ownership} onChange={v=>set('ownership',v)} options={['Personal','Ltd Company','Joint']}/>
+          <div style={{marginBottom:14}}>
+            <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
+              <input type="checkbox" checked={!!p.isHMO} onChange={e=>set('isHMO',e.target.checked)} style={{width:16,height:16,accentColor:'var(--brand)'}}/>
+              <span style={{fontSize:13,fontWeight:500,color:'var(--text)'}}>This is an HMO (5+ people from 2+ households)</span>
+            </label>
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:4,marginLeft:24}}>Mandatory HMO licence required from your local council. Check for selective/additional licensing in your area even if not an HMO.</div>
+          </div>
+          {p.isHMO&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px',background:'#fff8e1',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
+            <Input label="HMO licence number" value={p.hmoLicence||''} onChange={v=>set('hmoLicence',v)} placeholder="e.g. HMO/2024/00123"/>
+            <Input label="HMO licence expiry" value={p.hmoLicenceExpiry||''} onChange={v=>set('hmoLicenceExpiry',v)} placeholder="DD/MM/YYYY"/>
+          </div>}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}}>
             <Input label="Purchase price" value={p.purchasePrice} onChange={v=>set('purchasePrice',v)} placeholder="e.g. 95000" type="number"/>
             <Input label="Purchase date" value={p.purchaseDate} onChange={v=>set('purchaseDate',v)} placeholder="DD/MM/YYYY"/>
@@ -1410,7 +1423,11 @@ function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab
   const urgent=[],upcoming=[]
   props.forEach(p=>{
     const gas=dueSoon(p.gasDue),eicr=dueSoon(p.eicrDue),ins=dueSoon(p.insuranceRenewal)
-    if(p.insuranceType?.toLowerCase()==='home')urgent.push(`${p.shortName} - Insurance is HOME policy`)
+    if(p.insuranceType?.toLowerCase()==='home')urgent.push(`${p.shortName} - Insurance is HOME policy. Landlord insurance required.`)
+    if(p.isHMO&&!p.hmoLicence)urgent.push(`${p.shortName} - HMO licence number not recorded. Letting an unlicensed HMO is a criminal offence.`)
+    if(p.hmoLicenceExpiry&&dueSoon(p.hmoLicenceExpiry)==='overdue')urgent.push(`${p.shortName} - HMO licence expired ${p.hmoLicenceExpiry}. Renew immediately.`)
+    if(p.hmoLicenceExpiry&&dueSoon(p.hmoLicenceExpiry)==='due-soon')upcoming.push({text:`${p.shortName} - HMO licence expires ${p.hmoLicenceExpiry}`,days:dueDays(p.hmoLicenceExpiry)})
+    if(p.insurer&&!p.insuranceType)urgent.push(`${p.shortName} - Insurance type not specified. Confirm buildings and liability cover.`)
     if(gas==='overdue')urgent.push(`${p.shortName} - Gas certificate overdue`)
     if(eicr==='overdue')urgent.push(`${p.shortName} - EICR overdue`)
     if(p.epcRating&&['D','E','F','G'].includes(p.epcRating?.toUpperCase()))urgent.push(`${p.shortName} - EPC ${p.epcRating} needs upgrading by 2028`)
@@ -1529,7 +1546,9 @@ function RentabilityChecklist({prop}){
     {id:'gas',    label:'Gas Safety Certificate', status:prop.gasDue?'done':'missing',   hint:'Annual - Gas Safe registered engineer'},
     {id:'eicr',   label:'EICR (Electrical)',       status:prop.eicrDue?'done':'missing',  hint:'Every 5 years'},
     {id:'epc',    label:'EPC certificate',          status:prop.epcRating?(['A','B','C','D','E'].includes(prop.epcRating?.toUpperCase())?'done':'fail'):'missing', hint:'Minimum E (C from 2028)'},
-    {id:'ins',    label:'Landlord insurance',       status:prop.insurer&&prop.insuranceType?.toLowerCase()!=='home'?'done':prop.insurer?'fail':'missing', hint:'Must be landlord policy not home insurance'},
+    {id:'buildings_ins', label:'Buildings insurance', status:(()=>{const t=(prop.insuranceType||'').toLowerCase();const hasBldg=prop.insurer&&(t.includes('landlord')||t.includes('buildings')||t.includes('building'));return hasBldg?'done':prop.insurer&&t==='home'?'fail':'missing'})(), hint:'Buildings cover required if you own the freehold - not needed for leasehold flats where freeholder insures'},
+    {id:'ins',    label:'Landlord liability insurance', status:prop.insurer&&prop.insuranceType?.toLowerCase()!=='home'?'done':prop.insurer?'fail':'missing', hint:'Public liability and landlord policy - must not be a standard home insurance policy'},
+    ...(prop.isHMO?[{id:'hmo_lic',label:'HMO licence',status:prop.hmoLicence?'done':'missing',hint:'Mandatory for 5+ people from 2+ households - apply to local council'}]:[]),
     {id:'deposit',label:'Deposit scheme',           status:prop.depositScheme?'done':'missing', hint:'Within 30 days of receipt'},
     ...(nation==='Scotland'?[{id:'scot_reg',label:'Scottish Landlord Register',status:prop.scottishReg?'done':'missing',hint:'Mandatory - register with local council'}]:[]),
     ...(nation==='Wales'?[{id:'rent_smart',label:'Rent Smart Wales',status:prop.rentSmart?'done':'missing',hint:'Mandatory registration and licence'}]:[]),

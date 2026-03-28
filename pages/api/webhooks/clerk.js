@@ -1,5 +1,5 @@
 import { Webhook } from 'svix'
-import { sendWelcomeEmail } from '../../../lib/emails'
+import { sendWelcomeEmail, sendAdminNewUserNotification } from '../../../lib/emails'
 
 // Clerk webhook - fires on user.created
 // Setup: Clerk Dashboard → Webhooks → Add endpoint
@@ -54,6 +54,7 @@ export default async function handler(req, res) {
       try {
         // Send welcome email
         await sendWelcomeEmail({ email, name: first_name || name })
+        await sendAdminNewUserNotification({ email, name: first_name || name })
         console.log('Welcome email sent to:', email)
 
         // Add to newsletter subscribers
