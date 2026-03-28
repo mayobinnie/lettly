@@ -1,38 +1,37 @@
-import { savePortfolio } from '../../lib/supabase'
+import { getAuth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Handles two callers:
-// 1. fetch() with JSON body (dashboard auto-save)
-// 2. navigator.sendBeacon on page unload : sends raw JSON string
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
+
+  // Auth check - ALWAYS verify from Clerk session, never trust request body
+  const { userId } = getAuth(req)
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' })
+
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
-    const { userId, data } = body || {}
-    if (!userId || !data) return res.status(400).json({ error: 'Missing userId or data' })
+    const { data } = body || {}
+    if (!data) return res.status(400).json({ error: 'Missing data' })
 
-    // Direct save with full error surfacing for debugging
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceKey = process.env.SUPABASE_SERVICE_KEY
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    if (!url) return res.status(500).json({ error: 'NEXT_PUBLIC_SUPABASE_URL not set' })
-    if (!serviceKey && !anonKey) return res.status(500).json({ error: 'No Supabase key configured' })
+    if (!url || !serviceKey) return res.status(500).json({ error: 'Server configuration error' })
 
-    const client = createClient(url, serviceKey || anonKey)
+    const client = createClient(url, serviceKey)
     const { error } = await client
       .from('portfolios')
       .upsert({ user_id: userId, data, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
 
     if (error) {
       console.error('Supabase upsert error:', error)
-      return res.status(500).json({ error: error.message, code: error.code, hint: error.hint })
+      return res.status(500).json({ error: 'Save failed' })
     }
 
-    return res.status(200).json({ ok: true, keyUsed: serviceKey ? 'service' : 'anon' })
+    return res.status(200).json({ ok: true })
   } catch (err) {
     console.error('Save handler error:', err?.message)
-    return res.status(500).json({ error: err?.message })
+    return res.status(500).json({ error: 'Internal error' })
   }
 }
 

@@ -5,7 +5,7 @@ const SECTIONS = [
   {
     id: 'associations',
     title: 'Landlord associations',
-    intro: 'Joining a landlord association gives you access to legal helplines, template tenancy documents, and expert guidance — often cheaper than a single call to a solicitor.',
+    intro: 'Joining a landlord association gives you access to legal helplines, template tenancy documents, and expert guidance, often cheaper than a single call to a solicitor.',
     items: [
       { name:'NRLA', full:'National Residential Landlords Association', url:'https://www.nrla.org.uk', desc:'The largest UK landlord association with over 100,000 members. Legal helpline, tenancy documents, training and lobbying. Essential for England and Wales landlords.', tag:'England & Wales' },
       { name:'British Landlords Association', full:'BLA', url:'https://www.thebla.co.uk', desc:'Free and paid membership. Legal advice, tenancy documents and landlord insurance partnerships across the UK.', tag:'UK-wide' },
@@ -20,12 +20,12 @@ const SECTIONS = [
   {
     id: 'publications',
     title: 'News and publications',
-    intro: 'These publications break landlord legislation news, court case outcomes and market trends — often faster than official government channels.',
+    intro: 'These publications break landlord legislation news, court case outcomes and market trends, often faster than official government channels.',
     items: [
       { name:'LandlordZONE', url:'https://www.landlordzone.co.uk', desc:'One of the longest-running landlord news sites in the UK. Essential for breaking news on legislation, eviction law and policy changes.', tag:'News' },
       { name:'Landlord Today', url:'https://www.landlordtoday.co.uk', desc:'Daily news covering the UK private rented sector. Strong coverage of the Renters Rights Act, EPC deadlines and tax changes.', tag:'News' },
       { name:'Property118', url:'https://www.property118.com', desc:'News, analysis and strategy for UK property investors. Particularly strong on Section 24, tax and incorporation. Features an active community forum.', tag:'News & community' },
-      { name:'Landlord Law Blog', full:'Tessa Shepperson', url:'https://www.landlordlawblog.co.uk', desc:'Written by solicitor Tessa Shepperson. Highly accurate legal analysis of landlord and tenant law — one of the most trustworthy sources for compliance guidance online.', tag:'Legal' },
+      { name:'Landlord Law Blog', full:'Tessa Shepperson', url:'https://www.landlordlawblog.co.uk', desc:'Written by solicitor Tessa Shepperson. Highly accurate legal analysis of landlord and tenant law, one of the most trustworthy sources for compliance guidance online.', tag:'Legal' },
       { name:'LandlordVision Blog', url:'https://www.landlordvision.co.uk/blog', desc:'Practical guides on property management, accounting and compliance for independent landlords.', tag:'Guides' },
       { name:'Property Investment Project', url:'https://www.propertyinvestmentproject.co.uk', desc:'Data-driven analysis of UK property investment. Good for yield calculations, area analysis and buy-to-let strategy.', tag:'Investment' },
       { name:'PropertyHawk Blog', url:'https://www.propertyhawk.co.uk/blog', desc:'Practical landlord guides covering compliance, tenancy management and legislation explained in plain English.', tag:'Guides' },
@@ -36,14 +36,14 @@ const SECTIONS = [
   {
     id: 'forums',
     title: 'Forums and communities',
-    intro: 'Peer advice from experienced landlords is often more useful than anything you can read — these communities provide real-world answers to real landlord problems.',
+    intro: 'Peer advice from experienced landlords is often more useful than anything you can read. These communities provide real-world answers to real landlord problems.',
     items: [
       { name:'Property118 Forum', url:'https://www.property118.com', desc:'Active forum covering tax strategy, Section 24, lettings law and buy-to-let investment. Frequented by experienced portfolio landlords.', tag:'Tax & strategy' },
       { name:'LandlordZONE Forum', url:'https://www.landlordzone.co.uk/forum', desc:'High-volume forum with questions on compliance, difficult tenants, deposit disputes and legislation. Good for finding out how others have handled similar situations.', tag:'Compliance' },
       { name:'Property Tribes', url:'https://www.propertytribes.com', desc:'Friendly and supportive community covering all aspects of property investment and management. Well-suited to beginner and intermediate landlords.', tag:'Community' },
       { name:'NRLA Member Forum', url:'https://www.nrla.org.uk/forum', desc:'Members-only forum with high-quality moderated advice. The NRLA legal team occasionally responds directly to member questions.', tag:'Members only' },
       { name:'Property Forum', url:'https://www.propertyforum.com', desc:'General property discussion covering buy-to-let, development and commercial property.', tag:'General' },
-      { name:'Reddit — r/uklandlords', url:'https://www.reddit.com/r/uklandlords', desc:'Over 43,000 UK landlords asking and answering questions. Anonymous and direct. Particularly good for gauging how other landlords are responding to legislative changes.', tag:'Reddit' },
+      { name:'Reddit: r/uklandlords', url:'https://www.reddit.com/r/uklandlords', desc:'Over 43,000 UK landlords asking and answering questions. Anonymous and direct. Particularly good for gauging how other landlords are responding to legislative changes.', tag:'Reddit' },
     ]
   },
   {
@@ -54,7 +54,7 @@ const SECTIONS = [
       { name:'The Property Podcast', full:'Rob & Rob', url:'https://www.propertyhub.net/podcast', desc:'The most popular UK property podcast with over 500 episodes. Covers investment strategy, market analysis and landlord news. Essential listening for any serious investor.', tag:'Investment' },
       { name:'Listen Up Landlords', full:'NRLA', url:'https://www.nrla.org.uk', desc:'The NRLA\'s official podcast featuring deep dives into legislation, compliance and landlord rights. Highly accurate legal content straight from the UK\'s largest landlord body.', tag:'Compliance' },
       { name:'Inside Property Investing', full:'Mike Stenhouse', url:'https://www.insidepropertyinvesting.com', desc:'Strategy-focused podcast for investors building a UK property portfolio. Real case studies from working landlords.', tag:'Strategy' },
-      { name:'The Business of Property Podcast', url:'https://www.businessofproperty.com', desc:'Treating property as a business — systems, processes and scaling. Useful for landlords who want to run their portfolio more professionally.', tag:'Business' },
+      { name:'The Business of Property Podcast', url:'https://www.businessofproperty.com', desc:'Treating property as a business: systems, processes and scaling. Useful for landlords who want to run their portfolio more professionally.', tag:'Business' },
       { name:'Property Magic Podcast', full:'Simon Zutshi', url:'https://www.simonzutshi.com', desc:'Investment strategy, creative deal structures and portfolio building from one of the UK\'s most experienced property educators.', tag:'Investment' },
       { name:'This Week in Property', full:'Richard Swan', url:'https://www.thisweekinproperty.com', desc:'Weekly roundup of UK property news, legislation changes and market data. Good for staying on top of what\'s happening without spending hours reading.', tag:'News' },
       { name:'The Property Rebel Podcast', url:'https://www.thepropertyrebel.co.uk', desc:'Covers unconventional investment strategies, deal sourcing and portfolio growth tactics for entrepreneurial landlords.', tag:'Strategy' },
@@ -67,7 +67,7 @@ const SECTIONS = [
     items: [
       { name:'Succeed In Property', full:'Ranjan Bhattacharya', url:'https://www.youtube.com/@SucceedInProperty', desc:'Practical property investment education with strong content on tax, deal analysis and portfolio strategy from an experienced portfolio landlord.', tag:'Investment' },
       { name:'Property Hub', full:'Rob & Rob', url:'https://www.youtube.com/@PropertyHub', desc:'Companion to The Property Podcast. Market analysis, investment strategies and viewer Q&As. The largest UK property YouTube channel.', tag:'Investment' },
-      { name:'Moving Home with Charlie', full:'Charlie Lamdin', url:'https://www.youtube.com/@MovingHomewithCharlie', desc:'Market data and property trends. Less investment-focused — useful for understanding what buyers and tenants are thinking.', tag:'Market' },
+      { name:'Moving Home with Charlie', full:'Charlie Lamdin', url:'https://www.youtube.com/@MovingHomewithCharlie', desc:'Market data and property trends. Less investment-focused: useful for understanding what buyers and tenants are thinking.', tag:'Market' },
       { name:'The Property Circle', full:'Ste Hamilton', url:'https://www.youtube.com/@SteHamilton', desc:'Practical property management and investment from a working landlord. Honest, relatable content grounded in real experience.', tag:'Management' },
       { name:'Property Advisor', full:'Danny Valencia', url:'https://www.youtube.com/@DannyValencia', desc:'Investment analysis, deal breakdowns and portfolio strategy with a data-driven approach.', tag:'Investment' },
       { name:'Lettings Agency Growth', full:'Christopher Watkin', url:'https://www.youtube.com/@ChristopherWatkin', desc:'Primarily aimed at letting agents but contains valuable insights on tenant management, legislation and market trends relevant to any landlord.', tag:'Industry' },
@@ -81,7 +81,7 @@ export default function Resources() {
   return (
     <>
       <Head>
-        <title>UK Landlord Resources — Associations, Publications, Podcasts | Lettly</title>
+        <title>UK Landlord Resources: Associations, Publications, Podcasts | Lettly</title>
         <meta name="description" content="Curated list of the best UK landlord associations, news publications, forums, podcasts and YouTube channels. Free resources for private landlords in England, Scotland and Wales."/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <link rel="canonical" href="https://lettly.co/resources"/>
@@ -103,7 +103,7 @@ export default function Resources() {
         <div style={{maxWidth:860,margin:'0 auto',padding:'clamp(32px,5vw,64px) clamp(16px,4vw,48px)'}}>
           <div style={{marginBottom:48}}>
             <h1 style={{fontFamily:'var(--display)',fontSize:'clamp(28px,4vw,42px)',fontWeight:300,color:'var(--text)',marginBottom:12}}>UK landlord resources</h1>
-            <p style={{fontSize:15,color:'var(--text-2)',lineHeight:1.75,maxWidth:640}}>A curated directory of the best associations, publications, forums, podcasts and YouTube channels for UK private landlords. We do not have commercial relationships with any of these — they are here because they are genuinely useful.</p>
+            <p style={{fontSize:15,color:'var(--text-2)',lineHeight:1.75,maxWidth:640}}>A curated directory of the best associations, publications, forums, podcasts and YouTube channels for UK private landlords. We do not have commercial relationships with any of these: they are here because they are genuinely useful.</p>
           </div>
 
           {/* Jump links */}
@@ -137,7 +137,7 @@ export default function Resources() {
 
           <div style={{background:'var(--brand-subtle)',border:'0.5px solid rgba(27,94,59,0.2)',borderRadius:14,padding:'24px 28px',marginTop:16}}>
             <div style={{fontFamily:'var(--display)',fontSize:20,fontWeight:300,marginBottom:8,color:'var(--text)'}}>Manage your portfolio with Lettly</div>
-            <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.75,marginBottom:16}}>While these resources help you learn, Lettly does the work. Gas cert tracking, EICR reminders, compliance checklists, rent tracking and AI document reading — all in one place from £8/month.</p>
+            <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.75,marginBottom:16}}>While these resources help you learn, Lettly does the work. Gas cert tracking, EICR reminders, compliance checklists, rent tracking and AI document reading: all in one place from £8/month.</p>
             <a href="https://accounts.lettly.co/sign-up" style={{display:'inline-block',background:'var(--brand)',color:'#fff',textDecoration:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:500}}>Try Lettly free for 14 days</a>
           </div>
         </div>

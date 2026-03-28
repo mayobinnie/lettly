@@ -15,11 +15,10 @@ alter table portfolios enable row level security;
 -- Drop old policy if exists
 drop policy if exists "Users own portfolios" on portfolios;
 
--- Allow anon key to read/write (Clerk handles auth at the app layer)
-create policy "Anon full access portfolios"
-  on portfolios for all
-  using (true)
-  with check (true);
+-- All access goes through service key in API routes (verified Clerk auth)
+-- Block direct anon access entirely
+drop policy if exists "Anon full access portfolios" on portfolios;
+create policy "Block direct access" on portfolios for all using (false);
 
 -- Legislation alerts
 create table if not exists legislation_alerts (
@@ -40,10 +39,10 @@ alter table legislation_alerts add column if not exists source text;
 
 alter table legislation_alerts enable row level security;
 drop policy if exists "Authenticated users read alerts" on legislation_alerts;
-create policy "Anon read alerts"
-  on legislation_alerts for select using (true);
-create policy "Anon write alerts"
-  on legislation_alerts for all using (true) with check (true);
+-- Legislation alerts: only accessible via service key in API routes
+drop policy if exists "Anon read alerts" on legislation_alerts;
+drop policy if exists "Anon write alerts" on legislation_alerts;
+create policy "Block direct access alerts" on legislation_alerts for all using (false);
 
 -- Newsletter subscribers
 create table if not exists newsletter_subscribers (
@@ -57,5 +56,5 @@ create table if not exists newsletter_subscribers (
 
 alter table newsletter_subscribers enable row level security;
 drop policy if exists "Service role manages subscribers" on newsletter_subscribers;
-create policy "Anon manages subscribers"
-  on newsletter_subscribers for all using (true) with check (true);
+drop policy if exists "Anon manages subscribers" on newsletter_subscribers;
+create policy "Block direct access newsletter" on newsletter_subscribers for all using (false);

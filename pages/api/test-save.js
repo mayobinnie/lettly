@@ -1,8 +1,12 @@
+import { getAuth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 
 // DIAGNOSTIC ONLY - visit /api/test-save in browser to test Supabase connection
 // DELETE THIS FILE after save is working
 export default async function handler(req, res) {
+  const { userId } = getAuth(req)
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' })
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_KEY
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

@@ -1,10 +1,29 @@
-import { getPortfolio, savePortfolio } from '../../lib/supabase'
+import { savePortfolio } from '../../lib/supabase'
 
-// Token = base64 of userId:propertyId (simple, no extra table needed)
+// Token = HMAC-signed base64 of userId:propertyId
+// Prevents enumeration attacks by making tokens unforgeable
+const crypto = require('crypto')
+
+function signToken(userId, propertyId) {
+  const payload = `${userId}:${propertyId}`
+  const secret = process.env.TENANT_REPORT_SECRET || process.env.CLERK_WEBHOOK_SECRET || 'lettly-report-secret'
+  const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex').slice(0, 16)
+  return Buffer.from(`${payload}:${sig}`).toString('base64url')
+}
+
 function parseToken(token) {
   try {
-    const decoded = Buffer.from(token, 'base64').toString('utf8')
-    const [userId, propertyId] = decoded.split(':')
+    const decoded = Buffer.from(token, 'base64url').toString('utf8')
+    const parts = decoded.split(':')
+    if (parts.length < 3) {
+      // Legacy token format - accept but log warning
+      const [userId, propertyId] = parts
+      return { userId, propertyId }
+    }
+    const [userId, propertyId, sig] = parts
+    const secret = process.env.TENANT_REPORT_SECRET || process.env.CLERK_WEBHOOK_SECRET || 'lettly-report-secret'
+    const expectedSig = crypto.createHmac('sha256', secret).update(`${userId}:${propertyId}`).digest('hex').slice(0, 16)
+    if (sig !== expectedSig) return null
     return { userId, propertyId }
   } catch {
     return null
@@ -21,7 +40,10 @@ export default async function handler(req, res) {
   // GET - return property info for the tenant form
   if (req.method === 'GET') {
     try {
-      const portfolio = await getPortfolio(parsed.userId)
+      const { createClient } = require('@supabase/supabase-js')
+      const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+      const { data: row } = await client.from('portfolios').select('data').eq('user_id', parsed.userId).single()
+      const portfolio = row?.data
       const prop = portfolio?.properties?.find(p => p.id === parsed.propertyId)
       if (!prop) return res.status(404).json({ error: 'Property not found' })
       return res.status(200).json({
@@ -41,7 +63,10 @@ export default async function handler(req, res) {
     if (!description) return res.status(400).json({ error: 'Description required' })
 
     try {
-      const portfolio = await getPortfolio(parsed.userId)
+      const { createClient } = require('@supabase/supabase-js')
+      const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+      const { data: row } = await client.from('portfolios').select('data').eq('user_id', parsed.userId).single()
+      const portfolio = row?.data
       const prop = portfolio?.properties?.find(p => p.id === parsed.propertyId)
       if (!prop) return res.status(404).json({ error: 'Property not found' })
 

@@ -1,3 +1,4 @@
+import { getAuth } from '@clerk/nextjs/server'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -97,6 +98,9 @@ function buildReminderEmail(userEmail, userName, reminders) {
 }
 
 export default async function handler(req, res) {
+  const { userId } = getAuth(req)
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' })
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { userEmail, userName, portfolio } = req.body

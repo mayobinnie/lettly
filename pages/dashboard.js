@@ -3,7 +3,7 @@ import Head from 'next/head'
 import { useUser, UserButton } from '@clerk/nextjs'
 import { useRouter } from 'next/router'
 import { fmt, dueSoon, dueDays, epcColor, mergeDoc, LEGISLATION, LEGISLATION_SCOTLAND, LEGISLATION_WALES, getGrowthRate, projectValue } from '../lib/data'
-import { getPortfolio, savePortfolio } from '../lib/supabase'
+// Portfolio loaded via /api/data (server-side auth)
 import { detectNation, NATION_LABELS, getChecklist } from '../lib/nations'
 
 // Load PDF.js once and cache it
@@ -1550,7 +1550,7 @@ function InsuranceDetail({p}){
   ].filter(Boolean)
 
   return<div style={{marginTop:10,background:'var(--surface2)',borderRadius:10,overflow:'hidden'}}>
-    {/* Header row — always visible */}
+    {/* Header row: always visible */}
     <button onClick={()=>setOpen(v=>!v)} style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'none',border:'none',cursor:'pointer',fontFamily:'var(--font)'}}>
       <div style={{display:'flex',alignItems:'center',gap:10}}>
         <span style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>Insurance detail</span>
@@ -2313,7 +2313,7 @@ function TaxExportPanel({portfolio}){
 
 
 /* ============================================================
-   RESOURCES TAB — Curated landlord resources
+   RESOURCES TAB: Curated landlord resources
    ============================================================ */
 function ResourcesTab(){
   const[cat,setCat]=useState('associations')
@@ -2351,24 +2351,24 @@ function ResourcesTab(){
     },
     forums: {
       label: 'Forums & Communities',
-      desc: 'The most valuable free resource for landlords. Real experiences, peer advice and early warning on legislation changes — often faster than official channels.',
+      desc: 'The most valuable free resource for landlords. Real experiences, peer advice and early warning on legislation changes, often faster than official channels.',
       items: [
         {name:'Property118 Forum',url:'https://www.property118.com',desc:'Active forum covering tax strategy, Section 24, lettings law and investment. Frequented by experienced portfolio landlords.',tag:'Tax & strategy',tagCol:'amber'},
         {name:'LandlordZONE Forum',url:'https://www.landlordzone.co.uk/forum',desc:'High-volume forum with questions on compliance, difficult tenants, deposit disputes and legislation.',tag:'Compliance',tagCol:'blue'},
         {name:'Property Tribes',url:'https://www.propertytribes.com',desc:'Friendly community covering all aspects of property investment and management. Good for beginner and intermediate landlords.',tag:'Community',tagCol:'green'},
         {name:'NRLA Member Forum',url:'https://www.nrla.org.uk/forum',desc:'Members-only forum with high-quality moderated advice. Legal team occasionally answers directly.',tag:'Members only',tagCol:'amber'},
         {name:'Property Forum',url:'https://www.propertyforum.com',desc:'General property discussion covering buy-to-let, development and commercial property.',tag:'General',tagCol:'green'},
-        {name:'Reddit — r/uklandlords',url:'https://www.reddit.com/r/uklandlords',desc:'43,000+ UK landlords. Anonymous and direct. Good for gauging sentiment and finding out what real landlords are worried about.',tag:'Reddit',tagCol:'blue'},
+        {name:'Reddit: r/uklandlords',url:'https://www.reddit.com/r/uklandlords',desc:'43,000+ UK landlords. Anonymous and direct. Good for gauging sentiment and finding out what real landlords are worried about.',tag:'Reddit',tagCol:'blue'},
       ]
     },
     podcasts: {
       label: 'Podcasts',
-      desc: 'Learn while commuting. These cover property investment strategy, legislation and management — most have back catalogues covering everything a new landlord needs.',
+      desc: 'Learn while commuting. These cover property investment strategy, legislation and management. Most have back catalogues covering everything a new landlord needs.',
       items: [
         {name:'The Property Podcast',full:'Rob & Rob',url:'https://www.propertyhub.net/podcast',desc:'The most popular UK property podcast. 500+ episodes covering investment strategy, market analysis and landlord news. Essential for any serious investor.',tag:'Investment',tagCol:'green'},
         {name:'Listen Up Landlords',full:'NRLA',url:'https://www.nrla.org.uk',desc:'NRLA official podcast. Deep dives into legislation, compliance and landlord rights. Highly accurate legal content.',tag:'Compliance',tagCol:'blue'},
         {name:'Inside Property Investing',full:'Mike Stenhouse',url:'https://www.insidepropertyinvesting.com',desc:'Strategy-focused podcast for investors building a portfolio. Case studies from real landlords.',tag:'Strategy',tagCol:'amber'},
-        {name:'The Business of Property Podcast',url:'https://www.businessofproperty.com',desc:'Property as a business — systems, processes and scaling. Good for landlords wanting to professionalise.',tag:'Business',tagCol:'amber'},
+        {name:'The Business of Property Podcast',url:'https://www.businessofproperty.com',desc:'Property as a business: systems, processes and scaling. Good for landlords wanting to professionalise.',tag:'Business',tagCol:'amber'},
         {name:'Property Magic Podcast',full:'Simon Zutshi',url:'https://www.simonzutshi.com',desc:'Investment strategy, creative deals and portfolio building from one of the UK most experienced property investors.',tag:'Investment',tagCol:'green'},
         {name:'This Week in Property',full:'Richard Swan',url:'https://www.thisweekinproperty.com',desc:'Weekly roundup of UK property news, legislation changes and market data. Good for staying current.',tag:'News',tagCol:'blue'},
         {name:'The Property Rebel Podcast',url:'https://www.thepropertyrebel.co.uk',desc:'Covers unconventional investment strategies, deal sourcing and portfolio growth tactics.',tag:'Strategy',tagCol:'amber'},
@@ -2380,7 +2380,7 @@ function ResourcesTab(){
       items: [
         {name:'Succeed In Property',full:'Ranjan Bhattacharya',url:'https://www.youtube.com/@SucceedInProperty',desc:'Practical property investment education. Strong on tax, deal analysis and portfolio strategy. Experienced portfolio landlord.',tag:'Investment',tagCol:'green'},
         {name:'Property Hub',full:'Rob & Rob',url:'https://www.youtube.com/@PropertyHub',desc:'Companion to The Property Podcast. Market analysis, investment strategies and Q&As. Largest UK property YouTube channel.',tag:'Investment',tagCol:'green'},
-        {name:'Moving Home with Charlie',full:'Charlie Lamdin',url:'https://www.youtube.com/@MovingHomewithCharlie',desc:'Market data and property trends. Less investment-focused — good for understanding buyer and tenant sentiment.',tag:'Market',tagCol:'blue'},
+        {name:'Moving Home with Charlie',full:'Charlie Lamdin',url:'https://www.youtube.com/@MovingHomewithCharlie',desc:'Market data and property trends. Less investment-focused: good for understanding buyer and tenant sentiment.',tag:'Market',tagCol:'blue'},
         {name:'The Property Circle',full:'Ste Hamilton',url:'https://www.youtube.com/@SteHamilton',desc:'Practical property management and investment from a working landlord. Honest and relatable content.',tag:'Management',tagCol:'amber'},
         {name:'Property Advisor',full:'Danny Valencia',url:'https://www.youtube.com/@DannyValencia',desc:'Investment analysis, deal breakdowns and portfolio strategy. Good data-driven content.',tag:'Investment',tagCol:'green'},
         {name:'Lettings Agency Growth',full:'Christopher Watkin',url:'https://www.youtube.com/@ChristopherWatkin',desc:'Primarily for letting agents but has useful content on tenant management, legislation and market trends relevant to landlords.',tag:'Industry',tagCol:'blue'},
@@ -2406,7 +2406,7 @@ function ResourcesTab(){
     {/* Header */}
     <div style={{marginBottom:18}}>
       <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Landlord resources</div>
-      <div style={{fontSize:12,color:'var(--text-3)',lineHeight:1.6}}>Curated associations, publications, forums, podcasts and YouTube channels for UK landlords. Lettly does not have commercial relationships with any of these — they are here because they are genuinely useful.</div>
+      <div style={{fontSize:12,color:'var(--text-3)',lineHeight:1.6}}>Curated associations, publications, forums, podcasts and YouTube channels for UK landlords. Lettly does not have commercial relationships with any of these: they are here because they are genuinely useful.</div>
     </div>
 
     {/* Search */}
@@ -2461,7 +2461,7 @@ function ResourceCard({item,tagStyles,catLabel}){
 }
 
 /* ============================================================
-   TENANTS TAB — Find, check and track applicants
+   TENANTS TAB: Find, check and track applicants
    ============================================================ */
 function TenantsTab({portfolio,setPortfolio}){
   const props = portfolio.properties||[]
@@ -2503,7 +2503,7 @@ function TenantsTab({portfolio,setPortfolio}){
 
   const FINDING_PLATFORMS = [
     {name:'OpenRent',url:'https://www.openrent.co.uk',price:'From £29 one-off',desc:'Most popular direct-to-landlord portal. Lists on Rightmove and Zoopla. No agent involved.',tag:'Recommended',tagCol:'green'},
-    {name:'Rightmove',url:'https://www.rightmove.co.uk/landlords',price:'Via agent or OpenRent',desc:'Highest traffic in the UK. Cannot list directly — must use an agent or portal partner.',tag:'Highest traffic',tagCol:'blue'},
+    {name:'Rightmove',url:'https://www.rightmove.co.uk/landlords',price:'Via agent or OpenRent',desc:'Highest traffic in the UK. Cannot list directly: must use an agent or portal partner.',tag:'Highest traffic',tagCol:'blue'},
     {name:'Zoopla',url:'https://www.zoopla.co.uk',price:'Via agent or OpenRent',desc:'Second largest portal. Usually bundled with Rightmove listings via partners.',tag:'High traffic',tagCol:'blue'},
     {name:'SpareRoom',url:'https://www.spareroom.co.uk',price:'Free to £35/month',desc:'Best for rooms and HMO lettings. Large audience for sharers and young professionals.',tag:'HMO / rooms',tagCol:'amber'},
     {name:'Gumtree',url:'https://www.gumtree.com',price:'Free',desc:'Free listings. Lower quality leads than portals but useful for budget properties.',tag:'Free',tagCol:'gray'},
@@ -2515,7 +2515,7 @@ function TenantsTab({portfolio,setPortfolio}){
     {name:'OpenRent Referencing',url:'https://www.openrent.co.uk/tenant-referencing',price:'£20 per tenant',desc:'Credit check, employer reference, previous landlord reference, Right to Rent. Quick turnaround.',tag:'Best value',tagCol:'green'},
     {name:'HomeLet',url:'https://www.homelet.co.uk',price:'From £30 per tenant',desc:'Comprehensive referencing with rent guarantee insurance option. Used by many letting agents.',tag:'Comprehensive',tagCol:'blue'},
     {name:'Let Alliance',url:'https://www.letalliance.co.uk',price:'From £25 per tenant',desc:'Fast turnaround. Includes income verification, credit check and employer reference.',tag:'Fast',tagCol:'amber'},
-    {name:'Experian Rental Exchange',url:'https://www.experian.co.uk/consumer/rental-exchange.html',price:'Included with some services',desc:'Reports rental payments to Experian credit file — can incentivise tenants to pay on time.',tag:'Credit reporting',tagCol:'gray'},
+    {name:'Experian Rental Exchange',url:'https://www.experian.co.uk/consumer/rental-exchange.html',price:'Included with some services',desc:'Reports rental payments to Experian credit file: can incentivise tenants to pay on time.',tag:'Credit reporting',tagCol:'gray'},
   ]
 
   const propById = id => props.find(p=>p.id===id)
@@ -2552,14 +2552,14 @@ function TenantsTab({portfolio,setPortfolio}){
         })}
       </div>
       <div style={{marginTop:20,background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'14px 16px',fontSize:12,color:'#633806',lineHeight:1.7}}>
-        <strong>What letting agents do that these platforms also do:</strong> advertise on Rightmove and Zoopla, conduct viewings (if you pay for accompanied viewings on OpenRent), carry out referencing (available as an add-on on all platforms above), and prepare tenancy agreements. The main thing agents add is time — they manage enquiries and viewings on your behalf. If you have a local property and can do viewings yourself, you do not need an agent.
+        <strong>What letting agents do that these platforms also do:</strong> advertise on Rightmove and Zoopla, conduct viewings (if you pay for accompanied viewings on OpenRent), carry out referencing (available as an add-on on all platforms above), and prepare tenancy agreements. The main thing agents add is time: they manage enquiries and viewings on your behalf. If you have a local property and can do viewings yourself, you do not need an agent.
       </div>
     </div>}
 
     {/* ── REFERENCING SERVICES ── */}
     {view==='check'&&<div>
       <div style={{background:'var(--surface2)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px',marginBottom:18,fontSize:12,color:'var(--text-2)',lineHeight:1.7}}>
-        <strong style={{color:'var(--text)'}}>What a full reference check should cover:</strong> credit history, employment verification and income, previous landlord reference, Right to Rent check (England and Wales), CCJs and bankruptcy, and affordability (rent should not exceed 35-40% of gross monthly income). Under the Tenant Fees Act 2019 you cannot charge tenants for referencing — you must pay for it yourself.
+        <strong style={{color:'var(--text)'}}>What a full reference check should cover:</strong> credit history, employment verification and income, previous landlord reference, Right to Rent check (England and Wales), CCJs and bankruptcy, and affordability (rent should not exceed 35-40% of gross monthly income). Under the Tenant Fees Act 2019 you cannot charge tenants for referencing: you must pay for it yourself.
       </div>
       <div style={{fontSize:13,fontWeight:500,marginBottom:12}}>Referencing services</div>
       <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:20}}>
@@ -2606,9 +2606,9 @@ function TenantsTab({portfolio,setPortfolio}){
           <div style={{marginBottom:14}}><label style={lbl}>Gross monthly income (£)</label><input type="number" value={form.monthlyIncome} onChange={e=>fset('monthlyIncome',e.target.value)} placeholder="e.g. 3000" style={inp}/></div>
           <div style={{marginBottom:14}}><label style={lbl}>Employer</label><input value={form.employer} onChange={e=>fset('employer',e.target.value)} placeholder="Employer name" style={inp}/></div>
           <div style={{marginBottom:14}}><label style={lbl}>Credit check result</label><select value={form.creditCheck} onChange={e=>fset('creditCheck',e.target.value)} style={inp}><option value="">Not yet done</option><option>Pass</option><option>Pass with conditions</option><option>Fail</option></select></div>
-          <div style={{marginBottom:14}}><label style={lbl}>Employer reference</label><select value={form.referenceEmployer} onChange={e=>fset('referenceEmployer',e.target.value)} style={inp}><option value="">Not yet done</option><option>Obtained — satisfactory</option><option>Obtained — unsatisfactory</option><option>Unable to obtain</option></select></div>
-          <div style={{marginBottom:14}}><label style={lbl}>Previous landlord reference</label><select value={form.referenceLandlord} onChange={e=>fset('referenceLandlord',e.target.value)} style={inp}><option value="">Not yet done</option><option>Obtained — satisfactory</option><option>Obtained — unsatisfactory</option><option>Unable to obtain</option><option>First-time renter</option></select></div>
-          <div style={{marginBottom:14}}><label style={lbl}>Right to Rent verified</label><select value={form.rightToRent} onChange={e=>fset('rightToRent',e.target.value)} style={inp}><option value="">Not yet checked</option><option>Verified — unlimited right</option><option>Verified — time limited</option><option>Failed</option><option>N/A (Scotland)</option></select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Employer reference</label><select value={form.referenceEmployer} onChange={e=>fset('referenceEmployer',e.target.value)} style={inp}><option value="">Not yet done</option><option>Obtained: satisfactory</option><option>Obtained: unsatisfactory</option><option>Unable to obtain</option></select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Previous landlord reference</label><select value={form.referenceLandlord} onChange={e=>fset('referenceLandlord',e.target.value)} style={inp}><option value="">Not yet done</option><option>Obtained: satisfactory</option><option>Obtained: unsatisfactory</option><option>Unable to obtain</option><option>First-time renter</option></select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Right to Rent verified</label><select value={form.rightToRent} onChange={e=>fset('rightToRent',e.target.value)} style={inp}><option value="">Not yet checked</option><option>Verified: unlimited right</option><option>Verified: time limited</option><option>Failed</option><option>N/A (Scotland)</option></select></div>
           <div style={{marginBottom:14}}><label style={lbl}>Document type seen</label><select value={form.rightToRentDoc} onChange={e=>fset('rightToRentDoc',e.target.value)} style={inp}><option value="">Select</option><option>UK/Irish passport</option><option>UK birth certificate + NI</option><option>Biometric Residence Permit</option><option>Share code (online check)</option><option>EU Settlement Scheme</option><option>Visa/entry clearance</option></select></div>
           <div style={{marginBottom:14,display:'flex',gap:16,alignItems:'center'}}>
             <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:12}}>
@@ -2631,7 +2631,7 @@ function TenantsTab({portfolio,setPortfolio}){
           const ok=ratio<=35
           const warn=ratio>35&&ratio<=40
           return<div style={{gridColumn:'1/-1',marginBottom:14,padding:'10px 14px',borderRadius:9,background:ok?'var(--green-bg)':warn?'#fff8e1':'var(--red-bg)',border:`0.5px solid ${ok?'var(--green)':warn?'#EF9F27':'var(--red)'}`,fontSize:12,color:ok?'var(--green)':warn?'#633806':'var(--red)'}}>
-            Affordability: rent is {ratio}% of gross monthly income. {ok?'Within the 35% guideline.':warn?'Above 35% guideline — consider a guarantor.':'Above 40% — high risk. Guarantor strongly recommended.'}
+            Affordability: rent is {ratio}% of gross monthly income. {ok?'Within the 35% guideline.':warn?'Above 35% guideline: consider a guarantor.':'Above 40%: high risk. Guarantor strongly recommended.'}
           </div>
         })()}
 
@@ -2723,7 +2723,7 @@ function AffordabilityChecker({props}){
     </div>
     {ratio&&<div style={{padding:'12px 14px',borderRadius:10,background:ok?'var(--green-bg)':warn?'#fff8e1':'var(--red-bg)',border:`0.5px solid ${ok?'var(--green)':warn?'#EF9F27':'var(--red)'}`,fontSize:13,color:ok?'var(--green)':warn?'#633806':'var(--red)',lineHeight:1.7}}>
       <div style={{fontWeight:600,marginBottom:4}}>Rent is {ratio}% of income</div>
-      <div style={{fontSize:12}}>{ok?'Within the 35% affordability guideline. Applicant is likely to pass referencing.':warn?'Between 35-40%. Borderline — consider requesting a guarantor or additional income evidence.':'Above 40%. High risk of rent arrears. Guarantor strongly recommended. Most referencing services will flag this.'}</div>
+      <div style={{fontSize:12}}>{ok?'Within the 35% affordability guideline. Applicant is likely to pass referencing.':warn?'Between 35-40%. Borderline: consider requesting a guarantor or additional income evidence.':'Above 40%. High risk of rent arrears. Guarantor strongly recommended. Most referencing services will flag this.'}</div>
     </div>}
   </div>
 }
@@ -3192,7 +3192,7 @@ export default function Dashboard(){
     const wizardDone = typeof window !== 'undefined' && (localStorage.getItem('lettly_wizard_'+user.id) || localStorage.getItem('lettly_wizard_done'))
     if(!wizardDone){
       // Only show wizard after Supabase confirms no onboarding data
-      getPortfolio(user.id).then(data=>{
+      fetch('/api/data').then(r=>r.json()).then(({data})=>{
         const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
         const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[],applicants:p.applicants||[]}
         setPortfolio(pSafe)
@@ -3200,7 +3200,7 @@ export default function Dashboard(){
         if(!p.onboarding){setShowWizard(true)}
       })
     } else {
-      getPortfolio(user.id).then(data=>{
+      fetch('/api/data').then(r=>r.json()).then(({data})=>{
         const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
         const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[],applicants:p.applicants||[]}
         setPortfolio(pSafe)
@@ -3227,7 +3227,7 @@ export default function Dashboard(){
         const res = await fetch('/api/save',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({userId:user.id,data:portfolio})
+          body:JSON.stringify({data:portfolio})
         })
         const json = await res.json().catch(()=>({}))
         setSaveStatus(res.ok?'saved':'error')
@@ -3246,7 +3246,7 @@ export default function Dashboard(){
     const handleUnload = ()=>{
       if(portfolioRef.current&&user?.id){
         // Use sendBeacon for reliable save on unload
-        const data=JSON.stringify({userId:user.id,data:portfolioRef.current})
+        const data=JSON.stringify({data:portfolioRef.current})
         navigator.sendBeacon&&navigator.sendBeacon('/api/save',data)
         // Also try synchronous fallback
         savePortfolio(user.id,portfolioRef.current)
