@@ -94,7 +94,7 @@ async function fileToBase64(file) {
 const PILL={red:{bg:'#fce8e6',fg:'#791F1F'},amber:{bg:'#fff8e1',fg:'#633806'},green:{bg:'#e8f5e9',fg:'#1e6e35'},blue:{bg:'#e3f2fd',fg:'#0C447C'},brand:{bg:'#eaf4ee',fg:'#1b5e3b'},grey:{bg:'#f2f0eb',fg:'#6b6860'}}
 function Pill({type='grey',dot,children}){const c=PILL[type]||PILL.grey;return<span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,background:c.bg,color:c.fg,whiteSpace:'nowrap'}}>{dot&&<span style={{width:5,height:5,borderRadius:'50%',background:c.fg,flexShrink:0}}/>}{children}</span>}
 function Row({label,value,valueColor,pill,pillType}){return<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'0.5px solid var(--border)',gap:8}}><span style={{fontSize:12,color:'var(--text-2)',flexShrink:0}}>{label}</span>{pill?<Pill type={pillType||'grey'} dot>{pill}</Pill>:<span style={{fontSize:12,fontWeight:500,fontFamily:'var(--mono)',color:valueColor||'var(--text)',textAlign:'right'}}>{value||'-'}</span>}</div>}
-function Metric({label,value,sub,subGreen,subRed}){return<div style={{background:'var(--surface2)',borderRadius:'var(--radius)',padding:'14px 16px'}}><div style={{fontSize:11,color:'var(--text-2)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>{label}</div><div style={{fontSize:20,fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px'}}>{value}</div>{sub&&<div style={{fontSize:11,marginTop:3,color:subGreen?'var(--green)':subRed?'var(--red)':'var(--text-3)'}}>{sub}</div>}</div>}
+function Metric({label,value,sub,subGreen,subRed,onClick}){return<div onClick={onClick} style={{background:'var(--surface2)',borderRadius:'var(--radius)',padding:'14px 16px',cursor:onClick?'pointer':'default',transition:'background 0.15s'}} onMouseEnter={e=>{if(onClick)e.currentTarget.style.background='var(--surface3)'}} onMouseLeave={e=>{if(onClick)e.currentTarget.style.background='var(--surface2)'}}><div style={{fontSize:11,color:'var(--text-2)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>{label}{onClick&&<span style={{float:'right',fontSize:10,color:'var(--brand)',fontWeight:400}}>View →</span>}</div><div style={{fontSize:20,fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px'}}>{value}</div>{sub&&<div style={{fontSize:11,marginTop:3,color:subGreen?'var(--green)':subRed?'var(--red)':'var(--text-3)'}}>{sub}</div>}</div>}
 function Input({label,value,onChange,type='text',placeholder='',hint}){return<div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label><input type={type} value={value||''} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/>{hint&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>{hint}</div>}</div>}
 function Select({label,value,onChange,options}){return<div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label><select value={value||''} onChange={e=>onChange(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>{options.map(o=><option key={o.value||o} value={o.value||o}>{o.label||o}</option>)}</select></div>}
 
@@ -715,7 +715,7 @@ function PortfolioScore({props,checklist,urgent}){
   </div>
 }
 
-function Overview({portfolio,onAddDocs,user,onToggleCheck}){
+function Overview({portfolio,onAddDocs,user,onToggleCheck,setTab}){
   const props=portfolio.properties||[]
   const totalRent=props.reduce((s,p)=>s+(Number(p.rent)||0),0)
   const totalPayment=props.reduce((s,p)=>s+(Number(p.monthlyPayment)||0),0)
@@ -756,14 +756,14 @@ function Overview({portfolio,onAddDocs,user,onToggleCheck}){
 
     {/* Main metrics */}
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
-      <Metric label="Portfolio value" value={totalValue?fmt(totalValue):'-'} sub={totalEquity>0?fmt(totalEquity)+' equity':''} subGreen={totalEquity>0}/>
-      <Metric label="Monthly income" value={totalRent?fmt(totalRent):'-'} sub={net>0?'Net '+fmt(net)+'/mo':''} subGreen={net>0}/>
-      <Metric label="Gross yield" value={grossYield?grossYield+'%':'-'} sub={grossYield?(Number(grossYield)>=5?'Above 5% target':'Below 5% target'):''} subGreen={Number(grossYield)>=5}/>
+      <Metric label="Portfolio value" value={totalValue?fmt(totalValue):'-'} sub={totalEquity>0?fmt(totalEquity)+' equity':''} subGreen={totalEquity>0} onClick={setTab?()=>setTab('finance'):null}/>
+      <Metric label="Monthly income" value={totalRent?fmt(totalRent):'-'} sub={net>0?'Net '+fmt(net)+'/mo':''} subGreen={net>0} onClick={setTab?()=>setTab('rent'):null}/>
+      <Metric label="Gross yield" value={grossYield?grossYield+'%':'-'} sub={grossYield?(Number(grossYield)>=5?'Above 5% target':'Below 5% target'):''} subGreen={Number(grossYield)>=5} onClick={setTab?()=>setTab('finance'):null}/>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:14}}>
-      <Metric label="Properties" value={props.length} sub={props.length===0?'Add a property':'In portfolio'}/>
-      <Metric label="Total mortgage" value={totalMortgage?fmt(totalMortgage):'-'} sub={totalValue>0&&totalMortgage>0?((totalMortgage/totalValue)*100).toFixed(0)+'% LTV':''}/>
-      <Metric label="Actions needed" value={urgent.length+upcoming.length} sub={urgent.length>0?urgent.length+' urgent':'Nothing urgent'} subRed={urgent.length>0}/>
+      <Metric label="Properties" value={props.length} sub={props.length===0?'Add a property':'In portfolio'} onClick={setTab?()=>setTab('properties'):null}/>
+      <Metric label="Total mortgage" value={totalMortgage?fmt(totalMortgage):'-'} sub={totalValue>0&&totalMortgage>0?((totalMortgage/totalValue)*100).toFixed(0)+'% LTV':''} onClick={setTab?()=>setTab('finance'):null}/>
+      <Metric label="Actions needed" value={urgent.length+upcoming.length} sub={urgent.length>0?urgent.length+' urgent':'Nothing urgent'} subRed={urgent.length>0} onClick={setTab?()=>setTab('properties'):null}/>
     </div>
 
     {/* Projected value banner */}
@@ -1433,7 +1433,18 @@ function RentTracker({portfolio, setPortfolio}){
 
   const filteredProps = selProp === 'all' ? props : props.filter(p => p.id === selProp)
   const totalExpected = filteredProps.reduce((s,p) => s + (Number(p.rent)||0), 0)
-  const totalPaid = filteredProps.filter(p => getStatus(p.id, selMonth) === 'paid').reduce((s,p) => s + (Number(p.rent)||0), 0)
+  const totalPaid = filteredProps.reduce((s,p) => {
+    const status = getStatus(p.id, selMonth)
+    if(status === 'paid') {
+      const actual = Number(rentLedger?.[p.id]?.[selMonth+'_amount'])
+      return s + (actual || Number(p.rent) || 0)
+    }
+    if(status === 'partial') {
+      const actual = Number(rentLedger?.[p.id]?.[selMonth+'_amount'])
+      return s + (actual || 0)
+    }
+    return s
+  }, 0)
   const totalArrears = filteredProps.filter(p => ['unpaid','late','partial'].includes(getStatus(p.id, selMonth))).reduce((s,p) => s + (Number(p.rent)||0), 0)
 
   const statusMeta = {
@@ -1485,7 +1496,7 @@ function RentTracker({portfolio, setPortfolio}){
       : <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,overflow:'hidden'}}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
             <thead><tr style={{borderBottom:'0.5px solid var(--border)',background:'var(--surface2)'}}>
-              {['Property','Tenant','Rent/mo','Status','Action','Notes'].map(h => <th key={h} style={{textAlign:'left',padding:'10px 12px',fontSize:11,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px'}}>{h}</th>)}
+              {['Property','Tenant','Rent/mo','Status','Amount / Date / Note'].map(h => <th key={h} style={{textAlign:'left',padding:'10px 12px',fontSize:11,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px'}}>{h}</th>)}
             </tr></thead>
             <tbody>
               {filteredProps.map((p,i) => {
@@ -1514,11 +1525,25 @@ function RentTracker({portfolio, setPortfolio}){
                     </div>
                   </td>
                   <td style={{padding:'10px 12px'}}>
-                    <input
-                      defaultValue={note}
-                      onBlur={e=>setPortfolio(prev=>({...prev,rentLedger:{...prev.rentLedger,[p.id]:{...(prev.rentLedger?.[p.id]||{}),[noteKey]:e.target.value}}}))}
-                      placeholder="e.g. Paid by BACS"
-                      style={{background:'var(--surface2)',border:'0.5px solid var(--border)',borderRadius:6,padding:'4px 8px',fontFamily:'var(--font)',fontSize:11,color:'var(--text)',outline:'none',width:140}}/>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      <input
+                        defaultValue={rentLedger?.[p.id]?.[selMonth+'_amount']||''}
+                        onBlur={e=>setPortfolio(prev=>({...prev,rentLedger:{...prev.rentLedger,[p.id]:{...(prev.rentLedger?.[p.id]||{}),[selMonth+'_amount']:e.target.value}}}))}
+                        placeholder={status==='partial'?'Amount received':'Amount (£)'}
+                        type="number"
+                        style={{background:'var(--surface2)',border:'0.5px solid var(--border)',borderRadius:6,padding:'4px 8px',fontFamily:'var(--mono)',fontSize:11,color:'var(--text)',outline:'none',width:110}}/>
+                      <input
+                        defaultValue={rentLedger?.[p.id]?.[selMonth+'_date']||''}
+                        onBlur={e=>setPortfolio(prev=>({...prev,rentLedger:{...prev.rentLedger,[p.id]:{...(prev.rentLedger?.[p.id]||{}),[selMonth+'_date']:e.target.value}}}))}
+                        placeholder="Date received"
+                        type="date"
+                        style={{background:'var(--surface2)',border:'0.5px solid var(--border)',borderRadius:6,padding:'4px 8px',fontFamily:'var(--font)',fontSize:11,color:'var(--text)',outline:'none',width:130}}/>
+                      <input
+                        defaultValue={note}
+                        onBlur={e=>setPortfolio(prev=>({...prev,rentLedger:{...prev.rentLedger,[p.id]:{...(prev.rentLedger?.[p.id]||{}),[noteKey]:e.target.value}}}))}
+                        placeholder="Note e.g. BACS ref"
+                        style={{background:'var(--surface2)',border:'0.5px solid var(--border)',borderRadius:6,padding:'4px 8px',fontFamily:'var(--font)',fontSize:11,color:'var(--text)',outline:'none',width:130}}/>
+                    </div>
                   </td>
                 </tr>
               })}
@@ -1864,7 +1889,7 @@ export default function Dashboard(){
       </div>}
       <div className="dash-content">
         {tab==='overview'&&<div style={{marginBottom:18}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(22px,4vw,28px)',fontWeight:300,marginBottom:3}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:13,color:'var(--text-3)'}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} saved`}</p></div>}
-        {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} user={user} onToggleCheck={toggleCheck}/>}
+        {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
         {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
         {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='rent'        &&<RentTracker   portfolio={portfolio} setPortfolio={setPortfolio}/> }
