@@ -2194,8 +2194,7 @@ function TaxExportPanel({portfolio}){
       `This summary is for guidance only. Please confirm all figures with your accountant.`,
       `Prepared using Lettly: lettly.co`
     ]
-    navigator.clipboard.writeText(lines.join('
-'))
+    navigator.clipboard.writeText(lines.join('\n'))
     alert('Report copied to clipboard')
   }
 
