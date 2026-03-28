@@ -2337,10 +2337,10 @@ function ResourcesTab(){
       desc: 'Learn while commuting. These cover property investment strategy, legislation and management — most have back catalogues covering everything a new landlord needs.',
       items: [
         {name:'The Property Podcast',full:'Rob & Rob',url:'https://www.propertyhub.net/podcast',desc:'The most popular UK property podcast. 500+ episodes covering investment strategy, market analysis and landlord news. Essential for any serious investor.',tag:'Investment',tagCol:'green'},
-        {name:'Listen Up Landlords',full:'NRLA',url:'https://www.nrla.org.uk',desc:'NRLA's official podcast. Deep dives into legislation, compliance and landlord rights. Highly accurate legal content.',tag:'Compliance',tagCol:'blue'},
+        {name:'Listen Up Landlords',full:'NRLA',url:'https://www.nrla.org.uk',desc:'NRLA official podcast. Deep dives into legislation, compliance and landlord rights. Highly accurate legal content.',tag:'Compliance',tagCol:'blue'},
         {name:'Inside Property Investing',full:'Mike Stenhouse',url:'https://www.insidepropertyinvesting.com',desc:'Strategy-focused podcast for investors building a portfolio. Case studies from real landlords.',tag:'Strategy',tagCol:'amber'},
         {name:'The Business of Property Podcast',url:'https://www.businessofproperty.com',desc:'Property as a business — systems, processes and scaling. Good for landlords wanting to professionalise.',tag:'Business',tagCol:'amber'},
-        {name:'Property Magic Podcast',full:'Simon Zutshi',url:'https://www.simonzutshi.com',desc:'Investment strategy, creative deals and portfolio building from one of the UK's most experienced property investors.',tag:'Investment',tagCol:'green'},
+        {name:'Property Magic Podcast',full:'Simon Zutshi',url:'https://www.simonzutshi.com',desc:'Investment strategy, creative deals and portfolio building from one of the UK most experienced property investors.',tag:'Investment',tagCol:'green'},
         {name:'This Week in Property',full:'Richard Swan',url:'https://www.thisweekinproperty.com',desc:'Weekly roundup of UK property news, legislation changes and market data. Good for staying current.',tag:'News',tagCol:'blue'},
         {name:'The Property Rebel Podcast',url:'https://www.thepropertyrebel.co.uk',desc:'Covers unconventional investment strategies, deal sourcing and portfolio growth tactics.',tag:'Strategy',tagCol:'amber'},
       ]
