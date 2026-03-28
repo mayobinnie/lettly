@@ -1539,6 +1539,50 @@ function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab
 
 
 /* ---- Rentability Checklist ---- */
+
+function InsuranceDetail({p}){
+  const[open,setOpen]=useState(false)
+  const keyFacts=[
+    p.insuranceSumInsured&&{label:'Sum insured',value:'£'+Number(p.insuranceSumInsured).toLocaleString('en-GB')},
+    p.insurancePremium&&{label:'Annual premium',value:'£'+Number(p.insurancePremium).toLocaleString('en-GB')},
+    p.insuranceExcess&&{label:'Excess',value:'£'+Number(p.insuranceExcess).toLocaleString('en-GB')},
+    p.insuranceLossOfRent&&{label:'Loss of rent',value:'£'+Number(p.insuranceLossOfRent).toLocaleString('en-GB')+(p.insuranceLossOfRentPeriod?' ('+p.insuranceLossOfRentPeriod+')':'')},
+  ].filter(Boolean)
+
+  return<div style={{marginTop:10,background:'var(--surface2)',borderRadius:10,overflow:'hidden'}}>
+    {/* Header row — always visible */}
+    <button onClick={()=>setOpen(v=>!v)} style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'none',border:'none',cursor:'pointer',fontFamily:'var(--font)'}}>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <span style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>Insurance detail</span>
+        {keyFacts.slice(0,2).map(f=><span key={f.label} style={{fontSize:11,color:'var(--text-3)'}}>{f.label}: <span style={{color:'var(--text-2)',fontWeight:500}}>{f.value}</span></span>)}
+      </div>
+      <span style={{fontSize:11,color:'var(--brand)',fontWeight:500}}>{open?'Hide':'Show full policy'}</span>
+    </button>
+
+    {/* Expandable detail */}
+    {open&&<div style={{padding:'0 14px 14px',borderTop:'0.5px solid var(--border)'}}>
+      {keyFacts.length>0&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 16px',fontSize:11,paddingTop:10}}>
+        {keyFacts.map(f=><Row key={f.label} label={f.label} value={f.value}/>)}
+        {p.insuranceBuildings&&<Row label="Buildings cover" value={'£'+Number(p.insuranceBuildings).toLocaleString('en-GB')}/>}
+        {p.insuranceLiability&&<Row label="Liability cover" value={'£'+Number(p.insuranceLiability).toLocaleString('en-GB')}/>}
+        {p.insuranceLegal&&<Row label="Legal expenses" value={'£'+Number(p.insuranceLegal).toLocaleString('en-GB')}/>}
+        {p.insuranceBroker&&<Row label="Broker" value={p.insuranceBroker}/>}
+      </div>}
+      {p.insuranceCover&&<div style={{marginTop:10,fontSize:11,color:'var(--text-2)',lineHeight:1.7,padding:'8px 10px',background:'var(--surface)',borderRadius:7}}>
+        <div style={{fontWeight:500,color:'var(--text)',marginBottom:4}}>What is covered</div>
+        {p.insuranceCover}
+      </div>}
+      {p.insuranceUnoccupancy&&<div style={{marginTop:6,fontSize:11,color:'var(--amber)',background:'#fff8e1',borderRadius:6,padding:'7px 10px',lineHeight:1.6}}>
+        <span style={{fontWeight:500}}>Unoccupancy clause: </span>{p.insuranceUnoccupancy}
+      </div>}
+      {p.insuranceExclusions&&<div style={{marginTop:6,fontSize:11,color:'var(--red)',background:'var(--red-bg)',borderRadius:6,padding:'7px 10px',lineHeight:1.6}}>
+        <div style={{fontWeight:500,marginBottom:4}}>Exclusions</div>
+        {p.insuranceExclusions}
+      </div>}
+    </div>}
+  </div>
+}
+
 function RentabilityChecklist({prop}){
   if(!prop) return null
   const nation = prop.nation||'England'
@@ -1629,22 +1673,7 @@ function Properties({portfolio,onAddDocs,onScan,onManual,onEdit,onAdd}){
           <div>{p.gasDue&&<Row label="Gas due" value={p.gasDue} valueColor={col(gasC)}/>}{p.eicrDue&&<Row label="EICR due" value={p.eicrDue} valueColor={col(eicrC)}/>}{p.epcRating&&<Row label="EPC" value={`${p.epcRating}${p.epcExpiry?' - exp '+p.epcExpiry:''}`} valueColor={epcColor(p.epcRating)}/>}{!p.epcRating&&<Row label="EPC rating" value="Unknown - drop EPC cert" valueColor="var(--amber)"/>}{p.insurer&&<Row label="Insurer" value={p.insurer}/>}{p.insuranceRenewal&&<Row label="Ins. renew" value={p.insuranceRenewal} valueColor={col(insC)}/>}{p.notes&&<Row label="Notes" value={p.notes}/>}</div>
         </div>
         {p.insuranceType?.toLowerCase()==='home'&&<div style={{marginTop:10,fontSize:11,color:'var(--red)',background:'var(--red-bg)',borderRadius:7,padding:'7px 10px',lineHeight:1.6}}>Home insurance detected - you need a landlord policy.</div>}
-        {p.insurer&&p.insuranceType?.toLowerCase()!=='home'&&(p.insuranceSumInsured||p.insuranceCover||p.insuranceExclusions||p.insuranceLossOfRent||p.insuranceUnoccupancy)&&<div style={{marginTop:10,background:'var(--surface2)',borderRadius:10,padding:'12px 14px'}}>
-          <div style={{fontSize:12,fontWeight:500,marginBottom:8,color:'var(--text)'}}>Insurance detail</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 16px',fontSize:11}}>
-            {p.insuranceSumInsured&&<Row label="Sum insured" value={'£'+Number(p.insuranceSumInsured).toLocaleString('en-GB')}/>}
-            {p.insuranceBuildings&&<Row label="Buildings cover" value={'£'+Number(p.insuranceBuildings).toLocaleString('en-GB')}/>}
-            {p.insuranceLiability&&<Row label="Liability cover" value={'£'+Number(p.insuranceLiability).toLocaleString('en-GB')}/>}
-            {p.insurancePremium&&<Row label="Annual premium" value={'£'+Number(p.insurancePremium).toLocaleString('en-GB')}/>}
-            {p.insuranceExcess&&<Row label="Excess" value={'£'+Number(p.insuranceExcess).toLocaleString('en-GB')}/>}
-            {p.insuranceLossOfRent&&<Row label="Loss of rent" value={'£'+Number(p.insuranceLossOfRent).toLocaleString('en-GB')+(p.insuranceLossOfRentPeriod?' ('+p.insuranceLossOfRentPeriod+')':'')}/>}
-            {p.insuranceLegal&&<Row label="Legal expenses" value={'£'+Number(p.insuranceLegal).toLocaleString('en-GB')}/>}
-          </div>
-          {p.insuranceCover&&<div style={{marginTop:8,fontSize:11,color:'var(--text-2)',lineHeight:1.6}}><span style={{fontWeight:500,color:'var(--text)'}}>Covers: </span>{p.insuranceCover}</div>}
-          {p.insuranceUnoccupancy&&<div style={{marginTop:6,fontSize:11,color:'var(--amber)',background:'#fff8e1',borderRadius:6,padding:'5px 8px',lineHeight:1.5}}><span style={{fontWeight:500}}>Unoccupancy: </span>{p.insuranceUnoccupancy}</div>}
-          {p.insuranceExclusions&&<div style={{marginTop:6,fontSize:11,color:'var(--red)',background:'var(--red-bg)',borderRadius:6,padding:'5px 8px',lineHeight:1.5}}><span style={{fontWeight:500}}>Exclusions: </span>{p.insuranceExclusions}</div>}
-          {p.insuranceBroker&&<div style={{marginTop:4,fontSize:11,color:'var(--text-3)'}}>Broker: {p.insuranceBroker}</div>}
-        </div>}
+        {p.insurer&&p.insuranceType?.toLowerCase()!=='home'&&(p.insuranceSumInsured||p.insuranceCover||p.insuranceExclusions||p.insuranceLossOfRent||p.insuranceUnoccupancy)&&<InsuranceDetail p={p}/>}
         {p.epcRating&&['D','E','F','G'].includes(p.epcRating.toUpperCase())&&<div style={{marginTop:10,background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#633806',lineHeight:1.6}}>EPC {p.epcRating}: Minimum C required for new lets from 2028, all lets from 2030. Estimated upgrade cost: {p.epcRating==='D'?'£3,000-£8,000':'£5,000-£15,000'}.</div>}
       </div>
     })}

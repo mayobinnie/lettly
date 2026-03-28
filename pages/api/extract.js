@@ -12,6 +12,8 @@ CRITICAL RULES:
 - For gas certs, EICRs, EPCs: property = where the work was carried out
 - For insurance: property = the insured premises (not the policyholder's correspondence address)
 - shortName MUST start with house number: "11 Northfield Avenue" not "Northfield Avenue"
+- CRITICAL HOUSE NUMBER RULE: You must read the house number character by character. "3", "11", and "31" are completely different properties even if they share the same street. Do not guess or approximate. If a document contains multiple addresses with the same street name, extract ONLY the number that appears immediately before that street name in the context of the primary property. A page number, reference number, clause number, or any other number in the document is NOT the house number.
+- If you find multiple different house numbers in a document (e.g. landlord address vs property address), always use the property address number, not the landlord/agent/solicitor address number.
 - address MUST include full address with house number, street, town, postcode
 - CRITICAL: Do NOT create a property for access roads, rights of way, easements, or ancillary land described in title documents. Only extract a property if it is the PRIMARY dwelling being purchased, let, or managed.
 - CRITICAL: If a document describes "access via X road" or "right of way over X" : X is NOT the property address. The property is the main dwelling the document is fundamentally about.
@@ -21,7 +23,7 @@ CRITICAL RULES:
 - If the document is a generic template, a terms of business document, or does not refer to a specific identifiable property address with a house number, omit the property field entirely.
 - Extract EVERY date, certificate number, reference, name, amount . Do not skip anything.
 - For compliance docs: extract engineer/inspector name, registration numbers, test results, observations, and any defects noted
-- For tenancy agreements: extract ALL tenant names, ALL clauses about obligations, break clauses, permitted use
+- For tenancy agreements: extract ALL tenant names (the RENTERS, not the owner), ALL clauses about obligations, break clauses, permitted use. The tenant is the person paying rent. The landlord is the person receiving rent. Never confuse them. If the document says "The Landlord: Mayo Binnie" and "The Tenant: John Smith", tenantName = "John Smith" and landlordName = "Mayo Binnie".
 - For insurance: extract ALL covered risks, exclusions, excess amounts, and any special conditions
 - For leases: extract lease length, ground rent, service charge, review dates, landlord covenants, tenant covenants
 - Do not guess. Omit fields you cannot find. But look hard: the data is there across multiple pages.
@@ -87,7 +89,7 @@ Use this exact structure (omit any field you cannot find : but search ALL pages 
     }
   },
   "tenancy": {
-    "tenantName": "full name(s) of all tenants",
+    "tenantName": "ONLY the name(s) of the person(s) RENTING the property (the tenant/lessee/contract-holder). In a tenancy agreement there are typically two parties: the LANDLORD (also called lessor, licensor) and the TENANT (also called lessee, licensee, contract-holder). Extract ONLY the tenant party. NEVER put the landlord name, property owner name, letting agent name, or solicitor name in this field. In a standard AST: the tenant is the person paying rent and living at the property. Look for labels like: Tenant, Lessee, Contract-Holder, The Tenant. The landlord is the person receiving rent who owns the property.",
     "tenantPhone": "number", "tenantEmail": "email",
     "landlordName": "full name", "landlordAddress": "address",
     "agentName": "if applicable",
