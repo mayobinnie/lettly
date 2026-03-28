@@ -16,6 +16,9 @@ CRITICAL RULES:
 - CRITICAL: Do NOT create a property for access roads, rights of way, easements, or ancillary land described in title documents. Only extract a property if it is the PRIMARY dwelling being purchased, let, or managed.
 - CRITICAL: If a document describes "access via X road" or "right of way over X" — X is NOT the property address. The property is the main dwelling the document is fundamentally about.
 - If you cannot identify a specific house/flat number for the property, omit the property field entirely rather than guessing a road name.
+- NEVER use a document type as a property name. shortName must NEVER be "Rental Contract", "Tenancy Agreement", "Lease", "Document", "Contract", "Mortgage", "Unknown", or any variation of these. If you cannot identify a real street address with a house number, omit the property field entirely.
+- A valid shortName looks like: "11 Northfield Avenue" or "7 Tower Hill Mews" or "602 Hotham Road South". It starts with a number and ends with a street name.
+- If the document is a generic template, a terms of business document, or does not refer to a specific identifiable property address with a house number, omit the property field entirely.
 - Extract EVERY date, certificate number, reference, name, amount — do not skip anything
 - For compliance docs: extract engineer/inspector name, registration numbers, test results, observations, and any defects noted
 - For tenancy agreements: extract ALL tenant names, ALL clauses about obligations, break clauses, permitted use
@@ -44,10 +47,38 @@ Use this exact structure (omit any field you cannot find — but search ALL page
       "circuits": "number of circuits tested", "observations": "C1/C2/C3 codes if listed"
     },
     "insurance": {
-      "insurer": "name", "policyNumber": "number", "renewal": "DD/MM/YYYY",
-      "type": "Landlord|Home|Other", "premium": 0,
-      "cover": "buildings|contents|liability — list what is covered",
-      "excess": 0, "sumInsured": 0, "exclusions": "any notable exclusions"
+      "insurer": "name",
+      "policyNumber": "number",
+      "renewal": "DD/MM/YYYY",
+      "startDate": "DD/MM/YYYY",
+      "type": "Landlord|Home|Other",
+      "premium": 0,
+      "premiumBreakdown": "any breakdown of premium components if shown",
+      "paymentFrequency": "annual|monthly",
+      "sumInsured": 0,
+      "buildingsSum": 0,
+      "contentsSum": 0,
+      "liabilitySum": 0,
+      "excess": 0,
+      "voluntaryExcess": 0,
+      "compulsoryExcess": 0,
+      "cover": "full list of covers included — buildings, contents, liability, loss of rent, legal, etc",
+      "lossOfRentCover": 0,
+      "lossOfRentPeriod": "max period covered e.g. 12 months",
+      "legalExpensesCover": 0,
+      "emergencyCover": "yes/no and what is covered",
+      "floodCover": "yes/no",
+      "subsidence": "yes/no",
+      "accidentalDamage": "yes/no — buildings",
+      "accidentalDamagContents": "yes/no — contents",
+      "maliciousDamage": "yes/no",
+      "theftCover": "yes/no",
+      "unoccupancyClause": "any unoccupancy restrictions e.g. 30 consecutive days",
+      "exclusions": "list ALL notable exclusions found anywhere in the document",
+      "conditions": "any important policy conditions or warranties",
+      "claimsLine": "claims phone number if shown",
+      "broker": "broker name if different from insurer",
+      "insurerAddress": "insurer address if shown"
     },
     "epc": {
       "rating": "A|B|C|D|E|F|G", "expiry": "DD/MM/YYYY",
@@ -125,10 +156,10 @@ export default async function handler(req, res) {
   // Check file size - base64 is ~1.33x the original, so 20MB base64 = ~15MB file
   const approxBytes = (data.length * 3) / 4
   const approxMB = approxBytes / (1024 * 1024)
-  if (approxMB > 14) {
+  if (approxMB > 28) {
     return res.status(400).json({
       success: false,
-      error: `This file is ${approxMB.toFixed(0)}MB — too large to process. Try compressing the PDF or splitting it into smaller files (max 14MB).`,
+      error: `This file is ${approxMB.toFixed(0)}MB — too large to process. Try compressing the PDF or splitting it into smaller files (max 28MB).`,
       filename
     })
   }
@@ -162,7 +193,7 @@ export default async function handler(req, res) {
       try {
         response = await client.messages.create({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 4096,
+          max_tokens: 6000,
           messages: [{ role:'user', content }],
         })
         break
@@ -203,4 +234,4 @@ export default async function handler(req, res) {
   }
 }
 
-export const config = { api: { bodyParser: { sizeLimit: '20mb' } } }
+export const config = { api: { bodyParser: { sizeLimit: '40mb' } } }

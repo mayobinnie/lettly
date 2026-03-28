@@ -762,6 +762,109 @@ function FirstTimeLandlordChecklist({nation,checkedItems,onToggle}){
 
 /* ---- Property Form ---- */
 const EMPTY_PROP={shortName:'',address:'',nation:'',ownership:'Personal',purchasePrice:'',purchaseDate:'',currentValue:'',mortgage:'',lender:'',rate:'',fixedEnd:'',monthlyPayment:'',ercRate:'',rent:'',tenantName:'',tenantPhone:'',tenantEmail:'',tenancyStart:'',tenancyEnd:'',depositAmount:'',depositScheme:'',gasDue:'',eicrDue:'',epcRating:'',epcExpiry:'',insurer:'',policyNo:'',insuranceRenewal:'',insuranceType:'',notes:''}
+
+/* ---- Valuation Widget ---- */
+function ValuationWidget({address, currentValue, onAccept}){
+  const[state,setState]=useState('idle') // idle | loading | done | error
+  const[result,setResult]=useState(null)
+  const[showComps,setShowComps]=useState(false)
+
+  const postcode = (address||'').match(/[A-Z]{1,2}[0-9][0-9A-Z]?\s*[0-9][A-Z]{2}/i)?.[0]
+
+  async function fetchValuation(){
+    if(!postcode) return
+    setState('loading')
+    try{
+      const res = await fetch('/api/valuation',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({postcode})
+      })
+      const data = await res.json()
+      setResult(data)
+      setState(data.error?'error':'done')
+    }catch(e){
+      setState('error')
+      setResult({error:'Could not connect to Land Registry.'})
+    }
+  }
+
+  if(!postcode) return(
+    <div style={{background:'var(--surface2)',borderRadius:10,padding:'10px 14px',fontSize:12,color:'var(--text-3)',marginBottom:14}}>
+      Add a full postcode to the address above to get a valuation estimate.
+    </div>
+  )
+
+  return(
+    <div style={{background:'var(--brand-subtle)',border:'0.5px solid rgba(27,94,59,0.2)',borderRadius:12,padding:14,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:state==='done'?10:0}}>
+        <div>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--brand)',marginBottom:2}}>Land Registry estimate</div>
+          <div style={{fontSize:11,color:'var(--text-3)'}}>Based on recent sold prices near {postcode}</div>
+        </div>
+        {state==='idle'&&<button onClick={fetchValuation} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'6px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>
+          Get estimate
+        </button>}
+        {state==='loading'&&<div style={{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'var(--text-3)'}}>
+          <div style={{width:12,height:12,borderRadius:'50%',border:'2px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/>
+          Searching...
+        </div>}
+      </div>
+
+      {state==='done'&&result&&<>
+        {result.estimate ? <>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:10}}>
+            <div style={{background:'var(--surface)',borderRadius:8,padding:'10px 12px',textAlign:'center'}}>
+              <div style={{fontSize:10,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:3}}>Estimated value</div>
+              <div style={{fontSize:16,fontWeight:700,fontFamily:'var(--mono)',color:'var(--brand)'}}>£{result.estimate?.toLocaleString('en-GB')}</div>
+            </div>
+            <div style={{background:'var(--surface)',borderRadius:8,padding:'10px 12px',textAlign:'center'}}>
+              <div style={{fontSize:10,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:3}}>Sales range</div>
+              <div style={{fontSize:12,fontWeight:500,fontFamily:'var(--mono)'}}>£{result.min?.toLocaleString('en-GB')} - £{result.max?.toLocaleString('en-GB')}</div>
+            </div>
+            <div style={{background:'var(--surface)',borderRadius:8,padding:'10px 12px',textAlign:'center'}}>
+              <div style={{fontSize:10,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:3}}>Based on</div>
+              <div style={{fontSize:12,fontWeight:500}}>{result.count} sales</div>
+            </div>
+          </div>
+
+          <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+            {(!currentValue||currentValue===''||currentValue==='0')&&<button onClick={()=>onAccept(result.estimate)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'6px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>
+              Use this estimate
+            </button>}
+            {currentValue&&currentValue!==''&&<button onClick={()=>onAccept(result.estimate)} style={{background:'var(--brand-light)',color:'var(--brand)',border:'0.5px solid rgba(27,94,59,0.2)',borderRadius:7,padding:'6px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>
+              Update to £{result.estimate?.toLocaleString('en-GB')}
+            </button>}
+            <button onClick={()=>setShowComps(s=>!s)} style={{background:'none',border:'0.5px solid var(--border)',borderRadius:7,padding:'6px 12px',fontSize:11,color:'var(--text-2)',cursor:'pointer'}}>
+              {showComps?'Hide':'Show'} comparables ({result.comparables?.length})
+            </button>
+          </div>
+
+          {showComps&&result.comparables?.length>0&&<div style={{marginTop:10,borderTop:'0.5px solid var(--border)',paddingTop:10}}>
+            <div style={{fontSize:11,color:'var(--text-3)',marginBottom:6}}>Recent sold prices (HPI-adjusted to today)</div>
+            <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:180,overflowY:'auto'}}>
+              {result.comparables.map((c,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 0',borderBottom:'0.5px solid var(--border)',fontSize:11}}>
+                  <div style={{color:'var(--text-2)',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',paddingRight:8}}>{c.address}</div>
+                  <div style={{flexShrink:0,display:'flex',gap:10,alignItems:'center'}}>
+                    <span style={{color:'var(--text-3)'}}>{c.date}</span>
+                    <span style={{fontFamily:'var(--mono)',fontWeight:500,color:'var(--text)'}}>£{c.adjustedPrice?.toLocaleString('en-GB')}</span>
+                    <span style={{color:'var(--text-3)',fontSize:10}}>(sold £{c.price?.toLocaleString('en-GB')})</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{fontSize:10,color:'var(--text-3)',marginTop:6}}>{result.note}</div>
+          </div>}
+
+        </> : <div style={{fontSize:12,color:'var(--text-2)'}}>{result.message||result.error||'No recent sales data found for this area.'}</div>}
+      </>}
+
+      {state==='error'&&<div style={{fontSize:12,color:'var(--red)',marginTop:8}}>{result?.error||'Could not fetch valuation data.'}</div>}
+    </div>
+  )
+}
+
 function PropertyForm({initial,onSave,onDelete,onClose}){
   const[p,setP]=useState({...EMPTY_PROP,...initial})
   const set=(k,v)=>setP(prev=>({...prev,[k]:v}))
@@ -770,11 +873,13 @@ function PropertyForm({initial,onSave,onDelete,onClose}){
   // Auto-detect nation from address/postcode
   function handleAddressChange(v){
     set('address',v)
-    const words=v.split(' ')
-    const lastWord=words[words.length-1]
-    const secondLast=words[words.length-2]||''
-    const postcode=`${secondLast} ${lastWord}`.trim()
-    if(postcode.length>=3){const n=detectNation(postcode);if(n)set('nation',n)}
+    // Extract postcode using regex - more reliable than last-two-words approach
+    const postcodeMatch = v.match(/([A-Z]{1,2}[0-9][0-9A-Z]?\s*[0-9][A-Z]{2})/i)
+    if(postcodeMatch){
+      const postcode = postcodeMatch[1].trim()
+      const n = detectNation(postcode)
+      if(n) set('nation', n)
+    }
   }
 
   function handleSave(){
@@ -823,6 +928,7 @@ function PropertyForm({initial,onSave,onDelete,onClose}){
             <Input label="Current value (est.)" value={p.currentValue} onChange={v=>set('currentValue',v)} placeholder="e.g. 150000" type="number"/>
           </div>
           {p.currentValue&&p.purchasePrice&&<div style={{fontSize:12,color:'var(--green)',marginBottom:14}}>Estimated gain: {fmt(Number(p.currentValue)-Number(p.purchasePrice))}</div>}
+          <ValuationWidget address={p.address} currentValue={p.currentValue} onAccept={v=>set('currentValue',String(v))}/>
           <Input label="Notes" value={p.notes} onChange={v=>set('notes',v)} placeholder="Anything to remember"/>
         </>}
         {tab==='finance'&&<>
@@ -1315,6 +1421,13 @@ function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab
 
   return<div className="fade-up">
     {urgent.length>0&&<div style={{background:'#fce8e6',border:'0.5px solid #E24B4A',borderRadius:12,padding:'12px 14px',marginBottom:14,color:'#791F1F',fontSize:12,lineHeight:1.8}}><div style={{fontWeight:600,marginBottom:4}}>Warning: {urgent.length} urgent action{urgent.length>1?'s':''}</div>{urgent.map((x,i)=><div key={i}>- {x}</div>)}</div>}
+    {props.length>0&&props.some(p=>!p.currentValue)&&<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'12px 16px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+      <div>
+        <div style={{fontSize:13,fontWeight:500,color:'#633806',marginBottom:2}}>Portfolio value and yield are incomplete</div>
+        <div style={{fontSize:12,color:'#a07030',lineHeight:1.6}}>{props.filter(p=>!p.currentValue).map(p=>p.shortName).join(', ')} {props.filter(p=>!p.currentValue).length===1?'is':'are'} missing a current value. Add it to unlock yield, equity and projection charts.</div>
+      </div>
+      <button onClick={()=>setTab&&setTab('properties')} style={{background:'#EF9F27',color:'#fff',border:'none',borderRadius:7,padding:'6px 14px',fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>Edit properties →</button>
+    </div>}
 
     {/* Main metrics */}
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
@@ -1351,7 +1464,10 @@ function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab
 
     {/* Per-property growth cards - always show 1/5/10yr */}
     {props.filter(p=>p.currentValue).length>0&&<>
-      <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:10}}>Property growth projections</div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+        <div style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>Property growth projections</div>
+        <div style={{fontSize:10,color:'var(--text-3)'}}>Based on ONS HPI 5yr avg by postcode · <button onClick={()=>setTab&&setTab('finance')} style={{background:'none',border:'none',color:'var(--brand)',fontSize:10,cursor:'pointer',padding:0}}>update values →</button></div>
+      </div>
       <GrowthCards props={props}/>
     </>}
 
@@ -1460,6 +1576,7 @@ function Properties({portfolio,onAddDocs,onScan,onManual,onEdit,onAdd}){
           </div>
           <div style={{textAlign:'right',flexShrink:0}}>
             {p.rent&&<><div style={{fontSize:'clamp(18px,3vw,22px)',fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px'}}>{fmt(Number(p.rent))}</div><div style={{fontSize:10,color:'var(--text-3)'}}>per month</div></>}
+            {!p.rent&&p.currentValue&&<><div style={{fontSize:'clamp(14px,2vw,17px)',fontWeight:500,fontFamily:'var(--mono)',color:'var(--text-2)'}}>{fmt(Number(p.currentValue))}</div><div style={{fontSize:10,color:'var(--text-3)'}}>est. value</div></>}
             <button onClick={()=>onEdit(p)} style={{marginTop:8,fontSize:11,color:'var(--brand)',background:'none',border:'0.5px solid var(--brand-light)',borderRadius:6,padding:'3px 10px',cursor:'pointer'}}>Edit</button>
           </div>
         </div>
@@ -1474,6 +1591,22 @@ function Properties({portfolio,onAddDocs,onScan,onManual,onEdit,onAdd}){
           <div>{p.gasDue&&<Row label="Gas due" value={p.gasDue} valueColor={col(gasC)}/>}{p.eicrDue&&<Row label="EICR due" value={p.eicrDue} valueColor={col(eicrC)}/>}{p.epcRating&&<Row label="EPC" value={`${p.epcRating}${p.epcExpiry?' - exp '+p.epcExpiry:''}`} valueColor={epcColor(p.epcRating)}/>}{!p.epcRating&&<Row label="EPC rating" value="Unknown - drop EPC cert" valueColor="var(--amber)"/>}{p.insurer&&<Row label="Insurer" value={p.insurer}/>}{p.insuranceRenewal&&<Row label="Ins. renew" value={p.insuranceRenewal} valueColor={col(insC)}/>}{p.notes&&<Row label="Notes" value={p.notes}/>}</div>
         </div>
         {p.insuranceType?.toLowerCase()==='home'&&<div style={{marginTop:10,fontSize:11,color:'var(--red)',background:'var(--red-bg)',borderRadius:7,padding:'7px 10px',lineHeight:1.6}}>Home insurance detected - you need a landlord policy.</div>}
+        {p.insurer&&p.insuranceType?.toLowerCase()!=='home'&&(p.insuranceSumInsured||p.insuranceCover||p.insuranceExclusions||p.insuranceLossOfRent||p.insuranceUnoccupancy)&&<div style={{marginTop:10,background:'var(--surface2)',borderRadius:10,padding:'12px 14px'}}>
+          <div style={{fontSize:12,fontWeight:500,marginBottom:8,color:'var(--text)'}}>Insurance detail</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 16px',fontSize:11}}>
+            {p.insuranceSumInsured&&<Row label="Sum insured" value={'£'+Number(p.insuranceSumInsured).toLocaleString('en-GB')}/>}
+            {p.insuranceBuildings&&<Row label="Buildings cover" value={'£'+Number(p.insuranceBuildings).toLocaleString('en-GB')}/>}
+            {p.insuranceLiability&&<Row label="Liability cover" value={'£'+Number(p.insuranceLiability).toLocaleString('en-GB')}/>}
+            {p.insurancePremium&&<Row label="Annual premium" value={'£'+Number(p.insurancePremium).toLocaleString('en-GB')}/>}
+            {p.insuranceExcess&&<Row label="Excess" value={'£'+Number(p.insuranceExcess).toLocaleString('en-GB')}/>}
+            {p.insuranceLossOfRent&&<Row label="Loss of rent" value={'£'+Number(p.insuranceLossOfRent).toLocaleString('en-GB')+(p.insuranceLossOfRentPeriod?' ('+p.insuranceLossOfRentPeriod+')':'')}/>}
+            {p.insuranceLegal&&<Row label="Legal expenses" value={'£'+Number(p.insuranceLegal).toLocaleString('en-GB')}/>}
+          </div>
+          {p.insuranceCover&&<div style={{marginTop:8,fontSize:11,color:'var(--text-2)',lineHeight:1.6}}><span style={{fontWeight:500,color:'var(--text)'}}>Covers: </span>{p.insuranceCover}</div>}
+          {p.insuranceUnoccupancy&&<div style={{marginTop:6,fontSize:11,color:'var(--amber)',background:'#fff8e1',borderRadius:6,padding:'5px 8px',lineHeight:1.5}}><span style={{fontWeight:500}}>Unoccupancy: </span>{p.insuranceUnoccupancy}</div>}
+          {p.insuranceExclusions&&<div style={{marginTop:6,fontSize:11,color:'var(--red)',background:'var(--red-bg)',borderRadius:6,padding:'5px 8px',lineHeight:1.5}}><span style={{fontWeight:500}}>Exclusions: </span>{p.insuranceExclusions}</div>}
+          {p.insuranceBroker&&<div style={{marginTop:4,fontSize:11,color:'var(--text-3)'}}>Broker: {p.insuranceBroker}</div>}
+        </div>}
         {p.epcRating&&['D','E','F','G'].includes(p.epcRating.toUpperCase())&&<div style={{marginTop:10,background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#633806',lineHeight:1.6}}>EPC {p.epcRating}: Upgrade to C needed for new lets from 2028. Cost: {p.epcRating==='D'?'£3,000-£8,000':'£5,000-£15,000'}.</div>}
       </div>
     })}
@@ -1561,6 +1694,32 @@ function FinanceTab({portfolio,setPortfolio}){
     </div>
 
     {view==='overview'&&<>
+      {/* Missing data nudges */}
+      {(()=>{
+        const missing=[]
+        const noValue=props.filter(p=>!p.currentValue)
+        const noMortgage=props.filter(p=>p.lender&&!p.monthlyPayment)
+        const noRent=props.filter(p=>!p.rent)
+        const noRate=props.filter(p=>p.mortgage&&!p.rate)
+        if(noValue.length>0) missing.push({icon:'🏠',text:`Property value missing on ${noValue.map(p=>p.shortName).join(', ')} — needed for yield, equity and LTV`,action:'Use Land Registry estimate in Edit property',key:'value'})
+        if(noRent.length>0) missing.push({icon:'💸',text:`Monthly rent missing on ${noRent.map(p=>p.shortName).join(', ')} — needed for yield and net income`,action:'Edit property and add the monthly rent',key:'rent'})
+        if(noMortgage.length>0) missing.push({icon:'🏦',text:`Monthly mortgage payment missing on ${noMortgage.map(p=>p.shortName).join(', ')} — needed for net yield and cashflow`,action:'Edit property and add the monthly payment amount',key:'mortgage'})
+        if(noRate.length>0) missing.push({icon:'📊',text:`Interest rate missing on ${noRate.map(p=>p.shortName).join(', ')} — needed for interest coverage ratio`,action:'Edit property and add the interest rate',key:'rate'})
+        if(missing.length===0) return null
+        return<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'12px 16px',marginBottom:16}}>
+          <div style={{fontSize:12,fontWeight:600,color:'#633806',marginBottom:8}}>To unlock all metrics, add the following:</div>
+          {missing.map((m,i)=>(
+            <div key={i} style={{display:'flex',gap:8,alignItems:'flex-start',marginBottom:i<missing.length-1?7:0}}>
+              <span style={{fontSize:13,flexShrink:0}}>{m.icon}</span>
+              <div>
+                <div style={{fontSize:12,color:'#633806',lineHeight:1.5}}>{m.text}</div>
+                <div style={{fontSize:11,color:'#a07030',marginTop:1}}>How: {m.action}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      })()}
+
       {/* Monthly headline */}
       <div style={{background:'var(--brand)',borderRadius:14,padding:'20px 24px',marginBottom:16,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
         {[
@@ -1615,14 +1774,14 @@ function FinanceTab({portfolio,setPortfolio}){
                 const gy=val>0?((rent*12/val)*100):0
                 return<tr key={p.id} style={{borderBottom:i<props.length-1?'0.5px solid var(--border)':'none'}}>
                   <td style={{padding:'9px 10px',fontWeight:500,whiteSpace:'nowrap'}}>{p.shortName}</td>
-                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{rent?fmt(rent):'-'}</td>
-                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{mortgage?fmt(mortgage):'-'}</td>
-                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:net>0?'var(--green)':net<0?'var(--red)':'var(--text-3)',fontWeight:500}}>{rent&&mortgage?fmt(net):'-'}</td>
-                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{val?fmt(val):'-'}</td>
-                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{mort?fmt(mort):'-'}</td>
-                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:equity>0?'var(--green)':'var(--red)',fontWeight:500}}>{val&&mort?fmt(equity):'-'}</td>
-                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:ltv>80?'var(--red)':ltv>75?'var(--amber)':'var(--green)'}}>{ltv?ltv.toFixed(0)+'%':'-'}</td>
-                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:gy>=5?'var(--green)':gy>0?'var(--amber)':'var(--text-3)'}}>{gy?gy.toFixed(1)+'%':'-'}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{rent?fmt(rent):<span style={{color:'var(--amber)',fontSize:10}}>add rent</span>}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{mortgage?fmt(mortgage):<span style={{color:'var(--text-3)',fontSize:10}}>add payment</span>}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:net>0?'var(--green)':net<0?'var(--red)':'var(--text-3)',fontWeight:500}}>{rent&&mortgage?fmt(net):<span style={{color:'var(--text-3)',fontSize:10}}>{rent?'add payment':'add rent'}</span>}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{val?fmt(val):<span style={{color:'var(--amber)',fontSize:10}}>add value</span>}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)'}}>{mort?fmt(mort):<span style={{color:'var(--text-3)',fontSize:10}}>add mortgage</span>}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:equity>0?'var(--green)':'var(--red)',fontWeight:500}}>{val&&mort?fmt(equity):<span style={{color:'var(--text-3)',fontSize:10}}>{val?'add mortgage':'add value'}</span>}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:ltv>80?'var(--red)':ltv>75?'var(--amber)':'var(--green)'}}>{ltv?ltv.toFixed(0)+'%':<span style={{color:'var(--text-3)',fontSize:10}}>{val?'add mortgage':'add value'}</span>}</td>
+                  <td style={{padding:'9px 10px',fontFamily:'var(--mono)',color:gy>=5?'var(--green)':gy>0?'var(--amber)':'var(--text-3)'}}>{gy?gy.toFixed(1)+'%':<span style={{color:'var(--amber)',fontSize:10}}>{val?'add rent':'add value'}</span>}</td>
                 </tr>
               })}
             </tbody>

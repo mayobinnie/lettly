@@ -156,12 +156,12 @@ export default function Landing() {
           display:'flex', alignItems:'center', justifyContent:'space-between',
           height:68, transition:'all 0.25s'
         }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <a href="#" onClick={e=>{e.preventDefault();window.scrollTo({top:0,behavior:'smooth'})}} style={{ display:'flex', alignItems:'center', gap:10, textDecoration:'none' }}>
             <div style={{ width:38, height:38, background:'var(--brand)', borderRadius:11, display:'flex', alignItems:'center', justifyContent:'center' }}>
               <span style={{ color:'#fff', fontSize:20, fontWeight:700, fontFamily:'var(--display)', fontStyle:'italic' }}>L</span>
             </div>
             <span style={{ fontFamily:'var(--display)', fontSize:22, fontWeight:400, color:'var(--text)' }}>Lettly</span>
-          </div>
+          </a>
           <div className="hide-mobile" style={{ display:'flex', gap:32, alignItems:'center' }}>
             {[['How it works','#how-it-works'],['Features','#features'],['Pricing','#pricing'],['Blog','/blog']].map(([l,h]) => (
               <a key={l} href={h} style={{ fontSize:14, color:'var(--text-2)', textDecoration:'none', transition:'color 0.15s' }}
@@ -206,7 +206,7 @@ export default function Landing() {
           <div className="trust-pills" style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
             {[
               { icon:'🇬🇧', text:'Built for UK landlords' },
-              { icon:'🏴‍', text:'England, Scotland and Wales covered' },
+              { icon:'🏴', text:'England, Scotland and Wales covered' },
               { icon:'🔒', text:'Your data stays private' },
             ].map(t => (
               <span key={t.text} className="trust-pill"><span>{t.icon}</span>{t.text}</span>
@@ -374,7 +374,7 @@ export default function Landing() {
             <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
               {[
                 {
-                  flag:'🏴‍',
+                  flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',
                   nation:'England',
                   color:'rgba(255,255,255,0.12)',
                   items:[
@@ -387,7 +387,7 @@ export default function Landing() {
                   ]
                 },
                 {
-                  flag:'🏴‍',
+                  flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
                   nation:'Scotland',
                   color:'rgba(255,255,255,0.12)',
                   items:[
@@ -400,7 +400,7 @@ export default function Landing() {
                   ]
                 },
                 {
-                  flag:'🏴‍',
+                  flag:'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
                   nation:'Wales',
                   color:'rgba(255,255,255,0.12)',
                   items:[
@@ -568,12 +568,12 @@ export default function Landing() {
         {/* ── Footer ── */}
         <footer style={{ background:'var(--surface)', borderTop:'1px solid var(--border)', padding:'32px clamp(20px,4vw,48px)' }}>
           <div style={{ maxWidth:960, margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:16 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <a href="#" onClick={e=>{e.preventDefault();window.scrollTo({top:0,behavior:'smooth'})}} style={{ display:'flex', alignItems:'center', gap:8, textDecoration:'none' }}>
               <div style={{ width:30, height:30, background:'var(--brand)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <span style={{ color:'#fff', fontSize:15, fontWeight:700, fontFamily:'var(--display)', fontStyle:'italic' }}>L</span>
               </div>
               <span style={{ fontFamily:'var(--display)', fontSize:17, fontWeight:400, color:'var(--text)' }}>Lettly</span>
-            </div>
+            </a>
             <div style={{ display:'flex', gap:24, flexWrap:'wrap' }}>
               {[['Privacy','/privacy'],['Terms','/terms'],['Security','/security'],['Blog','/blog'],['Contact','mailto:hello@lettly.co']].map(([l,h]) => (
                 <a key={l} href={h} style={{ fontSize:13, color:'var(--text-3)', textDecoration:'none' }}>{l}</a>
