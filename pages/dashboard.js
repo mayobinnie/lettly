@@ -2425,7 +2425,7 @@ function ConditionReport({portfolio,setPortfolio,userId}){
 }
 
 /* ---- Root ---- */
-const TABS=[{id:'overview',label:'Overview'},{id:'properties',label:'Properties'},{id:'rent',label:'Rent tracker'},{id:'finance',label:'Finance'},{id:'maintenance',label:'Maintenance'},{id:'conditions',label:'Conditions'},{id:'tools',label:'Tools'},{id:'legislation',label:'Legislation'},{id:'ai',label:'Lettly AI'}]
+const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
 
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
@@ -2562,6 +2562,8 @@ export default function Dashboard(){
   if(!isLoaded||!isSignedIn)return<div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{width:28,height:28,borderRadius:'50%',border:'2.5px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/></div>
   // Camera scanner overlay
   if(showCamera)return<CameraScanner onFiles={f=>{handleFiles(f)}} onClose={()=>setShowCamera(false)}/>
+  // iOS safe area support
+  const safeAreaStyle = typeof window !== 'undefined' ? {paddingBottom:'env(safe-area-inset-bottom,0px)'} : {}
 
   // Pass toggleCheck down to Overview via portfolio context
   const portfolioWithToggle={...portfolio,_toggleCheck:toggleCheck}
@@ -2576,14 +2578,14 @@ export default function Dashboard(){
       <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
       <meta name="apple-mobile-web-app-title" content="Lettly"/>
     </Head>
-    <style>{`.dash-content{max-width:1060px;margin:0 auto;padding:24px 20px}@media(max-width:640px){.dash-content{padding:16px}}`}</style>
+    <style>{`.dash-content{max-width:1060px;margin:0 auto;padding:20px 20px 40px}@media(max-width:640px){.dash-content{padding:12px 12px 24px}}@media(max-width:480px){.dash-content{padding:10px 10px 20px}}`}</style>
 
     {showWizard&&<OnboardingWizard onComplete={completeWizard} firstName={user?.firstName}/>}
 
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
       <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:30,height:30,background:'var(--brand)',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:14,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:17,fontWeight:400}}>Lettly</span></div>
-        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}>{t.label}{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
+        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
           {saveStatus==='saving'&&<span style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
           {saveStatus==='saved'&&loaded&&<span style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
@@ -2613,7 +2615,7 @@ export default function Dashboard(){
         </div>
       </div>}
       <div className="dash-content">
-        {tab==='overview'&&<div style={{marginBottom:18}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(22px,4vw,28px)',fontWeight:300,marginBottom:3}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:13,color:'var(--text-3)'}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} saved`}</p></div>}
+        {tab==='overview'&&<div style={{marginBottom:14}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(20px,4vw,28px)',fontWeight:300,marginBottom:3}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:13,color:'var(--text-3)'}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} saved`}</p></div>}
         {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
         {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
         {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/> }
