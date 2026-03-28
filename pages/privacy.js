@@ -41,7 +41,7 @@ export default function Privacy() {
           </div>
 
           <div style={{ background: 'var(--brand-subtle)', border: '0.5px solid rgba(27,94,59,0.2)', borderRadius: 12, padding: '14px 18px', marginBottom: 36, fontSize: 13, color: 'var(--brand)', lineHeight: 1.7 }}>
-            The short version: we collect only what we need to run Lettly, we store it securely in the EU, we never sell it, and you can delete it any time.
+            The short version: we collect only what we need to run Lettly, we store it securely in the UK/EU, we never sell it, and you can delete it any time.
           </div>
 
           <Section title="Who we are">

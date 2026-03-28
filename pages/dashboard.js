@@ -2281,6 +2281,275 @@ function TaxExportPanel({portfolio}){
   </div>
 }
 
+
+/* ============================================================
+   TENANTS TAB — Find, check and track applicants
+   ============================================================ */
+function TenantsTab({portfolio,setPortfolio}){
+  const props = portfolio.properties||[]
+  const applicants = portfolio.applicants||[]
+  const[view,setView]=useState('find')
+  const[selProp,setSelProp]=useState(props[0]?.id||'')
+  const[showForm,setShowForm]=useState(false)
+  const[form,setForm]=useState({propId:'',name:'',email:'',phone:'',income:'',employer:'',employmentType:'',monthlyIncome:'',creditScore:'',creditCheck:'',referenceEmployer:'',referenceLandlord:'',rightToRent:'',rightToRentDoc:'',pets:false,smoker:false,notes:'',status:'Enquiry'})
+  const fset=(k,v)=>setForm(p=>({...p,[k]:v}))
+
+  const inp={background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',width:'100%'}
+  const lbl={display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}
+
+  function saveApplicant(){
+    if(!form.name.trim())return
+    const updated={...portfolio,applicants:[...applicants,{...form,id:Math.random().toString(36).slice(2),createdAt:new Date().toISOString()}]}
+    setPortfolio(updated)
+    setForm({propId:'',name:'',email:'',phone:'',income:'',employer:'',employmentType:'',monthlyIncome:'',creditScore:'',creditCheck:'',referenceEmployer:'',referenceLandlord:'',rightToRent:'',rightToRentDoc:'',pets:false,smoker:false,notes:'',status:'Enquiry'})
+    setShowForm(false)
+  }
+
+  function updateStatus(id,status){
+    setPortfolio({...portfolio,applicants:applicants.map(a=>a.id===id?{...a,status}:a)})
+  }
+
+  function deleteApplicant(id){
+    setPortfolio({...portfolio,applicants:applicants.filter(a=>a.id!==id)})
+  }
+
+  const statusColour={
+    'Enquiry':       {bg:'var(--surface2)',        col:'var(--text-2)'},
+    'Applied':       {bg:'#e8f5e9',                col:'#1b5e3b'},
+    'Referencing':   {bg:'#fff8e1',                col:'#633806'},
+    'Approved':      {bg:'var(--green-bg)',         col:'var(--green)'},
+    'Rejected':      {bg:'var(--red-bg)',           col:'var(--red)'},
+    'Offer made':    {bg:'var(--brand-subtle)',     col:'var(--brand)'},
+    'Tenancy signed':{bg:'#e8f5e9',                col:'#1b5e3b'},
+  }
+
+  const FINDING_PLATFORMS = [
+    {name:'OpenRent',url:'https://www.openrent.co.uk',price:'From £29 one-off',desc:'Most popular direct-to-landlord portal. Lists on Rightmove and Zoopla. No agent involved.',tag:'Recommended',tagCol:'green'},
+    {name:'Rightmove',url:'https://www.rightmove.co.uk/landlords',price:'Via agent or OpenRent',desc:'Highest traffic in the UK. Cannot list directly — must use an agent or portal partner.',tag:'Highest traffic',tagCol:'blue'},
+    {name:'Zoopla',url:'https://www.zoopla.co.uk',price:'Via agent or OpenRent',desc:'Second largest portal. Usually bundled with Rightmove listings via partners.',tag:'High traffic',tagCol:'blue'},
+    {name:'SpareRoom',url:'https://www.spareroom.co.uk',price:'Free to £35/month',desc:'Best for rooms and HMO lettings. Large audience for sharers and young professionals.',tag:'HMO / rooms',tagCol:'amber'},
+    {name:'Gumtree',url:'https://www.gumtree.com',price:'Free',desc:'Free listings. Lower quality leads than portals but useful for budget properties.',tag:'Free',tagCol:'gray'},
+    {name:'Facebook Marketplace',url:'https://www.facebook.com/marketplace',price:'Free',desc:'Strong local reach. Good for 1-2 bed properties in any area. Younger audience.',tag:'Free',tagCol:'gray'},
+  ]
+
+  const REFERENCING_SERVICES = [
+    {name:'Rightmove Tenant Passport',url:'https://www.rightmove.co.uk/landlords/tenant-referencing.html',price:'Free for landlords',desc:'Tenant completes their own reference check and shares the result with you. No cost to the landlord.',tag:'Free',tagCol:'green'},
+    {name:'OpenRent Referencing',url:'https://www.openrent.co.uk/tenant-referencing',price:'£20 per tenant',desc:'Credit check, employer reference, previous landlord reference, Right to Rent. Quick turnaround.',tag:'Best value',tagCol:'green'},
+    {name:'HomeLet',url:'https://www.homelet.co.uk',price:'From £30 per tenant',desc:'Comprehensive referencing with rent guarantee insurance option. Used by many letting agents.',tag:'Comprehensive',tagCol:'blue'},
+    {name:'Let Alliance',url:'https://www.letalliance.co.uk',price:'From £25 per tenant',desc:'Fast turnaround. Includes income verification, credit check and employer reference.',tag:'Fast',tagCol:'amber'},
+    {name:'Experian Rental Exchange',url:'https://www.experian.co.uk/consumer/rental-exchange.html',price:'Included with some services',desc:'Reports rental payments to Experian credit file — can incentivise tenants to pay on time.',tag:'Credit reporting',tagCol:'gray'},
+  ]
+
+  const propById = id => props.find(p=>p.id===id)
+
+  return<div className="fade-up">
+    {/* Sub-nav */}
+    <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
+      {[{id:'find',label:'Find tenants'},{id:'check',label:'Referencing services'},{id:'applicants',label:`Applicants (${applicants.length})`}].map(v=>
+        <button key={v.id} onClick={()=>setView(v.id)} style={{padding:'7px 16px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:view===v.id?'var(--brand)':'var(--border)',background:view===v.id?'var(--brand-light)':'var(--surface)',color:view===v.id?'var(--brand)':'var(--text-2)'}}>{v.label}</button>
+      )}
+    </div>
+
+    {/* ── FIND TENANTS ── */}
+    {view==='find'&&<div>
+      <div style={{background:'var(--brand-subtle)',border:'0.5px solid rgba(27,94,59,0.2)',borderRadius:12,padding:'14px 16px',marginBottom:18,fontSize:12,color:'var(--brand)',lineHeight:1.7}}>
+        <strong>Lettly does not charge to advertise your property.</strong> We partner with the best tenant-finding platforms so you can list directly without using a letting agent. The platforms below are tried and tested by UK private landlords.
+      </div>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:12}}>Where to advertise your property</div>
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {FINDING_PLATFORMS.map(p=>{
+          const tagStyles={green:{bg:'#eaf3de',col:'#27500A'},blue:{bg:'#E6F1FB',col:'#0C447C'},amber:{bg:'#FAEEDA',col:'#633806'},gray:{bg:'var(--surface2)',col:'var(--text-2)'}}
+          const ts=tagStyles[p.tagCol]
+          return<div key={p.name} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12}}>
+            <div style={{flex:1}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                <span style={{fontSize:13,fontWeight:500,color:'var(--text)'}}>{p.name}</span>
+                <span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,background:ts.bg,color:ts.col}}>{p.tag}</span>
+              </div>
+              <div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.6,marginBottom:6}}>{p.desc}</div>
+              <div style={{fontSize:11,color:'var(--text-3)'}}>{p.price}</div>
+            </div>
+            <a href={p.url} target="_blank" rel="noopener noreferrer" style={{flexShrink:0,background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 14px',fontSize:12,fontWeight:500,cursor:'pointer',textDecoration:'none',whiteSpace:'nowrap'}}>Visit site</a>
+          </div>
+        })}
+      </div>
+      <div style={{marginTop:20,background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'14px 16px',fontSize:12,color:'#633806',lineHeight:1.7}}>
+        <strong>What letting agents do that these platforms also do:</strong> advertise on Rightmove and Zoopla, conduct viewings (if you pay for accompanied viewings on OpenRent), carry out referencing (available as an add-on on all platforms above), and prepare tenancy agreements. The main thing agents add is time — they manage enquiries and viewings on your behalf. If you have a local property and can do viewings yourself, you do not need an agent.
+      </div>
+    </div>}
+
+    {/* ── REFERENCING SERVICES ── */}
+    {view==='check'&&<div>
+      <div style={{background:'var(--surface2)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px',marginBottom:18,fontSize:12,color:'var(--text-2)',lineHeight:1.7}}>
+        <strong style={{color:'var(--text)'}}>What a full reference check should cover:</strong> credit history, employment verification and income, previous landlord reference, Right to Rent check (England and Wales), CCJs and bankruptcy, and affordability (rent should not exceed 35-40% of gross monthly income). Under the Tenant Fees Act 2019 you cannot charge tenants for referencing — you must pay for it yourself.
+      </div>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:12}}>Referencing services</div>
+      <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:20}}>
+        {REFERENCING_SERVICES.map(p=>{
+          const tagStyles={green:{bg:'#eaf3de',col:'#27500A'},blue:{bg:'#E6F1FB',col:'#0C447C'},amber:{bg:'#FAEEDA',col:'#633806'},gray:{bg:'var(--surface2)',col:'var(--text-2)'}}
+          const ts=tagStyles[p.tagCol]
+          return<div key={p.name} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12}}>
+            <div style={{flex:1}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                <span style={{fontSize:13,fontWeight:500,color:'var(--text)'}}>{p.name}</span>
+                <span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,background:ts.bg,color:ts.col}}>{p.tag}</span>
+              </div>
+              <div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.6,marginBottom:6}}>{p.desc}</div>
+              <div style={{fontSize:11,color:'var(--text-3)'}}>{p.price}</div>
+            </div>
+            <a href={p.url} target="_blank" rel="noopener noreferrer" style={{flexShrink:0,background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 14px',fontSize:12,fontWeight:500,cursor:'pointer',textDecoration:'none',whiteSpace:'nowrap'}}>Visit site</a>
+          </div>
+        })}
+      </div>
+
+      {/* Built-in affordability checker */}
+      <AffordabilityChecker props={props}/>
+    </div>}
+
+    {/* ── APPLICANT TRACKER ── */}
+    {view==='applicants'&&<div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:500}}>Applicant tracker</div>
+          <div style={{fontSize:12,color:'var(--text-3)',marginTop:2}}>Track enquiries and applications through to tenancy</div>
+        </div>
+        <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add applicant</button>
+      </div>
+
+      {showForm&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:500,marginBottom:14}}>New applicant</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 14px'}}>
+          <div style={{marginBottom:14,gridColumn:'1/-1'}}><label style={lbl}>Property</label><select value={form.propId} onChange={e=>fset('propId',e.target.value)} style={inp}><option value="">Select property</option>{props.map(p=><option key={p.id} value={p.id}>{p.shortName}</option>)}</select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Full name</label><input value={form.name} onChange={e=>fset('name',e.target.value)} placeholder="Applicant name" style={inp}/></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Status</label><select value={form.status} onChange={e=>fset('status',e.target.value)} style={inp}><option>Enquiry</option><option>Applied</option><option>Referencing</option><option>Approved</option><option>Offer made</option><option>Tenancy signed</option><option>Rejected</option></select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Email</label><input value={form.email} onChange={e=>fset('email',e.target.value)} placeholder="email@example.com" style={inp}/></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Phone</label><input value={form.phone} onChange={e=>fset('phone',e.target.value)} placeholder="07700 000000" style={inp}/></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Employment type</label><select value={form.employmentType} onChange={e=>fset('employmentType',e.target.value)} style={inp}><option value="">Select</option><option>Employed full-time</option><option>Employed part-time</option><option>Self-employed</option><option>Contractor</option><option>Retired</option><option>Universal Credit</option><option>Student</option><option>Other</option></select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Gross monthly income (£)</label><input type="number" value={form.monthlyIncome} onChange={e=>fset('monthlyIncome',e.target.value)} placeholder="e.g. 3000" style={inp}/></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Employer</label><input value={form.employer} onChange={e=>fset('employer',e.target.value)} placeholder="Employer name" style={inp}/></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Credit check result</label><select value={form.creditCheck} onChange={e=>fset('creditCheck',e.target.value)} style={inp}><option value="">Not yet done</option><option>Pass</option><option>Pass with conditions</option><option>Fail</option></select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Employer reference</label><select value={form.referenceEmployer} onChange={e=>fset('referenceEmployer',e.target.value)} style={inp}><option value="">Not yet done</option><option>Obtained — satisfactory</option><option>Obtained — unsatisfactory</option><option>Unable to obtain</option></select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Previous landlord reference</label><select value={form.referenceLandlord} onChange={e=>fset('referenceLandlord',e.target.value)} style={inp}><option value="">Not yet done</option><option>Obtained — satisfactory</option><option>Obtained — unsatisfactory</option><option>Unable to obtain</option><option>First-time renter</option></select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Right to Rent verified</label><select value={form.rightToRent} onChange={e=>fset('rightToRent',e.target.value)} style={inp}><option value="">Not yet checked</option><option>Verified — unlimited right</option><option>Verified — time limited</option><option>Failed</option><option>N/A (Scotland)</option></select></div>
+          <div style={{marginBottom:14}}><label style={lbl}>Document type seen</label><select value={form.rightToRentDoc} onChange={e=>fset('rightToRentDoc',e.target.value)} style={inp}><option value="">Select</option><option>UK/Irish passport</option><option>UK birth certificate + NI</option><option>Biometric Residence Permit</option><option>Share code (online check)</option><option>EU Settlement Scheme</option><option>Visa/entry clearance</option></select></div>
+          <div style={{marginBottom:14,display:'flex',gap:16,alignItems:'center'}}>
+            <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:12}}>
+              <input type="checkbox" checked={form.pets} onChange={e=>fset('pets',e.target.checked)} style={{width:14,height:14,accentColor:'var(--brand)'}}/> Has pets
+            </label>
+            <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:12}}>
+              <input type="checkbox" checked={form.smoker} onChange={e=>fset('smoker',e.target.checked)} style={{width:14,height:14,accentColor:'var(--brand)'}}/> Smoker
+            </label>
+          </div>
+          <div style={{marginBottom:14,gridColumn:'1/-1'}}><label style={lbl}>Notes</label><textarea value={form.notes} onChange={e=>fset('notes',e.target.value)} placeholder="Any additional notes about this applicant" rows={2} style={{...inp,resize:'vertical'}}/></div>
+        </div>
+
+        {/* Affordability indicator */}
+        {form.monthlyIncome&&form.propId&&(()=>{
+          const prop=props.find(p=>p.id===form.propId)
+          const rent=Number(prop?.rent||0)
+          const income=Number(form.monthlyIncome)
+          if(!rent||!income)return null
+          const ratio=Math.round((rent/income)*100)
+          const ok=ratio<=35
+          const warn=ratio>35&&ratio<=40
+          return<div style={{gridColumn:'1/-1',marginBottom:14,padding:'10px 14px',borderRadius:9,background:ok?'var(--green-bg)':warn?'#fff8e1':'var(--red-bg)',border:`0.5px solid ${ok?'var(--green)':warn?'#EF9F27':'var(--red)'}`,fontSize:12,color:ok?'var(--green)':warn?'#633806':'var(--red)'}}>
+            Affordability: rent is {ratio}% of gross monthly income. {ok?'Within the 35% guideline.':warn?'Above 35% guideline — consider a guarantor.':'Above 40% — high risk. Guarantor strongly recommended.'}
+          </div>
+        })()}
+
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:4}}>
+          <button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
+          <button onClick={saveApplicant} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Save applicant</button>
+        </div>
+      </div>}
+
+      {applicants.length===0
+        ?<div style={{textAlign:'center',padding:'32px 0',fontSize:13,color:'var(--text-3)'}}>No applicants tracked yet. Use the platforms in "Find tenants" to advertise, then add enquiries here to track them through to tenancy.</div>
+        :<div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {applicants.map(a=>{
+            const prop=propById(a.propId)
+            const sc=statusColour[a.status]||statusColour['Enquiry']
+            const rent=Number(prop?.rent||0)
+            const income=Number(a.monthlyIncome||0)
+            const ratio=rent&&income?Math.round((rent/income)*100):null
+            const checks=[
+              {label:'Credit',val:a.creditCheck},
+              {label:'Employer ref',val:a.referenceEmployer},
+              {label:'Landlord ref',val:a.referenceLandlord},
+              {label:'Right to Rent',val:a.rightToRent},
+            ]
+            return<div key={a.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:500,marginBottom:2}}>{a.name}</div>
+                  <div style={{fontSize:11,color:'var(--text-3)'}}>{prop?.shortName||'No property'}{a.employmentType&&' · '+a.employmentType}{a.employer&&' at '+a.employer}</div>
+                </div>
+                <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                  <select value={a.status} onChange={e=>updateStatus(a.id,e.target.value)} style={{fontSize:11,fontWeight:500,padding:'3px 8px',borderRadius:20,border:'none',background:sc.bg,color:sc.col,cursor:'pointer',outline:'none',fontFamily:'var(--font)'}}>
+                    {Object.keys(statusColour).map(s=><option key={s}>{s}</option>)}
+                  </select>
+                  <button onClick={()=>deleteApplicant(a.id)} style={{color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',fontSize:16,lineHeight:1}}>x</button>
+                </div>
+              </div>
+
+              <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
+                {checks.map(ch=>{
+                  const done=ch.val&&!ch.val.includes('Not yet')&&!ch.val.includes('Not yet')
+                  const fail=ch.val?.toLowerCase().includes('fail')||ch.val?.toLowerCase().includes('unsatisfactory')
+                  return<span key={ch.label} style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,background:!ch.val?'var(--surface2)':fail?'var(--red-bg)':done?'var(--green-bg)':'#fff8e1',color:!ch.val?'var(--text-3)':fail?'var(--red)':done?'var(--green)':'#633806'}}>
+                    {ch.label}: {ch.val||'Pending'}
+                  </span>
+                })}
+                {ratio&&<span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,background:ratio<=35?'var(--green-bg)':ratio<=40?'#fff8e1':'var(--red-bg)',color:ratio<=35?'var(--green)':ratio<=40?'#633806':'var(--red)'}}>Affordability: {ratio}%</span>}
+                {a.pets&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:'var(--surface2)',color:'var(--text-2)'}}>Pets</span>}
+                {a.smoker&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:'var(--surface2)',color:'var(--text-2)'}}>Smoker</span>}
+              </div>
+
+              {a.notes&&<div style={{fontSize:11,color:'var(--text-3)',fontStyle:'italic'}}>{a.notes}</div>}
+              {(a.email||a.phone)&&<div style={{marginTop:8,fontSize:11,color:'var(--text-2)',display:'flex',gap:12}}>
+                {a.email&&<a href={'mailto:'+a.email} style={{color:'var(--brand)',textDecoration:'none'}}>{a.email}</a>}
+                {a.phone&&<a href={'tel:'+a.phone} style={{color:'var(--brand)',textDecoration:'none'}}>{a.phone}</a>}
+              </div>}
+            </div>
+          })}
+        </div>
+      }
+
+      <div style={{marginTop:16,background:'#fce8e6',border:'0.5px solid #E24B4A',borderRadius:10,padding:'12px 14px',fontSize:11,color:'#791F1F',lineHeight:1.7}}>
+        <strong>Data protection note:</strong> Applicant information is personal data under UK GDPR. Store only what is necessary, delete records for unsuccessful applicants promptly, and ensure your privacy notice covers rental applicants. You must not discriminate on protected characteristics (race, sex, religion, disability, pregnancy, sexual orientation, gender reassignment, age, or marriage) when selecting tenants under the Equality Act 2010.
+      </div>
+    </div>}
+  </div>
+}
+
+/* Affordability checker widget */
+function AffordabilityChecker({props}){
+  const[rent,setRent]=useState('')
+  const[income,setIncome]=useState('')
+  const ratio=rent&&income?((Number(rent)/Number(income))*100).toFixed(1):null
+  const ok=ratio<=35
+  const warn=ratio>35&&ratio<=40
+  const inp2={background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',width:'100%'}
+  return<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
+    <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Affordability calculator</div>
+    <div style={{fontSize:12,color:'var(--text-3)',marginBottom:14}}>Rent should not exceed 35% of gross monthly income (40% is the absolute maximum most lenders accept)</div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+      <div style={{marginBottom:14}}>
+        <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Monthly rent (£)</label>
+        <input type="number" value={rent} onChange={e=>setRent(e.target.value)} placeholder="e.g. 850" style={inp2}/>
+      </div>
+      <div style={{marginBottom:14}}>
+        <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Gross monthly income (£)</label>
+        <input type="number" value={income} onChange={e=>setIncome(e.target.value)} placeholder="e.g. 2800" style={inp2}/>
+      </div>
+    </div>
+    {ratio&&<div style={{padding:'12px 14px',borderRadius:10,background:ok?'var(--green-bg)':warn?'#fff8e1':'var(--red-bg)',border:`0.5px solid ${ok?'var(--green)':warn?'#EF9F27':'var(--red)'}`,fontSize:13,color:ok?'var(--green)':warn?'#633806':'var(--red)',lineHeight:1.7}}>
+      <div style={{fontWeight:600,marginBottom:4}}>Rent is {ratio}% of income</div>
+      <div style={{fontSize:12}}>{ok?'Within the 35% affordability guideline. Applicant is likely to pass referencing.':warn?'Between 35-40%. Borderline — consider requesting a guarantor or additional income evidence.':'Above 40%. High risk of rent arrears. Guarantor strongly recommended. Most referencing services will flag this.'}</div>
+    </div>}
+  </div>
+}
+
 function ToolsTab({portfolio,setPortfolio}){
   const props=portfolio.properties||[]
   const[tool,setTool]=useState('remortgage')
@@ -2726,12 +2995,12 @@ function ConditionReport({portfolio,setPortfolio,userId}){
 }
 
 /* ---- Root ---- */
-const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
+const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'tenants',label:'Find & check tenants',short:'Tenants'},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
 
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
   const[tab,setTab]=useState('overview')
-  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:'',voids:[]})
+  const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:'',voids:[],applicants:[]})
   const[queue,setQueue]=useState([])
   const[showDrop,setShowDrop]=useState(false)
   const[loaded,setLoaded]=useState(false)
@@ -2747,7 +3016,7 @@ export default function Dashboard(){
       // Only show wizard after Supabase confirms no onboarding data
       getPortfolio(user.id).then(data=>{
         const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
-        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[]}
+        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[],applicants:p.applicants||[]}
         setPortfolio(pSafe)
         setLoaded(true)
         if(!p.onboarding){setShowWizard(true)}
@@ -2755,7 +3024,7 @@ export default function Dashboard(){
     } else {
       getPortfolio(user.id).then(data=>{
         const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
-        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[]}
+        const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[],applicants:p.applicants||[]}
         setPortfolio(pSafe)
         setLoaded(true)
       })
@@ -2919,6 +3188,7 @@ export default function Dashboard(){
         {tab==='overview'&&<div style={{marginBottom:14}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(20px,4vw,28px)',fontWeight:300,marginBottom:3}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:13,color:'var(--text-3)'}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} saved`}</p></div>}
         {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
         {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
+        {tab==='tenants'     &&<TenantsTab    portfolio={portfolio} setPortfolio={setPortfolio}/>}
         {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='rent'        &&<RentTracker   portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='maintenance' &&<MaintenanceTab portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/>}

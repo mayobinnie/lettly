@@ -475,7 +475,7 @@ export default function Landing() {
               { icon:'🇬🇧', title:'England, Scotland and Wales all covered', body:"Lettly uses your property postcode to apply the right legislation automatically. England has the Renters Rights Act. Scotland has the PRT regime. Wales has Occupation Contracts. All three are different." },
               { icon:'⚖️', title:'Based on real compliance requirements', body:"Gas safety, EICRs, EPCs, deposit schemes, the Renters' Rights Bill. All the rules that actually affect you, tracked automatically." },
               { icon:'🌱', title:'Early access: help shape the product', body:"You're joining at the beginning. Your feedback directly shapes what we build next. We respond to every message personally." },
-              { icon:'🔒', title:'Your data is secure and private', body:"Bank-grade authentication. AES-256 encryption. Stored in the EU. We never sell your data to third parties. Ever." },
+              { icon:'🔒', title:'Your data is secure and private', body:"Bank-grade authentication. AES-256 encryption. Stored in the UK. We never sell your data to third parties. Ever." },
             ].map(t => (
               <div key={t.title} className="pain-card">
                 <div style={{ display:'flex', gap:14, alignItems:'flex-start' }}>
