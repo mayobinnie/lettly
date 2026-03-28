@@ -1,6 +1,7 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import '../styles/globals.css'
 import { useEffect, useState } from 'react'
+import Head from 'next/head'
 
 export default function App({ Component, pageProps }) {
   const [installPrompt, setInstallPrompt] = useState(null)
@@ -41,6 +42,13 @@ export default function App({ Component, pageProps }) {
   }
 
   return (
+    <>
+      <Head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+        <link rel="alternate icon" href="/favicon.svg"/>
+        <link rel="apple-touch-icon" href="/icon.svg"/>
+        <meta name="theme-color" content="#1b5e3b"/>
+      </Head>
     <ClerkProvider {...pageProps}>
       <Component {...pageProps} />
       {showBanner && (
@@ -63,5 +71,6 @@ export default function App({ Component, pageProps }) {
         </div>
       )}
     </ClerkProvider>
+    </>
   )
 }
