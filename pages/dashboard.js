@@ -1816,9 +1816,9 @@ function FinanceTab({portfolio,setPortfolio}){
 
   const MetricCard=({label,value,sub,subGreen,subRed,large,highlight,warn})=>(
     <div style={{background:highlight?'var(--brand-subtle)':warn?'var(--red-bg)':'var(--surface2)',borderRadius:12,padding:'14px 16px',border:highlight?'0.5px solid rgba(27,94,59,0.2)':warn?'0.5px solid var(--red)':'none'}}>
-      <div style={{fontSize:11,color:highlight?'var(--brand)':warn?'var(--red)':'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>{label}</div>
+      <div style={{fontSize:15,color:highlight?'var(--brand)':warn?'var(--red)':'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>{label}</div>
       <div style={{fontSize:large?26:20,fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px',color:highlight?'var(--brand)':warn?'var(--red)':'var(--text)'}}>{value}</div>
-      {sub&&<div style={{fontSize:11,marginTop:3,color:subGreen?'var(--green)':subRed?'var(--red)':'var(--text-3)'}}>{sub}</div>}
+      {sub&&<div style={{fontSize:15,marginTop:3,color:subGreen?'var(--green)':subRed?'var(--red)':'var(--text-3)'}}>{sub}</div>}
     </div>
   )
 
@@ -1826,7 +1826,7 @@ function FinanceTab({portfolio,setPortfolio}){
     {/* Sub-nav */}
     <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
       {[['overview','Overview'],['expenses','Income & Expenses'],['yields','Yield Analysis'],['s24','Section 24']].map(([id,label])=>(
-        <button key={id} onClick={()=>setView(id)} style={{padding:'6px 14px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:view===id?'var(--brand)':'var(--border)',background:view===id?'var(--brand-light)':'var(--surface)',color:view===id?'var(--brand)':'var(--text-2)'}}>
+        <button key={id} onClick={()=>setView(id)} style={{padding:'9px 18px',borderRadius:20,fontSize:15,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:view===id?'var(--brand)':'var(--border)',background:view===id?'var(--brand-light)':'var(--surface)',color:view===id?'var(--brand)':'var(--text-2)'}}>
           {label}
         </button>
       ))}
@@ -1845,14 +1845,14 @@ function FinanceTab({portfolio,setPortfolio}){
         if(noMortgage.length>0) missing.push({icon:'🏦',text:`Monthly mortgage payment missing on ${noMortgage.map(p=>p.shortName).join(', ')} : needed for net yield and cashflow`,action:'Edit property and add the monthly payment amount',key:'mortgage'})
         if(noRate.length>0) missing.push({icon:'📊',text:`Interest rate missing on ${noRate.map(p=>p.shortName).join(', ')} : needed for interest coverage ratio`,action:'Edit property and add the interest rate',key:'rate'})
         if(missing.length===0) return null
-        return<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'12px 16px',marginBottom:16}}>
-          <div style={{fontSize:12,fontWeight:600,color:'#633806',marginBottom:8}}>To unlock all metrics, add the following:</div>
+        return<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'16px 20px',marginBottom:16}}>
+          <div style={{fontSize:14,fontWeight:600,color:'#633806',marginBottom:12}}>To unlock all metrics, add the following:</div>
           {missing.map((m,i)=>(
             <div key={i} style={{display:'flex',gap:8,alignItems:'flex-start',marginBottom:i<missing.length-1?7:0}}>
-              <span style={{fontSize:13,flexShrink:0}}>{m.icon}</span>
+              <span style={{fontSize:15,flexShrink:0}}>{m.icon}</span>
               <div>
-                <div style={{fontSize:12,color:'#633806',lineHeight:1.5}}>{m.text}</div>
-                <div style={{fontSize:11,color:'#a07030',marginTop:1}}>How: {m.action}</div>
+                <div style={{fontSize:14,color:'#633806',lineHeight:1.5}}>{m.text}</div>
+                <div style={{fontSize:15,color:'#a07030',marginTop:1}}>How: {m.action}</div>
               </div>
             </div>
           ))}
@@ -1867,25 +1867,25 @@ function FinanceTab({portfolio,setPortfolio}){
           {label:'Monthly net',value:monthlyNet?fmt(monthlyNet):'-',sub:annualNet?fmt(annualNet)+'/yr':'',pos:monthlyNet>0},
         ].map(m=>(
           <div key={m.label}>
-            <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>{m.label}</div>
-            <div style={{fontSize:22,fontWeight:600,fontFamily:'var(--mono)',color:m.pos?'#a3f0a0':'#fff'}}>{m.value}</div>
-            {m.sub&&<div style={{fontSize:11,color:'rgba(255,255,255,0.55)',marginTop:2}}>{m.sub}</div>}
+            <div style={{fontSize:15,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>{m.label}</div>
+            <div style={{fontSize:26,fontWeight:600,fontFamily:'var(--mono)',color:m.pos?'#a3f0a0':'#fff'}}>{m.value}</div>
+            {m.sub&&<div style={{fontSize:15,color:'rgba(255,255,255,0.55)',marginTop:2}}>{m.sub}</div>}
           </div>
         ))}
       </div>
 
       {/* Portfolio health metrics */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:16}}>
         <MetricCard label="Portfolio value" value={totalValue?fmt(totalValue):'-'} sub={totalEquity>0?fmt(totalEquity)+' equity':''} subGreen={totalEquity>0} highlight={totalEquity>0}/>
         <MetricCard label="Total mortgage" value={totalMortgage?fmt(totalMortgage):'-'} sub={portfolioLTV>0?portfolioLTV.toFixed(1)+'% LTV':''}/>
         <MetricCard label="Total equity" value={totalEquity>0?fmt(totalEquity):'-'} sub={totalEquity>0?'Across '+props.length+' propert'+(props.length===1?'y':'ies'):''} subGreen={totalEquity>0} highlight={totalEquity>0}/>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:16}}>
         <MetricCard label="Gross yield" value={grossYield>0?grossYield.toFixed(2)+'%':'-'} sub={grossYield>0?(grossYield>=5?'Above 5% target':'Below 5% target'):''} subGreen={grossYield>=5} subRed={grossYield>0&&grossYield<5}/>
         <MetricCard label="Net yield" value={netYield?netYield.toFixed(2)+'%':'-'} sub={netYield>0?(netYield>=3?'Healthy':'Low net yield'):''} subGreen={netYield>=3} subRed={netYield>0&&netYield<3}/>
         <MetricCard label="Return on equity" value={returnOnEquity?returnOnEquity.toFixed(1)+'%':'-'} sub="Annual net profit / equity" highlight={returnOnEquity>8}/>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:20}}>
         <MetricCard label="Interest coverage" value={interestCoverage?interestCoverage.toFixed(2)+'x':'-'} sub={interestCoverage>0?(interestCoverage>=1.5?'Healthy buffer':'Tight - under 1.5x'):''} subGreen={interestCoverage>=1.5} subRed={interestCoverage>0&&interestCoverage<1.25} warn={interestCoverage>0&&interestCoverage<1.25}/>
         <MetricCard label="Annual expenses" value={totalExpenses?fmt(totalExpenses):'-'} sub={totalExpenses>0?fmt(totalExpenses/12)+'/mo avg':''}/>
         <MetricCard label="Portfolio LTV" value={portfolioLTV>0?portfolioLTV.toFixed(1)+'%':'-'} sub={portfolioLTV>0?(portfolioLTV<=75?'Under 75% - remortgage headroom':'Over 75% - limited headroom'):''} subGreen={portfolioLTV>0&&portfolioLTV<=75} warn={portfolioLTV>80}/>
@@ -1893,12 +1893,12 @@ function FinanceTab({portfolio,setPortfolio}){
 
       {/* Per-property summary */}
       {props.length>0&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
-        <div style={{fontSize:13,fontWeight:500,marginBottom:12}}>Property breakdown</div>
+        <div style={{fontSize:14,fontWeight:500,marginBottom:14}}>Property breakdown</div>
         <div style={{overflowX:'auto'}}>
-          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,minWidth:640}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:14,minWidth:640}}>
             <thead><tr style={{borderBottom:'0.5px solid var(--border)',background:'var(--surface2)'}}>
               {['Property','Rent/mo','Mortgage/mo','Net/mo','Value','Mortgage','Equity','LTV','Gross yield'].map(h=>(
-                <th key={h} style={{textAlign:'left',padding:'8px 10px',fontSize:10,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px',whiteSpace:'nowrap'}}>{h}</th>
+                <th key={h} style={{textAlign:'left',padding:'16px 18px',fontSize:15,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px',whiteSpace:'nowrap'}}>{h}</th>
               ))}
             </tr></thead>
             <tbody>
@@ -1929,50 +1929,50 @@ function FinanceTab({portfolio,setPortfolio}){
       </div>}
 
       {/* Remortgage alerts */}
-      {remortgageProps.length>0&&<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'12px 14px',marginBottom:14,fontSize:12,color:'#633806',lineHeight:1.7}}>
-        <div style={{fontWeight:600,marginBottom:4}}>Remortgage window : {remortgageProps.length} propert{remortgageProps.length===1?'y':'ies'} coming off fixed rate</div>
+      {remortgageProps.length>0&&<div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'16px 18px',marginBottom:14,fontSize:14,color:'#633806',lineHeight:1.7}}>
+        <div style={{fontWeight:600,marginBottom:6}}>Remortgage window : {remortgageProps.length} propert{remortgageProps.length===1?'y':'ies'} coming off fixed rate</div>
         {remortgageProps.map(p=><div key={p.id}>- {p.shortName}: fixed rate ends {p.fixedEnd} . Book now to avoid SVR.</div>)}
       </div>}
     </>}
 
     {view==='expenses'&&<>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:20}}>
         <MetricCard label="Annual rent income" value={annualRent?fmt(annualRent):'-'} subGreen={annualRent>0}/>
         <MetricCard label="Annual expenses" value={fmt(annualMortgage+totalExpenses)} sub="Mortgage + all costs"/>
         <MetricCard label="Annual net profit" value={fmt(annualNet)} subGreen={annualNet>0} subRed={annualNet<=0} sub={annualNet>0?'Before tax':'Loss position'}/>
       </div>
       <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-          <div style={{fontSize:13,fontWeight:500}}>Income and expenses</div>
-          <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'5px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add expense</button>
+          <div style={{fontSize:15,fontWeight:500}}>Income and expenses</div>
+          <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'5px 14px',fontSize:14,fontWeight:500,cursor:'pointer'}}>+ Add expense</button>
         </div>
         {showForm&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,marginBottom:14}}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
             <Input label="Date" value={newExp.date} onChange={v=>setNewExp(p=>({...p,date:v}))} placeholder="DD/MM/YYYY"/>
-            <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label><select value={newExp.property} onChange={e=>setNewExp(p=>({...p,property:e.target.value}))} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">All</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}</select></div>
-            <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Category</label><select value={newExp.category} onChange={e=>setNewExp(p=>({...p,category:e.target.value}))} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">Select</option>{cats.map(cat=><option key={cat} value={cat}>{cat}</option>)}</select></div>
+            <div style={{marginBottom:14}}><label style={{display:'block',fontSize:15,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label><select value={newExp.property} onChange={e=>setNewExp(p=>({...p,property:e.target.value}))} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:15,color:'var(--text)',outline:'none'}}><option value="">All</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}</select></div>
+            <div style={{marginBottom:14}}><label style={{display:'block',fontSize:15,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Category</label><select value={newExp.category} onChange={e=>setNewExp(p=>({...p,category:e.target.value}))} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:15,color:'var(--text)',outline:'none'}}><option value="">Select</option>{cats.map(cat=><option key={cat} value={cat}>{cat}</option>)}</select></div>
             <Input label="Amount (£)" value={newExp.amount} onChange={v=>setNewExp(p=>({...p,amount:v}))} placeholder="e.g. 120" type="number"/>
             <div style={{gridColumn:'1/-1'}}><Input label="Description" value={newExp.description} onChange={v=>setNewExp(p=>({...p,description:v}))} placeholder="Brief description"/></div>
           </div>
-          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button><button onClick={addExpense} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Add</button></div>
+          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:14,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button><button onClick={addExpense} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:14,fontWeight:500,cursor:'pointer'}}>Add</button></div>
         </div>}
         {expenses.length===0
-          ?<div style={{fontSize:12,color:'var(--text-3)',padding:'10px 0',textAlign:'center'}}>No expenses logged yet.</div>
+          ?<div style={{fontSize:14,color:'var(--text-3)',padding:'10px 0',textAlign:'center'}}>No expenses logged yet.</div>
           :<><table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
-            <thead><tr style={{borderBottom:'0.5px solid var(--border)'}}>{['Date','Property','Category','Description','Amount',''].map(h=><th key={h} style={{textAlign:'left',padding:'6px 8px',fontSize:11,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px'}}>{h}</th>)}</tr></thead>
+            <thead><tr style={{borderBottom:'0.5px solid var(--border)'}}>{['Date','Property','Category','Description','Amount',''].map(h=><th key={h} style={{textAlign:'left',padding:'6px 8px',fontSize:14,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px'}}>{h}</th>)}</tr></thead>
             <tbody>{expenses.map(e=><tr key={e.id} style={{borderBottom:'0.5px solid var(--border)'}}><td style={{padding:'8px'}}>{e.date||'-'}</td><td style={{padding:'8px',color:'var(--text-2)'}}>{e.property||'All'}</td><td style={{padding:'8px'}}>{e.category}</td><td style={{padding:'8px',color:'var(--text-2)'}}>{e.description}</td><td style={{padding:'8px',fontFamily:'var(--mono)',fontWeight:500}}>{fmt(Number(e.amount))}</td><td style={{padding:'8px'}}><button onClick={()=>deleteExpense(e.id)} style={{color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',fontSize:14}}>x</button></td></tr>)}</tbody>
             <tfoot><tr style={{borderTop:'0.5px solid var(--border-strong)'}}><td colSpan={4} style={{padding:'8px',fontWeight:500,fontSize:12}}>Total</td><td style={{padding:'8px',fontFamily:'var(--mono)',fontWeight:600,color:'var(--red)'}}>{fmt(totalExpenses)}</td><td/></tr></tfoot>
           </table>
-          {Object.keys(bycat).length>0&&<div style={{marginTop:12,display:'flex',flexWrap:'wrap',gap:6}}>{Object.entries(bycat).sort((a,b)=>b[1]-a[1]).map(([cat,total])=><span key={cat} style={{fontSize:11,padding:'3px 9px',borderRadius:20,background:'var(--surface2)',color:'var(--text-2)'}}>{cat}: {fmt(total)}</span>)}</div>}
+          {Object.keys(bycat).length>0&&<div style={{marginTop:12,display:'flex',flexWrap:'wrap',gap:6}}>{Object.entries(bycat).sort((a,b)=>b[1]-a[1]).map(([cat,total])=><span key={cat} style={{fontSize:15,padding:'3px 9px',borderRadius:20,background:'var(--surface2)',color:'var(--text-2)'}}>{cat}: {fmt(total)}</span>)}</div>}
           </>
         }
       </div>
     </>}
 
     {view==='yields'&&<>
-      <div style={{fontSize:13,color:'var(--text-2)',marginBottom:16,lineHeight:1.7}}>Yield analysis helps you identify your best and worst performing properties. Gross yield is rent vs purchase price. Net yield accounts for all costs.</div>
+      <div style={{fontSize:15,color:'var(--text-2)',marginBottom:16,lineHeight:1.7}}>Yield analysis helps you identify your best and worst performing properties. Gross yield is rent vs purchase price. Net yield accounts for all costs.</div>
       {props.length===0
-        ?<div style={{textAlign:'center',padding:'40px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}><div style={{fontSize:13,color:'var(--text-3)'}}>Add properties with values and rent to see yield analysis.</div></div>
+        ?<div style={{textAlign:'center',padding:'40px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}><div style={{fontSize:15,color:'var(--text-3)'}}>Add properties with values and rent to see yield analysis.</div></div>
         :<div style={{display:'flex',flexDirection:'column',gap:10}}>
           {[...props].sort((a,b)=>{
             const ya=a.rent&&a.currentValue?Number(a.rent)*12/Number(a.currentValue):0
@@ -1995,8 +1995,8 @@ function FinanceTab({portfolio,setPortfolio}){
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
                 <div style={{fontWeight:500,fontSize:14}}>{p.shortName}</div>
                 <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                  {gy>0&&<span style={{fontSize:12,padding:'3px 10px',borderRadius:20,background:gy>=5?'var(--green-bg)':gy>=3?'#fff8e1':'var(--red-bg)',color:gy>=5?'var(--green)':gy>=3?'#633806':'var(--red)',fontWeight:500}}>Gross yield: {gy.toFixed(2)}%</span>}
-                  {ny?<span style={{fontSize:12,padding:'3px 10px',borderRadius:20,background:ny>=3?'var(--green-bg)':'var(--surface2)',color:ny>=3?'var(--green)':'var(--text-3)',fontWeight:500}}>Net yield: {ny.toFixed(2)}%</span>:null}
+                  {gy>0&&<span style={{fontSize:14,padding:'3px 10px',borderRadius:20,background:gy>=5?'var(--green-bg)':gy>=3?'#fff8e1':'var(--red-bg)',color:gy>=5?'var(--green)':gy>=3?'#633806':'var(--red)',fontWeight:500}}>Gross yield: {gy.toFixed(2)}%</span>}
+                  {ny?<span style={{fontSize:14,padding:'3px 10px',borderRadius:20,background:ny>=3?'var(--green-bg)':'var(--surface2)',color:ny>=3?'var(--green)':'var(--text-3)',fontWeight:500}}>Net yield: {ny.toFixed(2)}%</span>:null}
                 </div>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
@@ -2009,8 +2009,8 @@ function FinanceTab({portfolio,setPortfolio}){
                   {l:'Gross yield on purchase',v:gyPurchase?gyPurchase.toFixed(2)+'%':'-'},
                   {l:'Annual rent',v:rent?fmt(rent*12):'-'},
                   {l:'Annual expenses',v:propExpenses?fmt(propExpenses):'-'},
-                ].map(m=><div key={m.l} style={{background:'var(--surface2)',borderRadius:8,padding:'10px 12px'}}>
-                  <div style={{fontSize:10,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:3}}>{m.l}</div>
+                ].map(m=><div key={m.l} style={{background:'var(--surface2)',borderRadius:8,padding:'16px 18px'}}>
+                  <div style={{fontSize:15,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px',marginBottom:3}}>{m.l}</div>
                   <div style={{fontSize:14,fontWeight:600,fontFamily:'var(--mono)',color:m.c||'var(--text)'}}>{m.v}</div>
                 </div>)}
               </div>
@@ -2023,26 +2023,26 @@ function FinanceTab({portfolio,setPortfolio}){
     {view==='s24'&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
         <div>
-          <div style={{fontSize:13,fontWeight:500}}>Section 24 tax calculator</div>
-          <div style={{fontSize:12,color:'var(--text-3)',marginTop:2}}>Extra tax cost on personal properties vs Ltd Company</div>
+          <div style={{fontSize:15,fontWeight:500}}>Section 24 tax calculator</div>
+          <div style={{fontSize:14,color:'var(--text-3)',marginTop:2}}>Extra tax cost on personal properties vs Ltd Company</div>
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <select value={taxRate} onChange={e=>setTaxRate(e.target.value)} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,fontFamily:'var(--font)',color:'var(--text)',outline:'none'}}>
+          <select value={taxRate} onChange={e=>setTaxRate(e.target.value)} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:14,fontFamily:'var(--font)',color:'var(--text)',outline:'none'}}>
             <option value="20">20% basic rate</option>
             <option value="40">40% higher rate</option>
             <option value="45">45% additional rate</option>
           </select>
-          <button onClick={calcSection24} disabled={s24Loading} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'6px 14px',fontSize:12,fontWeight:500,cursor:'pointer'}}>{s24Loading?'Calculating...':'Calculate'}</button>
+          <button onClick={calcSection24} disabled={s24Loading} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'9px 18px',fontSize:14,fontWeight:500,cursor:'pointer'}}>{s24Loading?'Calculating...':'Calculate'}</button>
         </div>
       </div>
-      <div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#633806',lineHeight:1.7,marginBottom:12}}>
+      <div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'14px 16px',fontSize:14,color:'#633806',lineHeight:1.7,marginBottom:12}}>
         Section 24 restricts mortgage interest relief for personally-owned properties. You can only claim 20% tax credit on mortgage interest regardless of your tax rate. This calculator shows your extra annual tax vs Ltd Company ownership.
       </div>
       {props.filter(p=>p.ownership==='Personal'&&p.mortgage).length===0
-        ?<div style={{fontSize:12,color:'var(--text-3)',padding:'8px 0'}}>Add personal properties with mortgage details to use this calculator.</div>
-        :<div style={{fontSize:12,color:'var(--text-2)',marginBottom:8}}>{props.filter(p=>p.ownership==='Personal').length} personal propert{props.filter(p=>p.ownership==='Personal').length===1?'y':'ies'}  and {props.filter(p=>p.ownership==='Ltd Company').length} Ltd Company</div>
+        ?<div style={{fontSize:14,color:'var(--text-3)',padding:'8px 0'}}>Add personal properties with mortgage details to use this calculator.</div>
+        :<div style={{fontSize:15,color:'var(--text-2)',marginBottom:12}}>{props.filter(p=>p.ownership==='Personal').length} personal propert{props.filter(p=>p.ownership==='Personal').length===1?'y':'ies'}  and {props.filter(p=>p.ownership==='Ltd Company').length} Ltd Company</div>
       }
-      {s24Result&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,fontSize:12,lineHeight:1.8,whiteSpace:'pre-wrap',color:'var(--text-2)',marginTop:8}}>{s24Result}</div>}
+      {s24Result&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,fontSize:14,lineHeight:1.8,whiteSpace:'pre-wrap',color:'var(--text-2)',marginTop:8}}>{s24Result}</div>}
     </div>}
   </div>
 }
