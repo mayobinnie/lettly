@@ -995,6 +995,7 @@ function PropertyForm({initial,onSave,onDelete,onClose}){
             <Input label="Tenant name" value={p.tenantName} onChange={v=>set('tenantName',v)} placeholder="Full name"/>
             <Input label="Tenant phone" value={p.tenantPhone} onChange={v=>set('tenantPhone',v)} placeholder="07700 000000"/>
             <Input label="Tenant email" value={p.tenantEmail} onChange={v=>set('tenantEmail',v)} placeholder="tenant@email.com"/>
+            <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:8,padding:'8px 0'}}><input type="checkbox" id="rentReminder" checked={!!p.rentReminders} onChange={e=>set('rentReminders',e.target.checked)}/><label htmlFor="rentReminder" style={{fontSize:12,color:'var(--text-2)'}}>Send automated rent reminders to tenant (5 days and 1 day before due date)</label></div>
             <Input label="Monthly rent" value={p.rent} onChange={v=>set('rent',v)} placeholder="e.g. 850" type="number"/>
             <Input label="Tenancy start" value={p.tenancyStart} onChange={v=>set('tenancyStart',v)} placeholder="DD/MM/YYYY"/>
             <Input label="Tenancy end" value={p.tenancyEnd} onChange={v=>set('tenancyEnd',v)} placeholder="DD/MM/YYYY"/>
@@ -2982,6 +2983,520 @@ function AffordabilityChecker({props}){
   </div>
 }
 
+
+/* ================================================================
+   EXPENSES PANEL
+   ================================================================ */
+function ExpensesPanel({portfolio,setPortfolio}){
+  const props=portfolio.properties||[]
+  const[expenses,setExpenses]=useState([])
+  const[loading,setLoading]=useState(true)
+  const[selProp,setSelProp]=useState(props[0]?.id||'')
+  const[form,setForm]=useState({category:'repairs_maintenance',amount:'',date:'',description:''})
+  const[saving,setSaving]=useState(false)
+  const[filterProp,setFilterProp]=useState('all')
+
+  const HMRC_CATEGORIES=[
+    {id:'repairs_maintenance',label:'Repairs & maintenance'},
+    {id:'insurance',label:'Insurance premiums'},
+    {id:'mortgage_interest',label:'Mortgage interest (Section 24)'},
+    {id:'letting_agent',label:'Letting agent fees'},
+    {id:'legal_professional',label:'Legal & professional fees'},
+    {id:'ground_rent',label:'Ground rent & service charge'},
+    {id:'utilities',label:'Utilities paid by landlord'},
+    {id:'travel',label:'Travel to property'},
+    {id:'advertising',label:'Advertising & tenant finding'},
+    {id:'other',label:'Other allowable expense'},
+  ]
+
+  useEffect(()=>{
+    fetch('/api/expenses').then(r=>r.json()).then(d=>setExpenses(d.expenses||[])).finally(()=>setLoading(false))
+  },[])
+
+  async function addExpense(){
+    if(!form.amount||!selProp) return
+    setSaving(true)
+    try{
+      const r=await fetch('/api/expenses',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({propId:selProp,category:form.category,amount:parseFloat(form.amount),date:form.date||new Date().toISOString().split('T')[0],description:form.description})})
+      const d=await r.json()
+      if(d.expense) setExpenses(prev=>[d.expense,...prev])
+      setForm({category:'repairs_maintenance',amount:'',date:'',description:''})
+    }catch(e){alert('Could not save expense')}
+    setSaving(false)
+  }
+
+  async function deleteExpense(id){
+    if(!confirm('Delete this expense?')) return
+    await fetch('/api/expenses',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})})
+    setExpenses(prev=>prev.filter(e=>e.id!==id))
+  }
+
+  const filtered=filterProp==='all'?expenses:expenses.filter(e=>e.prop_id===filterProp)
+  const total=filtered.reduce((s,e)=>s+Number(e.amount),0)
+  const byCategory={}
+  filtered.forEach(e=>{byCategory[e.category]=(byCategory[e.category]||0)+Number(e.amount)})
+  const catLabel=id=>HMRC_CATEGORIES.find(c=>c.id===id)?.label||id
+  const propName=id=>props.find(p=>p.id===id)?.shortName||id
+
+  return<div className="fade-up">
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Expense tracker</div>
+      <div style={{fontSize:12,color:'var(--text-3)'}}>HMRC allowable expenses by property. Used for tax year export and MTD submissions.</div>
+    </div>
+    {/* Add expense form */}
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:16}}>
+      <div style={{fontSize:12,fontWeight:500,marginBottom:12}}>Add expense</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+        <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}>
+          {props.map(p=><option key={p.id} value={p.id}>{p.shortName}</option>)}
+        </select>
+        <select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}>
+          {HMRC_CATEGORIES.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+        </select>
+        <input type="number" placeholder="Amount £" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}/>
+        <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}/>
+      </div>
+      <input placeholder="Description (optional)" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',marginBottom:8,boxSizing:'border-box'}}/>
+      <button onClick={addExpense} disabled={saving||!form.amount} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:12,fontWeight:500,cursor:saving||!form.amount?'not-allowed':'pointer',opacity:saving||!form.amount?0.6:1}}>
+        {saving?'Saving...':'Add expense'}
+      </button>
+    </div>
+    {/* Summary */}
+    {filtered.length>0&&<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:8,marginBottom:16}}>
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:10,padding:'12px 14px'}}>
+        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>Total expenses</div>
+        <div style={{fontSize:20,fontWeight:600,fontFamily:'var(--mono)',color:'var(--red)'}}>-£{total.toLocaleString('en-GB',{maximumFractionDigits:0})}</div>
+      </div>
+      {Object.entries(byCategory).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([cat,amt])=><div key={cat} style={{background:'var(--surface2)',borderRadius:10,padding:'12px 14px'}}>
+        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>{catLabel(cat)}</div>
+        <div style={{fontSize:16,fontWeight:500,fontFamily:'var(--mono)'}}>£{Number(amt).toLocaleString('en-GB',{maximumFractionDigits:0})}</div>
+      </div>)}
+    </div>}
+    {/* Filter + list */}
+    <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}}>
+      <button onClick={()=>setFilterProp('all')} style={{padding:'4px 12px',borderRadius:20,fontSize:11,border:'0.5px solid',borderColor:filterProp==='all'?'var(--brand)':'var(--border)',background:filterProp==='all'?'var(--brand-light)':'var(--surface)',color:filterProp==='all'?'var(--brand)':'var(--text-2)',cursor:'pointer'}}>All</button>
+      {props.map(p=><button key={p.id} onClick={()=>setFilterProp(p.id)} style={{padding:'4px 12px',borderRadius:20,fontSize:11,border:'0.5px solid',borderColor:filterProp===p.id?'var(--brand)':'var(--border)',background:filterProp===p.id?'var(--brand-light)':'var(--surface)',color:filterProp===p.id?'var(--brand)':'var(--text-2)',cursor:'pointer'}}>{p.shortName}</button>)}
+    </div>
+    {loading?<div style={{fontSize:12,color:'var(--text-3)',padding:'20px 0',textAlign:'center'}}>Loading...</div>
+    :filtered.length===0?<div style={{fontSize:12,color:'var(--text-3)',padding:'20px 0',textAlign:'center'}}>No expenses yet. Add your first above.</div>
+    :<div style={{display:'flex',flexDirection:'column',gap:7}}>
+      {filtered.map(e=><div key={e.id} style={{display:'flex',alignItems:'center',gap:12,background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:10,padding:'10px 14px'}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:500}}>{catLabel(e.category)}</div>
+          <div style={{fontSize:11,color:'var(--text-3)'}}>{propName(e.prop_id)} {e.date&&' · '+new Date(e.date).toLocaleDateString('en-GB')} {e.description&&' · '+e.description}</div>
+        </div>
+        <div style={{fontSize:14,fontWeight:600,fontFamily:'var(--mono)',color:'var(--red)',flexShrink:0}}>-£{Number(e.amount).toLocaleString('en-GB',{maximumFractionDigits:0})}</div>
+        <button onClick={()=>deleteExpense(e.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:16,padding:'0 4px',flexShrink:0}}>x</button>
+      </div>)}
+    </div>}
+  </div>
+}
+
+/* ================================================================
+   DEAL ANALYSER
+   ================================================================ */
+function DealAnalyser({props}){
+  const[price,setPrice]=useState('')
+  const[rent,setRent]=useState('')
+  const[deposit,setDeposit]=useState(25)
+  const[rate,setRate]=useState(5.0)
+  const[term,setTerm]=useState(25)
+  const[costs,setCosts]=useState(3000)
+
+  const p=Number(price)||0
+  const r=Number(rent)||0
+  const dep=p*(Number(deposit)/100)
+  const loan=p-dep
+  const monthlyRate=Number(rate)/100/12
+  const payments=Number(term)*12
+  const monthlyMortgage=loan>0&&monthlyRate>0?loan*(monthlyRate*Math.pow(1+monthlyRate,payments))/(Math.pow(1+monthlyRate,payments)-1):0
+  const grossYield=p>0&&r>0?((r*12)/p*100):0
+  const netYield=p>0&&r>0?(((r*12)-(monthlyMortgage*12))/p*100):0
+  const monthlyCashflow=r-monthlyMortgage
+  const sdlt=p<=250000?0:p<=925000?(p-250000)*0.03:p<=1500000?20250+(p-925000)*0.08:66250+(p-1500000)*0.13
+  const totalCosts=dep+sdlt+Number(costs)
+  const annualReturn=monthlyCashflow*12
+  const roi=totalCosts>0?(annualReturn/totalCosts*100):0
+
+  function Row({label,value,color}){return<div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'0.5px solid var(--border)'}}>
+    <span style={{fontSize:12,color:'var(--text-2)'}}>{label}</span>
+    <span style={{fontSize:12,fontWeight:500,color:color||'var(--text)',fontFamily:'var(--mono)'}}>{value}</span>
+  </div>}
+
+  const fmt=n=>'£'+Math.round(n).toLocaleString('en-GB')
+  const pct=n=>n.toFixed(1)+'%'
+  const good=monthlyCashflow>0?'var(--green)':'var(--red)'
+
+  return<div className="fade-up">
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Deal analyser</div>
+      <div style={{fontSize:12,color:'var(--text-3)'}}>Enter a purchase price and expected rent. See yield, cashflow, SDLT and ROI before you buy.</div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+      {/* Inputs */}
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
+        <div style={{fontSize:12,fontWeight:500,marginBottom:12}}>Property details</div>
+        {[
+          {label:'Purchase price',value:price,set:setPrice,placeholder:'e.g. 150000'},
+          {label:'Expected monthly rent',value:rent,set:setRent,placeholder:'e.g. 850'},
+          {label:'Other purchase costs (surveys, legal)',value:costs,set:setCosts,placeholder:'e.g. 3000'},
+        ].map(f=><div key={f.label} style={{marginBottom:10}}>
+          <div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>{f.label}</div>
+          <input type="number" value={f.value} onChange={e=>f.set(e.target.value)} placeholder={f.placeholder} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',boxSizing:'border-box'}}/>
+        </div>)}
+        <div style={{marginBottom:10}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text-3)',marginBottom:4}}><span>Deposit</span><span style={{fontWeight:500,color:'var(--text)'}}>{deposit}% = {price?fmt(dep):'£0'}</span></div>
+          <input type="range" min="15" max="40" step="5" value={deposit} onChange={e=>setDeposit(Number(e.target.value))} style={{width:'100%'}}/>
+        </div>
+        <div style={{marginBottom:10}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text-3)',marginBottom:4}}><span>Interest rate</span><span style={{fontWeight:500,color:'var(--text)'}}>{rate}%</span></div>
+          <input type="range" min="3" max="9" step="0.1" value={rate} onChange={e=>setRate(Number(e.target.value))} style={{width:'100%'}}/>
+        </div>
+        <div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text-3)',marginBottom:4}}><span>Mortgage term</span><span style={{fontWeight:500,color:'var(--text)'}}>{term} years</span></div>
+          <input type="range" min="10" max="35" step="5" value={term} onChange={e=>setTerm(Number(e.target.value))} style={{width:'100%'}}/>
+        </div>
+      </div>
+      {/* Results */}
+      <div>
+        <div style={{background:monthlyCashflow>0?'var(--green-bg)':'var(--red-bg)',border:'0.5px solid '+(monthlyCashflow>0?'var(--green)':'var(--red)'),borderRadius:14,padding:16,marginBottom:10,textAlign:'center'}}>
+          <div style={{fontSize:11,color:good,marginBottom:4}}>Monthly cashflow</div>
+          <div style={{fontSize:32,fontWeight:600,fontFamily:'var(--mono)',color:good}}>{price&&rent?fmt(monthlyCashflow):'-'}</div>
+          <div style={{fontSize:11,color:good}}>after {price&&rent?fmt(monthlyMortgage):'-'}/mo mortgage</div>
+        </div>
+        <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:14}}>
+          <Row label="Gross yield" value={price&&rent?pct(grossYield):'-'} color={grossYield>=6?'var(--green)':grossYield>=4?'var(--amber)':'var(--red)'}/>
+          <Row label="Net yield (after mortgage)" value={price&&rent?pct(netYield):'-'} color={netYield>=3?'var(--green)':netYield>=1?'var(--amber)':'var(--red)'}/>
+          <Row label="Annual return" value={price&&rent?fmt(annualReturn):'-'}/>
+          <Row label="ROI on cash in" value={price&&rent?pct(roi):'-'} color={roi>=8?'var(--green)':roi>=4?'var(--amber)':'var(--red)'}/>
+          <Row label="SDLT (buy-to-let surcharge)" value={price?fmt(sdlt):'-'}/>
+          <Row label="Total cash required" value={price?fmt(totalCosts):'-'}/>
+          <Row label="Loan to value" value={deposit+'% deposit / '+(100-deposit)+'% LTV'}/>
+        </div>
+        <div style={{fontSize:11,color:'var(--text-3)',marginTop:8,lineHeight:1.6}}>SDLT includes the 3% buy-to-let surcharge. Does not include running costs (insurance, repairs, void periods) which typically reduce net yield by 1-2%. Not financial advice.</div>
+      </div>
+    </div>
+  </div>
+}
+
+/* ================================================================
+   CGT PLANNER
+   ================================================================ */
+function CGTPlanner({props}){
+  const[selProp,setSelProp]=useState(props[0]?.id||'')
+  const[salePrice,setSalePrice]=useState('')
+  const[purchasePrice,setPurchasePrice]=useState('')
+  const[purchaseCosts,setPurchaseCosts]=useState(3000)
+  const[improvements,setImprovements]=useState(0)
+  const[saleCosts,setSaleCosts]=useState(3000)
+  const[yearsOwned,setYearsOwned]=useState(5)
+  const[higherRate,setHigherRate]=useState(true)
+
+  const sp=Number(salePrice)||0
+  const pp=Number(purchasePrice)||0
+  const gain=sp-pp-Number(purchaseCosts)-Number(improvements)-Number(saleCosts)
+  const annualAllowance=3000
+  const taxableGain=Math.max(0,gain-annualAllowance)
+  const cgtRate=higherRate?0.24:0.18
+  const cgtDue=taxableGain*cgtRate
+  const netProceeds=sp-Number(saleCosts)-(pp+Number(purchaseCosts)+Number(improvements))-cgtDue
+
+  const fmt=n=>'£'+Math.round(Math.max(0,n)).toLocaleString('en-GB')
+  function Row({label,value,bold,color}){return<div style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'0.5px solid var(--border)'}}>
+    <span style={{fontSize:12,color:bold?'var(--text)':'var(--text-2)',fontWeight:bold?500:400}}>{label}</span>
+    <span style={{fontSize:12,fontWeight:bold?600:500,color:color||'var(--text)',fontFamily:'var(--mono)'}}>{value}</span>
+  </div>}
+
+  const selectedProp=props.find(p=>p.id===selProp)
+  if(selectedProp?.purchasePrice&&!purchasePrice) setPurchasePrice(selectedProp.purchasePrice)
+
+  return<div className="fade-up">
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>CGT planner</div>
+      <div style={{fontSize:12,color:'var(--text-3)'}}>Estimate capital gains tax on disposal. Includes the annual allowance and 2024/25 CGT rates.</div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
+        <div style={{fontSize:12,fontWeight:500,marginBottom:12}}>Property details</div>
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>Property</div>
+          <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}>
+            {props.map(p=><option key={p.id} value={p.id}>{p.shortName}</option>)}
+          </select>
+        </div>
+        {[
+          {label:'Expected sale price',value:salePrice,set:setSalePrice},
+          {label:'Original purchase price',value:purchasePrice,set:setPurchasePrice},
+          {label:'Purchase costs (SDLT, legal)',value:purchaseCosts,set:setPurchaseCosts},
+          {label:'Capital improvements (extensions, renovations)',value:improvements,set:setImprovements},
+          {label:'Sale costs (agent fees, legal)',value:saleCosts,set:setSaleCosts},
+        ].map(f=><div key={f.label} style={{marginBottom:8}}>
+          <div style={{fontSize:11,color:'var(--text-3)',marginBottom:3}}>{f.label}</div>
+          <input type="number" value={f.value} onChange={e=>f.set(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',boxSizing:'border-box'}}/>
+        </div>)}
+        <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8}}>
+          <input type="checkbox" id="higherRate" checked={higherRate} onChange={e=>setHigherRate(e.target.checked)}/>
+          <label htmlFor="higherRate" style={{fontSize:12,color:'var(--text-2)'}}>Higher rate taxpayer (24% CGT rate)</label>
+        </div>
+      </div>
+      <div>
+        <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:14,marginBottom:10}}>
+          <Row label="Sale price" value={fmt(sp)}/>
+          <Row label="Less: purchase price" value={'-'+fmt(pp)}/>
+          <Row label="Less: purchase costs" value={'-'+fmt(purchaseCosts)}/>
+          <Row label="Less: improvements" value={'-'+fmt(improvements)}/>
+          <Row label="Less: sale costs" value={'-'+fmt(saleCosts)}/>
+          <Row label="Total gain" value={fmt(gain)} bold/>
+          <Row label="Less: annual CGT allowance" value={'-'+fmt(annualAllowance)}/>
+          <Row label="Taxable gain" value={fmt(taxableGain)}/>
+          <Row label={'CGT at '+(higherRate?'24':'18')+'%'} value={fmt(cgtDue)} color="var(--red)"/>
+        </div>
+        <div style={{background:gain>0?'var(--green-bg)':'var(--surface2)',border:'0.5px solid '+(gain>0?'var(--green)':'var(--border)'),borderRadius:14,padding:16,textAlign:'center',marginBottom:8}}>
+          <div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>Net proceeds after CGT</div>
+          <div style={{fontSize:28,fontWeight:600,fontFamily:'var(--mono)',color:gain>0?'var(--green)':'var(--text)'}}>{fmt(netProceeds)}</div>
+        </div>
+        <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.6,padding:'8px 12px',background:'var(--surface2)',borderRadius:8}}>
+          Based on 2024/25 CGT rates: 18% basic rate, 24% higher rate for residential property. Does not account for Private Residence Relief, Lettings Relief, or other reliefs. Consult an accountant before selling. Not financial advice.
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+/* ================================================================
+   LTD VS PERSONAL
+   ================================================================ */
+function LtdVsPersonal({portfolio}){
+  const[rent,setRent]=useState(portfolio.properties?.reduce((s,p)=>s+(Number(p.rent)||0),0)||2000)
+  const[mortgage,setMortgage]=useState(portfolio.properties?.reduce((s,p)=>s+(Number(p.monthlyPayment)||0),0)||800)
+  const[expenses,setExpenses]=useState(200)
+  const[taxBand,setTaxBand]=useState('higher')
+  const[salary,setSalary]=useState(50000)
+
+  const annualRent=Number(rent)*12
+  const annualMortgage=Number(mortgage)*12
+  const annualExpenses=Number(expenses)*12
+  const annualSalary=Number(salary)
+
+  // Personal ownership
+  const mortgageInterestPersonal=annualMortgage
+  const personalProfit=annualRent-annualExpenses
+  const sec24Credit=mortgageInterestPersonal*0.20
+  const personalTax=taxBand==='higher'?personalProfit*0.40:personalProfit*0.20
+  const personalNetAfterTax=personalProfit-personalTax+sec24Credit
+
+  // Ltd company
+  const ltdProfit=annualRent-annualMortgage-annualExpenses
+  const corpTax=ltdProfit>0?ltdProfit*0.19:0
+  const ltdProfitAfterTax=ltdProfit-corpTax
+  const dividendAllowance=500
+  const dividendTaxable=Math.max(0,ltdProfitAfterTax-dividendAllowance)
+  const dividendTax=taxBand==='higher'?dividendTaxable*0.3375:dividendTaxable*0.0875
+  const ltdNetAfterTax=ltdProfitAfterTax-dividendTax
+
+  const saving=ltdNetAfterTax-personalNetAfterTax
+  const fmt=n=>'£'+Math.round(Math.abs(n)).toLocaleString('en-GB')
+
+  function Row({label,value,color,bold}){return<div style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'0.5px solid var(--border)'}}>
+    <span style={{fontSize:12,color:bold?'var(--text)':'var(--text-2)',fontWeight:bold?500:400}}>{label}</span>
+    <span style={{fontSize:12,fontWeight:bold?600:500,color:color||'var(--text)',fontFamily:'var(--mono)'}}>{value}</span>
+  </div>}
+
+  return<div className="fade-up">
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Ltd company vs personal ownership</div>
+      <div style={{fontSize:12,color:'var(--text-3)'}}>Should you incorporate? Model both scenarios side by side including Section 24 and corporation tax.</div>
+    </div>
+    {/* Inputs */}
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:14,marginBottom:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:8}}>
+        {[
+          {label:'Total monthly rent',value:rent,set:setRent},
+          {label:'Total monthly mortgage payments',value:mortgage,set:setMortgage},
+          {label:'Monthly expenses (insurance, repairs, etc.)',value:expenses,set:setExpenses},
+          {label:'Your other employment income',value:salary,set:setSalary},
+        ].map(f=><div key={f.label}>
+          <div style={{fontSize:11,color:'var(--text-3)',marginBottom:3}}>{f.label}</div>
+          <input type="number" value={f.value} onChange={e=>f.set(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',boxSizing:'border-box'}}/>
+        </div>)}
+        <div>
+          <div style={{fontSize:11,color:'var(--text-3)',marginBottom:3}}>Tax band</div>
+          <select value={taxBand} onChange={e=>setTaxBand(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}>
+            <option value="basic">Basic rate (20%)</option>
+            <option value="higher">Higher rate (40%)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    {/* Comparison */}
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:14}}>
+        <div style={{fontSize:12,fontWeight:500,marginBottom:10,color:'var(--text)'}}>Personal ownership</div>
+        <Row label="Annual rental income" value={fmt(annualRent)}/>
+        <Row label="Allowable expenses" value={'-'+fmt(annualExpenses)}/>
+        <Row label="Taxable profit" value={fmt(personalProfit)}/>
+        <Row label={'Income tax ('+(taxBand==='higher'?'40':'20')+'%)'} value={'-'+fmt(personalTax)} color="var(--red)"/>
+        <Row label="Section 24 tax credit (20%)" value={'+'+fmt(sec24Credit)} color="var(--green)"/>
+        <Row label="Net after tax" value={fmt(personalNetAfterTax)} bold color="var(--text)"/>
+      </div>
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--brand)',borderRadius:14,padding:14}}>
+        <div style={{fontSize:12,fontWeight:500,marginBottom:10,color:'var(--brand)'}}>Ltd company</div>
+        <Row label="Annual rental income" value={fmt(annualRent)}/>
+        <Row label="Mortgage interest (fully deductible)" value={'-'+fmt(annualMortgage)}/>
+        <Row label="Allowable expenses" value={'-'+fmt(annualExpenses)}/>
+        <Row label="Corporation tax (19%)" value={'-'+fmt(corpTax)} color="var(--red)"/>
+        <Row label="Dividend tax on extraction" value={'-'+fmt(dividendTax)} color="var(--red)"/>
+        <Row label="Net after all tax" value={fmt(ltdNetAfterTax)} bold color="var(--brand)"/>
+      </div>
+    </div>
+    <div style={{background:saving>0?'var(--green-bg)':'var(--red-bg)',border:'0.5px solid '+(saving>0?'var(--green)':'var(--red)'),borderRadius:12,padding:'14px 16px',textAlign:'center',marginBottom:8}}>
+      <div style={{fontSize:13,fontWeight:500,color:saving>0?'var(--green)':'var(--red)'}}>
+        {saving>0?'Ltd company saves you '+fmt(saving)+' per year':'Personal ownership saves you '+fmt(Math.abs(saving))+' per year'}
+      </div>
+    </div>
+    <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.6,padding:'8px 12px',background:'var(--surface2)',borderRadius:8}}>
+      Simplified model. Does not include: CGT on incorporation transfer, loss of mortgage relief (lenders often charge higher rates for Ltd companies), accountancy costs (approx. £800-1,500/yr for Ltd), or all personal tax implications. Always take professional advice before incorporating. Not financial or tax advice.
+    </div>
+  </div>
+}
+
+/* ================================================================
+   CONTRACTOR DIRECTORY
+   ================================================================ */
+function ContractorDirectory({portfolio}){
+  const props=portfolio.properties||[]
+  const[selProp,setSelProp]=useState(props[0]?.id||'')
+  const[category,setCategory]=useState('gas')
+  const prop=props.find(p=>p.id===selProp)
+  const postcode=prop?.address?.match(/[A-Z]{1,2}[0-9][0-9A-Z]?\s*[0-9][A-Z]{2}/i)?.[0]||''
+
+  const CATEGORIES=[
+    {id:'gas',label:'Gas Safe engineer (gas cert)',search:'gas safe engineer'},
+    {id:'electrical',label:'Electrician (EICR)',search:'electrician EICR domestic'},
+    {id:'epc',label:'EPC assessor',search:'EPC energy performance certificate assessor'},
+    {id:'plumber',label:'Plumber',search:'plumber emergency'},
+    {id:'roofing',label:'Roofer',search:'roofing contractor'},
+    {id:'general',label:'General builder / handyman',search:'general builder handyman'},
+    {id:'locksmith',label:'Locksmith',search:'locksmith emergency'},
+    {id:'inventory',label:'Inventory clerk',search:'inventory clerk lettings'},
+  ]
+
+  const cat=CATEGORIES.find(c=>c.id===category)
+  const searchQuery=cat?encodeURIComponent(cat.search+' '+postcode):''
+  const checkatradeUrl='https://www.checkatrade.com/search?search='+searchQuery
+  const ratedUrl='https://www.ratedpeople.com/find-tradespeople?q='+searchQuery
+  const findATradeUrl='https://www.findatrade.com/search?q='+encodeURIComponent((cat?.search||'')+' '+postcode)
+  const gasSafeUrl='https://www.gassaferegister.co.uk/find-an-engineer/'
+  const neieUrl='https://www.napit.org.uk/find-a-member'
+
+  return<div className="fade-up">
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Find a contractor</div>
+      <div style={{fontSize:12,color:'var(--text-3)'}}>Find Gas Safe engineers, electricians, EPC assessors and other trades near your properties.</div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
+      <div>
+        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>Property (to get local results)</div>
+        <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}>
+          {props.map(p=><option key={p.id} value={p.id}>{p.shortName}</option>)}
+        </select>
+      </div>
+      <div>
+        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:4}}>What do you need?</div>
+        <select value={category} onChange={e=>setCategory(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}>
+          {CATEGORIES.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+        </select>
+      </div>
+    </div>
+    {postcode&&<div style={{fontSize:12,color:'var(--brand)',fontWeight:500,marginBottom:12}}>Searching near: {postcode}</div>}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:10,marginBottom:16}}>
+      {[
+        {name:'Gas Safe Register',desc:'Official register for gas engineers. Use for gas certs.',url:gasSafeUrl,badge:'Official',color:'var(--brand)'},
+        {name:'NAPIT / NICEIC',desc:'Find certified electricians for EICR work.',url:neieUrl,badge:'Official',color:'var(--brand)'},
+        {name:'Checkatrade',desc:'Vetted tradespeople with reviews. Pre-searched for your area.',url:checkatradeUrl,badge:'Vetted',color:'var(--amber)'},
+        {name:'Rated People',desc:'Get multiple quotes from local trades.',url:ratedUrl,badge:'Quotes',color:'#0C447C'},
+      ].map(s=><a key={s.name} href={s.url} target="_blank" rel="noreferrer" style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px',textDecoration:'none',display:'block',transition:'all 0.15s'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+          <div style={{fontSize:13,fontWeight:500,color:'var(--text)'}}>{s.name}</div>
+          <span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:'var(--surface2)',color:s.color,fontWeight:500}}>{s.badge}</span>
+        </div>
+        <div style={{fontSize:12,color:'var(--text-3)',lineHeight:1.5}}>{s.desc}</div>
+        <div style={{fontSize:11,color:'var(--brand)',marginTop:8}}>Search now →</div>
+      </a>)}
+    </div>
+    <div style={{background:'var(--surface2)',borderRadius:10,padding:'10px 14px',fontSize:12,color:'var(--text-3)',lineHeight:1.7}}>
+      Always verify Gas Safe registration numbers at gassaferegister.co.uk before any gas work. Keep copies of all contractor certificates in Lettly by dropping them in the property document zone.
+    </div>
+  </div>
+}
+
+/* ================================================================
+   REFERRAL PANEL
+   ================================================================ */
+function ReferralPanel(){
+  const[data,setData]=useState(null)
+  const[loading,setLoading]=useState(true)
+  const[redeemCode,setRedeemCode]=useState('')
+  const[redeemMsg,setRedeemMsg]=useState('')
+  const[copied,setCopied]=useState(false)
+
+  useEffect(()=>{
+    fetch('/api/referral').then(r=>r.json()).then(d=>setData(d)).finally(()=>setLoading(false))
+  },[])
+
+  async function redeem(){
+    if(!redeemCode.trim()) return
+    const r=await fetch('/api/referral',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:redeemCode.trim().toUpperCase()})})
+    const d=await r.json()
+    setRedeemMsg(d.message||d.error||'Something went wrong')
+  }
+
+  const link=data?.code?'https://lettly.co/?ref='+data.code:''
+
+  function copy(){navigator.clipboard.writeText(link);setCopied(true);setTimeout(()=>setCopied(false),2000)}
+
+  return<div className="fade-up">
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Refer and earn</div>
+      <div style={{fontSize:12,color:'var(--text-3)'}}>Share Lettly with fellow landlords. Both of you get a free month when they sign up and start a subscription.</div>
+    </div>
+    {loading?<div style={{fontSize:12,color:'var(--text-3)',padding:'20px 0',textAlign:'center'}}>Loading...</div>:<>
+      {/* Your code */}
+      <div style={{background:'var(--brand-subtle)',border:'1px solid var(--brand)',borderRadius:14,padding:'20px 24px',marginBottom:16,textAlign:'center'}}>
+        <div style={{fontSize:12,color:'var(--brand)',marginBottom:8,fontWeight:500}}>Your referral link</div>
+        <div style={{fontFamily:'var(--mono)',fontSize:15,fontWeight:600,color:'var(--brand)',marginBottom:12,wordBreak:'break-all'}}>{link||'Generating...'}</div>
+        <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap'}}>
+          <button onClick={copy} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:12,fontWeight:500,cursor:'pointer'}}>
+            {copied?'Copied!':'Copy link'}
+          </button>
+          {typeof navigator!=='undefined'&&navigator.share&&<button onClick={()=>navigator.share({title:'Lettly',text:'Manage your rental properties without a letting agent. Use my link for a free month:',url:link})} style={{background:'var(--surface)',color:'var(--brand)',border:'0.5px solid var(--brand)',borderRadius:8,padding:'8px 20px',fontSize:12,cursor:'pointer'}}>Share</button>}
+        </div>
+      </div>
+      {/* Stats */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+        <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px',textAlign:'center'}}>
+          <div style={{fontSize:24,fontWeight:600,color:'var(--brand)',fontFamily:'var(--mono)'}}>{data?.uses||0}</div>
+          <div style={{fontSize:12,color:'var(--text-3)'}}>Landlords referred</div>
+        </div>
+        <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px',textAlign:'center'}}>
+          <div style={{fontSize:24,fontWeight:600,color:'var(--green)',fontFamily:'var(--mono)'}}>{data?.credits||0}</div>
+          <div style={{fontSize:12,color:'var(--text-3)'}}>Free months earned</div>
+        </div>
+      </div>
+      {/* Redeem a code */}
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px'}}>
+        <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Have a referral code?</div>
+        <div style={{display:'flex',gap:8}}>
+          <input value={redeemCode} onChange={e=>setRedeemCode(e.target.value.toUpperCase())} placeholder="e.g. LETTLY-AB12CD" style={{flex:1,background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 10px',fontFamily:'var(--mono)',fontSize:12,color:'var(--text)'}}/>
+          <button onClick={redeem} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 16px',fontSize:12,cursor:'pointer'}}>Apply</button>
+        </div>
+        {redeemMsg&&<div style={{fontSize:12,color:redeemMsg.includes('error')||redeemMsg.includes('Invalid')?'var(--red)':'var(--green)',marginTop:8}}>{redeemMsg}</div>}
+      </div>
+    </>}
+  </div>
+}
+
 function ToolsTab({portfolio,setPortfolio}){
   const props=portfolio.properties||[]
   const[tool,setTool]=useState('remortgage')
@@ -2997,7 +3512,7 @@ function ToolsTab({portfolio,setPortfolio}){
   const equity=rp&&rp.currentValue&&rp.mortgage?Number(rp.currentValue)-Number(rp.mortgage):null
   const maxRelease=rp&&rp.currentValue?Math.floor(Number(rp.currentValue)*0.75)-Number(rp.mortgage||0):null
   return<div className="fade-up">
-    <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>{[{id:'remortgage',label:'Remortgage planner'},{id:'documents',label:'Document generator'},{id:'voids',label:'Void tracker'},{id:'taxexport',label:'Tax export'},{id:'report',label:'Portfolio report'}].map(t=><button key={t.id} onClick={()=>{setTool(t.id);setGenerated('')}} style={{padding:'7px 16px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:tool===t.id?'var(--brand)':'var(--border)',background:tool===t.id?'var(--brand-light)':'var(--surface)',color:tool===t.id?'var(--brand)':'var(--text-2)'}}>{t.label}</button>)}</div>
+    <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>{[{id:'remortgage',label:'Remortgage planner'},{id:'documents',label:'Document generator'},{id:'voids',label:'Void tracker'},{id:'taxexport',label:'Tax export'},{id:'expenses',label:'Expenses'},{id:'deal',label:'Deal analyser'},{id:'cgt',label:'CGT planner'},{id:'ltd',label:'Ltd vs personal'},{id:'contractors',label:'Find a contractor'},{id:'referral',label:'Refer & earn'},{id:'report',label:'Portfolio report'}].map(t=><button key={t.id} onClick={()=>{setTool(t.id);setGenerated('')}} style={{padding:'7px 16px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:tool===t.id?'var(--brand)':'var(--border)',background:tool===t.id?'var(--brand-light)':'var(--surface)',color:tool===t.id?'var(--brand)':'var(--text-2)'}}>{t.label}</button>)}</div>
     {tool==='remortgage'&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
       <div style={{fontSize:13,fontWeight:500,marginBottom:14}}>Remortgage planner</div>
       <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Select property</label><select value={remProp} onChange={e=>setRemProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}><option value="">Choose a property</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}</select></div>
@@ -3031,6 +3546,12 @@ function ToolsTab({portfolio,setPortfolio}){
     </div>}
     {tool==='voids'&&<VoidTrackerPanel portfolio={portfolio} setPortfolio={setPortfolio}/>}
     {tool==='taxexport'&&<TaxExportPanel portfolio={portfolio}/>}
+    {tool==='expenses'&&<ExpensesPanel portfolio={portfolio} setPortfolio={setPortfolio}/>}
+    {tool==='deal'&&<DealAnalyser props={props}/>}
+    {tool==='cgt'&&<CGTPlanner props={props}/>}
+    {tool==='ltd'&&<LtdVsPersonal portfolio={portfolio}/>}
+    {tool==='contractors'&&<ContractorDirectory portfolio={portfolio}/>}
+    {tool==='referral'&&<ReferralPanel/>}
     {tool==='report'&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
       <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Portfolio report</div>
       <div style={{fontSize:12,color:'var(--text-3)',marginBottom:16}}>Summary for sharing with advisors or accountants</div>

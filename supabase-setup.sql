@@ -83,3 +83,36 @@ create table if not exists content_queue (
 alter table content_queue enable row level security;
 drop policy if exists "Block direct access queue" on content_queue;
 create policy "Block direct access queue" on content_queue for all using (false);
+
+-- ============================================================
+-- EXPENSES TABLE
+-- ============================================================
+create table if not exists expenses (
+  id uuid default gen_random_uuid() primary key,
+  user_id text not null,
+  prop_id text not null,
+  category text not null,
+  amount numeric not null,
+  date date,
+  description text,
+  receipt_url text,
+  created_at timestamptz default now()
+);
+alter table expenses enable row level security;
+drop policy if exists "Block direct access expenses" on expenses;
+create policy "Block direct access expenses" on expenses for all using (false);
+
+-- ============================================================
+-- REFERRALS TABLE
+-- ============================================================
+create table if not exists referrals (
+  id uuid default gen_random_uuid() primary key,
+  referrer_id text not null,
+  code text unique,
+  referred_by text,
+  credits integer default 0,
+  created_at timestamptz default now()
+);
+alter table referrals enable row level security;
+drop policy if exists "Block direct access referrals" on referrals;
+create policy "Block direct access referrals" on referrals for all using (false);
