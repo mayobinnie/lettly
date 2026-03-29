@@ -290,7 +290,12 @@ export default function Landing() {
           <div className="grid-2" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:44 }}>
             {/* Lettly column, LEFT, green, prominent */}
             <div style={{ background:'var(--brand-subtle)', border:'1.5px solid var(--brand)', borderRadius:16, padding:'20px 18px' }}>
-              <div style={{ fontSize:13, fontWeight:700, color:'var(--brand)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:16 }}>With Lettly</div>
+              <div style={{ fontSize:13, fontWeight:700, color:'var(--brand)', display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
+                  <div style={{ width:28, height:28, background:'var(--brand)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <span style={{ color:'#fff', fontSize:14, fontWeight:700, fontFamily:'Georgia, serif', fontStyle:'italic' }}>L</span>
+                  </div>
+                  <span style={{ fontSize:15, fontWeight:600, fontFamily:'Georgia, serif', color:'var(--brand)' }}>Lettly</span>
+                </div
               {[
                 { icon:'✅', title:'Keep your rent, all of it', body:'Manage yourself and save £1,000 to £3,000 per year. Lettly starts at just £8/month for 1-2 properties.' },
                 { icon:'📲', title:'Drop a document, done', body:'Upload your gas cert, EICR or tenancy agreement. Lettly reads it and tracks every date automatically.' },
