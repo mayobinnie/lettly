@@ -288,40 +288,42 @@ export default function Landing() {
           </div>
 
           <div className="grid-2" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:44 }}>
-            <div>
-              <div style={{ fontSize:13, fontWeight:600, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:14 }}>Without Lettly</div>
+            {/* Lettly column, LEFT, green, prominent */}
+            <div style={{ background:'var(--brand-subtle)', border:'1.5px solid var(--brand)', borderRadius:16, padding:'20px 18px' }}>
+              <div style={{ fontSize:13, fontWeight:700, color:'var(--brand)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:16 }}>With Lettly</div>
               {[
-                { icon:'💸', title:'Paying 10–20% in agent fees', body:"On a £1,200/month property, that's up to £2,880/year straight out of your pocket." },
-                { icon:'📁', title:'Chasing paperwork', body:'Gas certs, EICRs, EPCs, insurance renewals. All in different places, easy to miss.' },
-                { icon:'😰', title:'Three different sets of landlord law', body:'England, Scotland and Wales each have different rules. Section 21 is gone in Scotland, occupation contracts in Wales, Renters Rights Act in England. One missed requirement can mean fines or losing your case.' },
-                { icon:'📱', title:'Managing tenants manually', body:'WhatsApp chains, sticky notes, and spreadsheets that only you understand.' },
-              ].map(p => (
-                <div key={p.title} className="pain-card" style={{ marginBottom:10, borderLeft:'3px solid #fce8e6' }}>
-                  <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
-                    <span style={{ fontSize:20, flexShrink:0 }}>{p.icon}</span>
+                { icon:'✅', title:'Keep your rent, all of it', body:'Manage yourself and save £1,000 to £3,000 per year. Lettly starts at just £8/month for 1-2 properties.' },
+                { icon:'📲', title:'Drop a document, done', body:'Upload your gas cert, EICR or tenancy agreement. Lettly reads it and tracks every date automatically.' },
+                { icon:'🛡️', title:'Stay compliant automatically', body:'Lettly reads your property postcode and applies the right law for England, Scotland or Wales. Reminders before every deadline.' },
+                { icon:'📊', title:'One place for everything', body:'Tenants, rent, expenses, maintenance, documents, CGT, deal analysis. All in one dashboard.' },
+              ].map(s => (
+                <div key={s.title} style={{ marginBottom:12, background:'#fff', borderRadius:10, padding:'12px 14px', border:'0.5px solid rgba(27,94,59,0.15)' }}>
+                  <div style={{ display:'flex', gap:11, alignItems:'flex-start' }}>
+                    <span style={{ fontSize:18, flexShrink:0, marginTop:1 }}>{s.icon}</span>
                     <div>
-                      <div style={{ fontSize:15, fontWeight:600, color:'var(--text)', marginBottom:4 }}>{p.title}</div>
-                      <div style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.7 }}>{p.body}</div>
+                      <div style={{ fontSize:14, fontWeight:600, color:'var(--brand)', marginBottom:3 }}>{s.title}</div>
+                      <div style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.65 }}>{s.body}</div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div>
-              <div style={{ fontSize:13, fontWeight:600, color:'var(--brand)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:14 }}>With Lettly</div>
+            {/* Without column, RIGHT, muted, faded */}
+            <div style={{ opacity:0.75 }}>
+              <div style={{ fontSize:13, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:16 }}>Without Lettly</div>
               {[
-                { icon:'✅', title:'Keep your rent, all of it', body:'Manage yourself and save £1,000 to £3,000 per year. Lettly starts at just £8/month for 1-2 properties.' },
-                { icon:'📲', title:'Drop a document, done', body:'Upload your gas cert, EICR or tenancy agreement. Lettly reads it and tracks every date automatically.' },
-                { icon:'🛡️', title:'Stay compliant automatically', body:'Lettly reads your property postcode and applies the right law for England, Scotland or Wales. Reminders before every deadline. Never miss a requirement again.' },
-                { icon:'📊', title:'One place for everything', body:'Tenants, rent, maintenance, documents. All in your dashboard. No spreadsheets needed.' },
-              ].map(s => (
-                <div key={s.title} className="pain-card" style={{ marginBottom:10, borderLeft:'3px solid var(--brand-mid)' }}>
-                  <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
-                    <span style={{ fontSize:20, flexShrink:0 }}>{s.icon}</span>
+                { icon:'💸', title:'Paying 10-20% in agent fees', body:"On a £1,200/month property, that's up to £2,880/year straight out of your pocket." },
+                { icon:'📁', title:'Chasing paperwork', body:'Gas certs, EICRs, EPCs, insurance renewals. All in different places, easy to miss.' },
+                { icon:'😰', title:'Three different sets of landlord law', body:'One missed requirement can mean fines, an invalid notice, or losing your case in court.' },
+                { icon:'📱', title:'Managing everything manually', body:'WhatsApp chains, sticky notes, and spreadsheets that only you understand.' },
+              ].map(p => (
+                <div key={p.title} style={{ marginBottom:12, background:'var(--surface2)', borderRadius:10, padding:'12px 14px', border:'0.5px solid var(--border)' }}>
+                  <div style={{ display:'flex', gap:11, alignItems:'flex-start' }}>
+                    <span style={{ fontSize:18, flexShrink:0, marginTop:1, filter:'grayscale(0.4)' }}>{p.icon}</span>
                     <div>
-                      <div style={{ fontSize:15, fontWeight:600, color:'var(--text)', marginBottom:4 }}>{s.title}</div>
-                      <div style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.7 }}>{s.body}</div>
+                      <div style={{ fontSize:14, fontWeight:600, color:'var(--text-2)', marginBottom:3 }}>{p.title}</div>
+                      <div style={{ fontSize:13, color:'var(--text-3)', lineHeight:1.65 }}>{p.body}</div>
                     </div>
                   </div>
                 </div>
@@ -346,8 +348,30 @@ export default function Landing() {
               <p className="section-sub" style={{ maxWidth:500, margin:'0 auto' }}>A letting agent charges a percentage of every rent payment, every month. Lettly is a flat annual fee.</p>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:28 }}>
-              {/* Letting agent column */}
-              <div style={{ background:'#fce8e6', border:'1px solid #f5b8b4', borderRadius:20, padding:'clamp(24px,3vw,36px)' }}>
+              {/* Lettly column - LEFT */}
+              <div style={{ background:'var(--brand-subtle)', border:'2px solid var(--brand)', borderRadius:20, padding:'clamp(24px,3vw,36px)', position:'relative' }}>
+                <div style={{ position:'absolute', top:-14, left:'50%', transform:'translateX(-50%)', background:'var(--brand)', color:'#fff', borderRadius:20, padding:'5px 18px', fontSize:12, fontWeight:700, whiteSpace:'nowrap' }}>Replace your agent</div>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
+                  <div style={{ width:28, height:28, background:'var(--brand)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <span style={{ color:'#fff', fontSize:14, fontWeight:700, fontFamily:'Georgia, serif', fontStyle:'italic' }}>L</span>
+                  </div>
+                  <span style={{ fontSize:15, fontWeight:600, fontFamily:'Georgia, serif', color:'var(--brand)' }}>Lettly</span>
+                </div>
+                {[
+                  { label:'All properties (1–2)', value:'£8/month' },
+                  { label:'All properties (3–5)', value:'£16/month' },
+                  { label:'All properties (6–10)', value:'£24/month' },
+                  { label:'Tenant finding portals', value:'From £29 one-off (OpenRent)' },
+                  { label:'Annual total (1–2 props)', value:'£96/year', bold:true },
+                ].map(r => (
+                  <div key={r.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'0.5px solid rgba(27,94,59,0.15)' }}>
+                    <span style={{ fontSize:13, color:'var(--brand)' }}>{r.label}</span>
+                    <span style={{ fontSize:13, fontWeight:r.bold?700:500, color:'var(--brand)' }}>{r.value}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Agent column - RIGHT, muted */}
+              <div style={{ background:'#fce8e6', border:'1px solid #f5b8b4', borderRadius:20, padding:'clamp(24px,3vw,36px)', opacity:0.82 }}>
                 <div style={{ fontSize:13, fontWeight:700, color:'#791F1F', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:20 }}>High-street letting agent</div>
                 {[
                   { label:'Management fee', value:'10–15% of rent monthly' },
@@ -359,23 +383,6 @@ export default function Landing() {
                   <div key={r.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'0.5px solid rgba(224,72,72,0.2)' }}>
                     <span style={{ fontSize:13, color:'#791F1F' }}>{r.label}</span>
                     <span style={{ fontSize:13, fontWeight:r.bold?700:500, color:'#791F1F' }}>{r.value}</span>
-                  </div>
-                ))}
-              </div>
-              {/* Lettly column */}
-              <div style={{ background:'var(--brand-subtle)', border:'2px solid var(--brand)', borderRadius:20, padding:'clamp(24px,3vw,36px)', position:'relative' }}>
-                <div style={{ position:'absolute', top:-14, left:'50%', transform:'translateX(-50%)', background:'var(--brand)', color:'#fff', borderRadius:20, padding:'5px 18px', fontSize:12, fontWeight:700, whiteSpace:'nowrap' }}>Replace your agent</div>
-                <div style={{ fontSize:13, fontWeight:700, color:'var(--brand)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:20 }}>Lettly</div>
-                {[
-                  { label:'All properties (1–2)', value:'£8/month' },
-                  { label:'All properties (3–5)', value:'£16/month' },
-                  { label:'All properties (6–10)', value:'£24/month' },
-                  { label:'Tenant finding portals', value:'From £29 one-off (OpenRent)' },
-                  { label:'Annual total (1–2 props)', value:'£96/year', bold:true },
-                ].map(r => (
-                  <div key={r.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'0.5px solid rgba(27,94,59,0.15)' }}>
-                    <span style={{ fontSize:13, color:'var(--brand)' }}>{r.label}</span>
-                    <span style={{ fontSize:13, fontWeight:r.bold?700:500, color:'var(--brand)' }}>{r.value}</span>
                   </div>
                 ))}
               </div>
