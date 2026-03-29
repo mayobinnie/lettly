@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -22,7 +22,7 @@
   --amber-bg:       #fff8e1;
   --green:          #1e6e35;
   --green-bg:       #e8f5e9;
-  --font:           'DM Sans', system-ui, sans-serif;
+  --font:           'Plus Jakarta Sans', system-ui, sans-serif;
   --display:        'Fraunces', Georgia, serif;
   --mono:           'DM Mono', monospace;
   --radius:         10px;
