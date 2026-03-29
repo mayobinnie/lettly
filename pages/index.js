@@ -187,7 +187,7 @@ export default function Landing() {
           </h1>
 
           <p className="section-sub fade-up-3" style={{ maxWidth:580, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
-            England, Scotland and Wales each have different landlord laws. Lettly tracks the right legislation for each of your properties by postcode, so you stay fully legal without paying agent fees.
+            Everything you need to manage your properties without a letting agent. Compliance tracking, AI document reading, financial planning, expense recording, CGT calculations, and more, all in one place.
           </p>
 
           <p style={{ fontSize:15, color:'var(--text-2)', marginBottom:20, fontWeight:500 }}>
@@ -206,7 +206,7 @@ export default function Landing() {
             Free for 14 days · No credit card · Takes 2 minutes
           </p>
 
-          <div className="trust-pills" style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
+          <div className="trust-pills" style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap', marginBottom:40 }}>
             {[
               { icon:'🇬🇧', text:'Built for UK landlords' },
               { icon:'🏴', text:'England, Scotland and Wales covered' },
@@ -214,6 +214,35 @@ export default function Landing() {
             ].map(t => (
               <span key={t.text} className="trust-pill"><span>{t.icon}</span>{t.text}</span>
             ))}
+          </div>
+
+          {/* Feature strip */}
+          <div style={{ borderTop:'0.5px solid var(--border)', paddingTop:32 }}>
+            <div style={{ fontSize:12, color:'var(--text-3)', marginBottom:18, textTransform:'uppercase', letterSpacing:'0.8px', fontWeight:500 }}>Everything included on every plan</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:'10px 16px', textAlign:'left', maxWidth:780, margin:'0 auto' }}>
+              {[
+                { icon:'📄', label:'AI document extraction' },
+                { icon:'⚖️', label:'Nation-specific compliance' },
+                { icon:'📊', label:'Deal analyser' },
+                { icon:'🧮', label:'CGT planner' },
+                { icon:'🏢', label:'Ltd vs personal modeller' },
+                { icon:'💷', label:'Expense tracker (HMRC)' },
+                { icon:'📅', label:'Rent reminders to tenants' },
+                { icon:'🔍', label:'Legislation monitor' },
+                { icon:'🤖', label:'AI landlord assistant' },
+                { icon:'📋', label:'Document generator' },
+                { icon:'🏚️', label:'Void period tracker' },
+                { icon:'🔧', label:'Contractor directory' },
+              ].map(f => (
+                <div key={f.label} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:15, flexShrink:0 }}>{f.icon}</span>
+                  <span style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.4 }}>{f.label}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop:18, fontSize:13, color:'var(--text-3)' }}>
+              and more, <a href="#features" style={{ color:'var(--brand)', textDecoration:'none', fontWeight:500 }}>see all features →</a>
+            </div>
           </div>
         </section>
 
