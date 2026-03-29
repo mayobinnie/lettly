@@ -295,7 +295,7 @@ export default function Landing() {
                     <span style={{ color:'#fff', fontSize:14, fontWeight:700, fontFamily:'Georgia, serif', fontStyle:'italic' }}>L</span>
                   </div>
                   <span style={{ fontSize:15, fontWeight:600, fontFamily:'Georgia, serif', color:'var(--brand)' }}>Lettly</span>
-                </div
+                </div>
               {[
                 { icon:'✅', title:'Keep your rent, all of it', body:'Manage yourself and save £1,000 to £3,000 per year. Lettly starts at just £8/month for 1-2 properties.' },
                 { icon:'📲', title:'Drop a document, done', body:'Upload your gas cert, EICR or tenancy agreement. Lettly reads it and tracks every date automatically.' },
