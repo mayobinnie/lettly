@@ -3,16 +3,16 @@ import { getAuth } from '@clerk/nextjs/server'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const PROMPT = `You are a UK property management compliance expert. READ EVERY PAGE OF THIS DOCUMENT thoroughly before extracting anything. Return ONLY a valid JSON object — no markdown, no explanation, no commentary.
+const PROMPT = `You are a UK property management compliance expert. READ EVERY PAGE OF THIS DOCUMENT thoroughly before extracting anything. Return ONLY a valid JSON object: no markdown, no explanation, no commentary.
 
-═══ PROPERTY ADDRESS — READ THIS CAREFULLY ═══
-The property address is WHERE THE WORK WAS DONE or WHERE THE TENANCY IS — not the landlord address, not the agent address, not the solicitor address.
+═══ PROPERTY ADDRESS: READ THIS CAREFULLY ═══
+The property address is WHERE THE WORK WAS DONE or WHERE THE TENANCY IS: not the landlord address, not the agent address, not the solicitor address.
 - Gas cert / EICR / EPC: the address of the property inspected (printed at the top of the certificate)
 - Tenancy agreement: the property being rented (not the landlord correspondence address)
 - Insurance: the insured premises address (not the policyholder postal address)
 - Mortgage / completion: the property being purchased or mortgaged
 
-HOUSE NUMBER RULES (critical — read character by character):
+HOUSE NUMBER RULES (critical: read character by character):
 - "3", "11" and "31" are COMPLETELY DIFFERENT properties on the same street
 - Copy the house number digit-by-digit from the document. Never guess.
 - Page numbers, clause numbers, reference numbers are NOT house numbers
@@ -20,7 +20,7 @@ HOUSE NUMBER RULES (critical — read character by character):
 - shortName MUST start with the house number: "11 Northfield Avenue" not "Northfield Avenue"
 - If you cannot find a house number, omit the property field entirely
 
-INVALID property names — NEVER use these as shortName:
+INVALID property names: NEVER use these as shortName:
 Rental Contract, Tenancy Agreement, Lease, Document, Contract, Mortgage, Unknown, Not stated, Insurance, Gas Certificate, EICR, EPC, Report, Form, Certificate, Deed, Notice, Section, Schedule
 
 ═══ DOCUMENT-SPECIFIC EXTRACTION RULES ═══
@@ -41,7 +41,7 @@ EICR (ELECTRICAL INSTALLATION CONDITION REPORT):
 - Extract all C1, C2, C3, FI observations if listed
 
 EPC (ENERGY PERFORMANCE CERTIFICATE):
-- Current energy rating = single letter A B C D E F G — extract the CURRENT rating not the potential rating
+- Current energy rating = single letter A B C D E F G: extract the CURRENT rating not the potential rating
 - Valid until / expiry date = epc.expiry
 - EPC reference number if shown
 
@@ -62,7 +62,7 @@ INSURANCE POLICY:
 - premium = annual premium as a NUMBER in £
 - sumInsured = total buildings sum insured as a NUMBER in £
 - excess = the standard excess as a NUMBER in £
-- Read EVERY PAGE for exclusions — they are often on later pages
+- Read EVERY PAGE for exclusions: they are often on later pages
 - unoccupancyClause = exact wording of any clause about unoccupied properties
 
 MORTGAGE OFFER / COMPLETION STATEMENT:
@@ -80,14 +80,14 @@ All monetary amounts must be NUMBERS not strings:
 - mortgage: 150000 (not "£150,000")
 - premium: 450 (not "£450.00")
 All dates must be DD/MM/YYYY format.
-If a value is not found, omit the field entirely — do not use null, 0, or "unknown".
+If a value is not found, omit the field entirely: do not use null, 0, or "unknown".
 
 ═══ JSON STRUCTURE ═══
 {
   "documentType": "gas_certificate|eicr|insurance|epc_certificate|tenancy_agreement|mortgage_offer|completion_statement|lease|section_notice|inventory|other",
   "property": {
     "address": "full address exactly as printed in document",
-    "shortName": "e.g. 11 Northfield Avenue — starts with house number",
+    "shortName": "e.g. 11 Northfield Avenue: starts with house number",
     "postcode": "postcode extracted separately for matching accuracy",
     "uprn": "if present",
     "tenure": "Freehold|Leasehold|if stated"
@@ -138,10 +138,10 @@ If a value is not found, omit the field entirely — do not use null, 0, or "unk
     }
   },
   "tenancy": {
-    "tenantName": "tenant full name(s) — the person paying rent",
+    "tenantName": "tenant full name(s): the person paying rent",
     "tenantPhone": "number",
     "tenantEmail": "email",
-    "landlordName": "landlord full name — the person receiving rent",
+    "landlordName": "landlord full name: the person receiving rent",
     "landlordAddress": "landlord address",
     "agentName": "if applicable",
     "rent": 0,

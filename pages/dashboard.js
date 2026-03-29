@@ -1657,13 +1657,54 @@ function RentabilityChecklist({prop}){
 }
 
 /* ---- Properties ---- */
-function Properties({portfolio,onAddDocs,onScan,onManual,onEdit,onAdd}){
+
+function PropertyDropZone({propName,propId,onFiles,onManual}){
+  const[over,setOver]=useState(false)
+  const[open,setOpen]=useState(false)
+  const ref=useRef(null)
+
+  function drop(e){
+    e.preventDefault()
+    e.stopPropagation()
+    setOver(false)
+    const files=Array.from(e.dataTransfer.files)
+    if(files.length) onFiles(files)
+  }
+
+  if(!open) return<button onClick={()=>setOpen(true)} style={{marginTop:14,width:'100%',background:'none',border:'0.5px dashed var(--border-strong)',borderRadius:10,padding:'10px 14px',cursor:'pointer',fontSize:12,color:'var(--text-3)',fontFamily:'var(--font)',display:'flex',alignItems:'center',gap:8,transition:'all 0.15s'}}
+    onMouseEnter={e=>e.currentTarget.style.borderColor='var(--brand)'}
+    onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border-strong)'}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Add documents for {propName}
+  </button>
+
+  return<div style={{marginTop:14,border:'0.5px dashed '+(over?'var(--brand)':'var(--border-strong)'),borderRadius:10,padding:'12px 14px',background:over?'var(--brand-subtle)':'var(--surface2)',transition:'all 0.15s'}}
+    onDragOver={e=>{e.preventDefault();setOver(true)}}
+    onDragLeave={()=>setOver(false)}
+    onDrop={drop}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+      <div style={{fontSize:12,fontWeight:500,color:'var(--brand)'}}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight:5,verticalAlign:'middle'}}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Drop documents for {propName}
+      </div>
+      <button onClick={()=>setOpen(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:16,lineHeight:1}}>x</button>
+    </div>
+    <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10}}>Gas cert, EICR, EPC, insurance, tenancy, mortgage: any document for this property. Goes straight here, no matching needed.</div>
+    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+      <label style={{background:'var(--brand)',color:'#fff',borderRadius:7,padding:'6px 14px',fontSize:11,fontWeight:500,cursor:'pointer'}}>
+        Browse files
+        <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.heic,.webp" style={{display:'none'}} onChange={e=>{const f=Array.from(e.target.files);if(f.length)onFiles(f);e.target.value=''}}/>
+      </label>
+      <button onClick={onManual} style={{background:'var(--surface)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 14px',fontSize:11,cursor:'pointer'}}>Enter manually</button>
+    </div>
+  </div>
+}
+
+function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,onAdd}){
   const props=portfolio.properties||[]
   const col=s=>s==='valid'?'var(--green)':s==='due-soon'?'var(--amber)':s==='overdue'?'var(--red)':'var(--text-3)'
   return<div className="fade-up">
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div style={{fontSize:13,color:'var(--text-2)'}}>{props.length} propert{props.length===1?'y':'ies'}</div><button onClick={onAdd} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add property</button></div>
-    <DropZone onFiles={onAddDocs} compact onScan={onScan} onManual={onManual}/>
-    <div style={{marginBottom:12}}/>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}><div style={{fontSize:13,color:'var(--text-2)'}}>{props.length} propert{props.length===1?'y':'ies'}</div><button onClick={onAdd} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add property</button></div>
     {props.length===0?null:props.map(p=>{
       const gasC=dueSoon(p.gasDue),eicrC=dueSoon(p.eicrDue),insC=dueSoon(p.insuranceRenewal)
       const epcStatus=p.epcRating?(['A','B','C'].includes(p.epcRating.toUpperCase())?'green':p.epcRating.toUpperCase()==='D'?'amber':'red'):null
@@ -1703,6 +1744,8 @@ function Properties({portfolio,onAddDocs,onScan,onManual,onEdit,onAdd}){
         {p.insuranceType?.toLowerCase()==='home'&&<div style={{marginTop:10,fontSize:11,color:'var(--red)',background:'var(--red-bg)',borderRadius:7,padding:'7px 10px',lineHeight:1.6}}>Home insurance detected - you need a landlord policy.</div>}
         {p.insurer&&p.insuranceType?.toLowerCase()!=='home'&&(p.insuranceSumInsured||p.insuranceCover||p.insuranceExclusions||p.insuranceLossOfRent||p.insuranceUnoccupancy)&&<InsuranceDetail p={p}/>}
         {p.epcRating&&['D','E','F','G'].includes(p.epcRating.toUpperCase())&&<div style={{marginTop:10,background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#633806',lineHeight:1.6}}>EPC {p.epcRating}: Minimum C required for new lets from 2028, all lets from 2030. Estimated upgrade cost: {p.epcRating==='D'?'£3,000-£8,000':'£5,000-£15,000'}.</div>}
+        {/* Property-scoped document drop */}
+        <PropertyDropZone propName={p.shortName} propId={p.id} onFiles={files=>onAddDocsToProp&&onAddDocsToProp(files,p.id)} onManual={onManual}/>
       </div>
     })}
   </div>
@@ -2339,6 +2382,189 @@ function TaxExportPanel({portfolio}){
 }
 
 
+
+
+/* ============================================================
+   CONTENT QUEUE TAB: AI agent drafts, Mayo approves
+   ============================================================ */
+function ContentQueueTab({user}){
+  const[items,setItems]=useState([])
+  const[loading,setLoading]=useState(true)
+  const[filter,setFilter]=useState('draft')
+  const[typeFilter,setTypeFilter]=useState('all')
+  const[selected,setSelected]=useState(null)
+  const[generating,setGenerating]=useState(false)
+  const[topicInput,setTopicInput]=useState('')
+  const[keywordInput,setKeywordInput]=useState('')
+  const[genMsg,setGenMsg]=useState('')
+
+  async function loadItems(){
+    setLoading(true)
+    try{
+      const params = new URLSearchParams()
+      if(filter!=='all') params.set('status',filter)
+      if(typeFilter!=='all') params.set('type',typeFilter)
+      const r = await fetch('/api/content-queue?'+params)
+      const d = await r.json()
+      setItems(d.items||[])
+    }catch(e){console.error(e)}
+    setLoading(false)
+  }
+
+  useState(()=>{loadItems()},[filter,typeFilter])
+
+  async function updateItem(id, patch){
+    await fetch('/api/content-queue',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,...patch})})
+    await loadItems()
+    if(selected?.id===id) setSelected(prev=>({...prev,...patch}))
+  }
+
+  async function deleteItem(id){
+    if(!confirm('Delete this draft?')) return
+    await fetch('/api/content-queue',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})})
+    setSelected(null)
+    await loadItems()
+  }
+
+  async function generateContent(mode){
+    setGenerating(true)
+    setGenMsg('AI is researching and writing...')
+    try{
+      const body = mode==='topic'
+        ? {manual:true,mode:'topic',topicTitle:topicInput,keyword:keywordInput}
+        : {manual:true,mode:'seo'}
+      const r = await fetch('/api/agent-content',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+process.env.NEXT_PUBLIC_CRON_SECRET},
+        body:JSON.stringify(body)
+      })
+      const d = await r.json()
+      setGenMsg(d.message||'Done')
+      setTopicInput('')
+      setKeywordInput('')
+      await loadItems()
+    }catch(e){setGenMsg('Error: '+e.message)}
+    setGenerating(false)
+  }
+
+  const typeLabel={
+    blog_post:'Blog post',
+    social_instagram:'Instagram',
+    social_linkedin:'LinkedIn',
+    email_blast:'Email',
+    seo_article:'SEO article'
+  }
+  const typeColour={
+    blog_post:{bg:'#E6F1FB',col:'#0C447C'},
+    social_instagram:{bg:'#FBEAF0',col:'#72243E'},
+    social_linkedin:{bg:'#E6F1FB',col:'#0C447C'},
+    email_blast:{bg:'#FAEEDA',col:'#633806'},
+    seo_article:{bg:'#eaf3de',col:'#27500A'}
+  }
+  const urgencyCol={HIGH:'var(--red)',MEDIUM:'var(--amber)',LOW:'var(--text-3)'}
+  const statusBg={draft:'var(--surface2)',approved:'var(--green-bg)',published:'#E6F1FB',rejected:'var(--red-bg)'}
+  const statusCol={draft:'var(--text-2)',approved:'var(--green)',published:'#0C447C',rejected:'var(--red)'}
+
+  return<div className="fade-up">
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:13,fontWeight:500,marginBottom:4}}>Content queue</div>
+      <div style={{fontSize:12,color:'var(--text-3)'}}>AI drafts content automatically. You review, edit if needed, then approve. Nothing publishes without your click.</div>
+    </div>
+
+    {/* Generate controls */}
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:16}}>
+      <div style={{fontSize:12,fontWeight:500,marginBottom:12}}>Generate content</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:8,marginBottom:10}}>
+        <input value={topicInput} onChange={e=>setTopicInput(e.target.value)} placeholder="Article title e.g. How to evict a tenant legally" style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',outline:'none'}}/>
+        <input value={keywordInput} onChange={e=>setKeywordInput(e.target.value)} placeholder="SEO keyword e.g. how to evict tenant UK" style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)',outline:'none'}}/>
+        <button onClick={()=>generateContent('topic')} disabled={generating||!topicInput} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 16px',fontSize:12,fontWeight:500,cursor:generating||!topicInput?'not-allowed':'pointer',opacity:generating||!topicInput?0.6:1,whiteSpace:'nowrap'}}>
+          {generating?'Writing...':'Write article'}
+        </button>
+      </div>
+      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <button onClick={()=>generateContent('seo')} disabled={generating} style={{background:'var(--surface2)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:generating?'not-allowed':'pointer',opacity:generating?0.6:1}}>
+          Run weekly SEO batch (2 articles)
+        </button>
+        {genMsg&&<span style={{fontSize:11,color:'var(--text-3)'}}>{genMsg}</span>}
+      </div>
+    </div>
+
+    {/* Filters */}
+    <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+      {['draft','approved','published','rejected','all'].map(s=>
+        <button key={s} onClick={()=>setFilter(s)} style={{padding:'5px 14px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:filter===s?'var(--brand)':'var(--border)',background:filter===s?'var(--brand-light)':'var(--surface)',color:filter===s?'var(--brand)':'var(--text-2)',textTransform:'capitalize'}}>{s==='all'?'All statuses':s}</button>
+      )}
+      <div style={{width:1,background:'var(--border)',margin:'0 4px'}}/>
+      {['all','blog_post','social_instagram','social_linkedin'].map(t=>
+        <button key={t} onClick={()=>setTypeFilter(t)} style={{padding:'5px 14px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:typeFilter===t?'var(--brand)':'var(--border)',background:typeFilter===t?'var(--brand-light)':'var(--surface)',color:typeFilter===t?'var(--brand)':'var(--text-2)'}}>{t==='all'?'All types':typeLabel[t]||t}</button>
+      )}
+    </div>
+
+    <div style={{display:'grid',gridTemplateColumns:selected?'1fr 1fr':'1fr',gap:14}}>
+      {/* Item list */}
+      <div>
+        {loading?<div style={{fontSize:12,color:'var(--text-3)',padding:'20px 0',textAlign:'center'}}>Loading...</div>
+        :items.length===0?<div style={{fontSize:12,color:'var(--text-3)',padding:'20px 0',textAlign:'center'}}>No items. Generate some content above or wait for the weekly agent to run.</div>
+        :<div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {items.map(item=>{
+            const tc=typeColour[item.type]||{bg:'var(--surface2)',col:'var(--text-2)'}
+            const isSelected=selected?.id===item.id
+            return<div key={item.id} onClick={()=>setSelected(isSelected?null:item)}
+              style={{background:isSelected?'var(--brand-subtle)':'var(--surface)',border:`0.5px solid ${isSelected?'var(--brand)':'var(--border)'}`,borderRadius:11,padding:'11px 14px',cursor:'pointer',transition:'all 0.15s'}}>
+              <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:6}}>
+                <span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,background:tc.bg,color:tc.col,flexShrink:0}}>{typeLabel[item.type]||item.type}</span>
+                <span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,background:statusBg[item.status]||'var(--surface2)',color:statusCol[item.status]||'var(--text-2)',flexShrink:0,textTransform:'capitalize'}}>{item.status}</span>
+                {item.urgency==='HIGH'&&<span style={{fontSize:10,color:'var(--red)',fontWeight:600}}>URGENT</span>}
+              </div>
+              <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:2,lineHeight:1.4}}>{item.title}</div>
+              <div style={{fontSize:11,color:'var(--text-3)'}}>{new Date(item.created_at).toLocaleDateString('en-GB')} {item.source&&'· '+item.source.replace('_',' ')}</div>
+              {item.status==='draft'&&<div style={{display:'flex',gap:6,marginTop:8}}>
+                <button onClick={e=>{e.stopPropagation();updateItem(item.id,{status:'approved'})}} style={{background:'var(--green-bg)',color:'var(--green)',border:'none',borderRadius:6,padding:'4px 10px',fontSize:11,fontWeight:500,cursor:'pointer'}}>Approve</button>
+                <button onClick={e=>{e.stopPropagation();updateItem(item.id,{status:'rejected'})}} style={{background:'var(--red-bg)',color:'var(--red)',border:'none',borderRadius:6,padding:'4px 10px',fontSize:11,cursor:'pointer'}}>Reject</button>
+                <button onClick={e=>{e.stopPropagation();deleteItem(item.id)}} style={{background:'none',color:'var(--text-3)',border:'none',padding:'4px 6px',fontSize:11,cursor:'pointer'}}>Delete</button>
+              </div>}
+              {item.status==='approved'&&<div style={{display:'flex',gap:6,marginTop:8}}>
+                <button onClick={e=>{e.stopPropagation();updateItem(item.id,{status:'published'})}} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:6,padding:'4px 12px',fontSize:11,fontWeight:500,cursor:'pointer'}}>Mark published</button>
+              </div>}
+            </div>
+          })}
+        </div>}
+      </div>
+
+      {/* Detail pane */}
+      {selected&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,maxHeight:'80vh',overflowY:'auto'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14}}>
+          <div style={{fontSize:13,fontWeight:500,color:'var(--text)',flex:1,paddingRight:8}}>{selected.title}</div>
+          <button onClick={()=>setSelected(null)} style={{color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',fontSize:18,flexShrink:0}}>x</button>
+        </div>
+        {selected.meta_description&&<div style={{fontSize:11,color:'var(--text-3)',marginBottom:12,padding:'8px 10px',background:'var(--surface2)',borderRadius:8,lineHeight:1.6}}>
+          <span style={{fontWeight:500,color:'var(--text-2)'}}>Meta: </span>{selected.meta_description}
+        </div>}
+        {selected.slug&&<div style={{fontSize:11,color:'var(--brand)',marginBottom:12}}>
+          /blog/{selected.slug}
+        </div>}
+        <div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.9,whiteSpace:'pre-wrap',borderTop:'0.5px solid var(--border)',paddingTop:12}}>
+          {selected.body}
+        </div>
+        {selected.notes&&<div style={{marginTop:12,fontSize:11,color:'var(--text-3)',padding:'6px 10px',background:'var(--surface2)',borderRadius:7}}>
+          {selected.notes}
+        </div>}
+        <div style={{display:'flex',gap:8,marginTop:14,flexWrap:'wrap'}}>
+          {selected.status==='draft'&&<>
+            <button onClick={()=>updateItem(selected.id,{status:'approved'})} style={{background:'var(--green-bg)',color:'var(--green)',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Approve</button>
+            <button onClick={()=>updateItem(selected.id,{status:'rejected'})} style={{background:'var(--red-bg)',color:'var(--red)',border:'none',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Reject</button>
+          </>}
+          {selected.status==='approved'&&<button onClick={()=>updateItem(selected.id,{status:'published'})} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Mark published</button>}
+          <button onClick={()=>{navigator.clipboard.writeText(selected.body||'')}} style={{background:'var(--surface2)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Copy</button>
+        </div>
+      </div>}
+    </div>
+
+    <div style={{marginTop:20,fontSize:11,color:'var(--text-3)',lineHeight:1.8,padding:'12px 14px',background:'var(--surface2)',borderRadius:10}}>
+      <strong style={{color:'var(--text-2)'}}>How this works:</strong> The legislation monitor runs every Monday and triggers this agent automatically when it finds legal changes. The SEO agent runs every Wednesday and drafts 2 articles from the keyword list. You approve here, then copy the content to your blog or social scheduler. Nothing goes anywhere without your click.
+    </div>
+  </div>
+}
 
 /* ============================================================
    RESOURCES TAB: Curated landlord resources
@@ -3201,7 +3427,7 @@ function ConditionReport({portfolio,setPortfolio,userId}){
 }
 
 /* ---- Root ---- */
-const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'tenants',label:'Find & check tenants',short:'Tenants'},{id:'resources',label:'Resources',short:'Links'},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
+const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'tenants',label:'Find & check tenants',short:'Tenants'},{id:'resources',label:'Resources',short:'Links'},{id:'content',label:'Content queue',short:'Content',adminOnly:true},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
 
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
@@ -3325,12 +3551,11 @@ export default function Dashboard(){
         setQueue(q=>q.map(x=>x.id===id?{...x,status:'extracting'}:x))
         const res=await fetch('/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,data:b64,mediaType:detectedType||file.type})})
         const result=await res.json()
-        setQueue(q=>q.map(x=>x.id===id?{...x,status:result.success?'done':'error',result}:x))
         if(result.success&&result.extracted){
           // Show what was extracted before saving
           const extracted = result.extracted
           const prop = extracted.property
-          const matchedProp = prop ? portfolio.properties?.find(p=>{
+          const matchedProp = prop ? (portfolioRef.current||portfolio).properties?.find(p=>{
             const pn = (p.address||'').toLowerCase()
             const en = (prop.address||'').toLowerCase()
             const shortN = (prop.shortName||'').toLowerCase()
@@ -3353,6 +3578,8 @@ export default function Dashboard(){
           if(f2.lender) changes.push('Lender: '+f2.lender)
 
           setQueue(q=>q.map(x=>x.id===id?{...x,status:'confirm',result,extracted,changes,matchedProp}:x))
+        } else {
+          setQueue(q=>q.map(x=>x.id===id?{...x,status:'error',result}:x))
         }
         // Small pause between files to avoid rate limits
         if(valid.indexOf(file)<valid.length-1) await new Promise(r=>setTimeout(r,500))
@@ -3364,6 +3591,81 @@ export default function Dashboard(){
 
   if(!isLoaded||!isSignedIn)return<div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{width:28,height:28,borderRadius:'50%',border:'2.5px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/></div>
   // Camera scanner overlay
+  // Property-scoped file handler: skips address matching, goes direct to property
+  async function handleFilesForProp(files, propId) {
+    const valid = files.filter(f => {
+      const ext = f.name.toLowerCase()
+      return ext.endsWith('.pdf') || ext.endsWith('.jpg') || ext.endsWith('.jpeg') ||
+             ext.endsWith('.png') || ext.endsWith('.heic') || ext.endsWith('.webp')
+    })
+    for (const file of valid) {
+      const id = Math.random().toString(36).slice(2)
+      setQueue(q => [...q, { id, name: file.name, status: 'reading', forcePropId: propId }])
+      try {
+        const { data: b64, mediaType: detectedType } = await fileToBase64(file)
+        setQueue(q => q.map(x => x.id === id ? { ...x, status: 'extracting' } : x))
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, data: b64, mediaType: detectedType || file.type })
+        })
+        const result = await res.json()
+        if (result.success && result.extracted) {
+          // Force-assign to this property, no matching needed
+          setPortfolio(prev => {
+            const props = prev.properties || []
+            const patch = {}
+            const cx = result.extracted.compliance || {}
+            const t = result.extracted.tenancy || {}
+            const f2 = result.extracted.finance || {}
+            // Apply same field mapping as mergeDoc but skip address matching
+            if (cx.gas?.date) patch.gasDate = cx.gas.date
+            if (cx.gas?.due) patch.gasDue = cx.gas.due
+            if (cx.eicr?.date) patch.eicrDate = cx.eicr.date
+            if (cx.eicr?.due) patch.eicrDue = cx.eicr.due
+            if (cx.epc?.rating) patch.epcRating = cx.epc.rating.toUpperCase().trim().charAt(0)
+            if (cx.epc?.expiry) patch.epcExpiry = cx.epc.expiry
+            if (cx.insurance?.insurer) patch.insurer = cx.insurance.insurer
+            if (cx.insurance?.renewal) patch.insuranceRenewal = cx.insurance.renewal
+            if (cx.insurance?.premium) patch.insurancePremium = Number(String(cx.insurance.premium).replace(/[^0-9.]/g,''))||undefined
+            if (cx.insurance?.sumInsured) patch.insuranceSumInsured = Number(String(cx.insurance.sumInsured).replace(/[^0-9.]/g,''))||undefined
+            if (cx.insurance?.excess) patch.insuranceExcess = Number(String(cx.insurance.excess).replace(/[^0-9.]/g,''))||undefined
+            if (cx.insurance?.unoccupancyClause) patch.insuranceUnoccupancy = cx.insurance.unoccupancyClause
+            if (cx.insurance?.exclusions) patch.insuranceExclusions = cx.insurance.exclusions
+            if (cx.insurance?.cover) patch.insuranceCover = cx.insurance.cover
+            if (cx.insurance?.lossOfRentCover) patch.insuranceLossOfRent = cx.insurance.lossOfRentCover
+            if (cx.insurance?.broker) patch.insuranceBroker = cx.insurance.broker
+            if (t.rent) patch.rent = Number(String(t.rent).replace(/[^0-9.]/g,''))||undefined
+            if (t.tenantName) patch.tenantName = t.tenantName
+            if (t.tenantPhone) patch.tenantPhone = t.tenantPhone
+            if (t.tenantEmail) patch.tenantEmail = t.tenantEmail
+            if (t.depositAmount) patch.depositAmount = Number(String(t.depositAmount).replace(/[^0-9.]/g,''))||undefined
+            if (t.depositScheme) patch.depositScheme = t.depositScheme
+            if (t.startDate) patch.tenancyStart = t.startDate
+            if (f2.lender) patch.lender = f2.lender
+            if (f2.mortgage) patch.mortgage = Number(String(f2.mortgage).replace(/[^0-9.]/g,''))||undefined
+            if (f2.rate) patch.rate = f2.rate
+            if (f2.fixedEnd) patch.fixedEnd = f2.fixedEnd
+            if (f2.monthlyPayment) patch.monthlyPayment = Number(String(f2.monthlyPayment).replace(/[^0-9.]/g,''))||undefined
+            const docType = result.extracted.documentType
+            const updated = props.map(p =>
+              p.id === propId
+                ? { ...p, ...patch, docs: Array.from(new Set([...(p.docs || []), docType])) }
+                : p
+            )
+            return { ...prev, properties: updated }
+          })
+          setQueue(q => q.map(x => x.id === id ? { ...x, status: 'done', result } : x))
+        } else {
+          setQueue(q => q.map(x => x.id === id ? { ...x, status: 'error', result } : x))
+        }
+        if (valid.indexOf(file) < valid.length - 1) await new Promise(r => setTimeout(r, 500))
+      } catch {
+        setQueue(q => q.map(x => x.id === id ? { ...x, status: 'error', result: { error: 'Could not process this file.' } } : x))
+      }
+    }
+  }
+
   if(showCamera)return<CameraScanner onFiles={f=>{handleFiles(f)}} onClose={()=>setShowCamera(false)}/>
   // iOS safe area support
   const safeAreaStyle = typeof window !== 'undefined' ? {paddingBottom:'env(safe-area-inset-bottom,0px)'} : {}
@@ -3388,7 +3690,7 @@ export default function Dashboard(){
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
       <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:30,height:30,background:'var(--brand)',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:14,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:17,fontWeight:400}}>Lettly</span></div>
-        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
+        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.filter(t=>!t.adminOnly||user?.publicMetadata?.admin||user?.emailAddresses?.[0]?.emailAddress?.includes('lettly.co')).map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
           {saveStatus==='saving'&&<span style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
           {saveStatus==='saved'&&loaded&&<span style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
@@ -3407,7 +3709,7 @@ export default function Dashboard(){
               <button onClick={()=>setQueue([])} style={{fontSize:11,color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}}>Clear all</button>
             </div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onConfirm={(confirmedItem)=>{setPortfolio(prev=>mergeDoc(prev,confirmedItem.extracted));setQueue(q=>q.map(x=>x.id===confirmedItem.id?{...x,status:'done'}:x))}} onReject={(rejectedItem)=>{setQueue(q=>q.filter(x=>x.id!==rejectedItem.id))}} onRetry={async(failedItem)=>{
+          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onManual={()=>setShowManual(true)} onConfirm={(confirmedItem)=>{setPortfolio(prev=>mergeDoc(prev,confirmedItem.extracted));setQueue(q=>q.map(x=>x.id===confirmedItem.id?{...x,status:'done'}:x))}} onReject={(rejectedItem)=>{setQueue(q=>q.filter(x=>x.id!==rejectedItem.id))}} onRetry={async(failedItem)=>{
               setQueue(q=>q.map(x=>x.id===failedItem.id?{...x,status:'reading',result:null}:x))
               try{
                 const file=new File([],failedItem.name)
@@ -3420,9 +3722,10 @@ export default function Dashboard(){
       <div className="dash-content">
         {tab==='overview'&&<div style={{marginBottom:14}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(20px,4vw,28px)',fontWeight:300,marginBottom:3}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:13,color:'var(--text-3)'}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} saved`}</p></div>}
         {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
-        {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
+        {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onAddDocsToProp={handleFilesForProp} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
         {tab==='tenants'     &&<TenantsTab    portfolio={portfolio} setPortfolio={setPortfolio}/>}
         {tab==='resources'   &&<ResourcesTab/>}
+        {tab==='content'    &&<ContentQueueTab user={user}/>}
         {tab==='finance'     &&<FinanceTab    portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='rent'        &&<RentTracker   portfolio={portfolio} setPortfolio={setPortfolio}/> }
         {tab==='maintenance' &&<MaintenanceTab portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/>}

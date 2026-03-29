@@ -119,6 +119,28 @@ Return ONLY the JSON object, nothing else.`
     // Log a "checked" record even if no changes, so we know it ran
     console.log(`Legislation monitor ran: ${MONITORED_TOPICS.length} topics checked, ${alerts.length} alerts`)
 
+    // Trigger content agent for any HIGH urgency alerts
+    const highAlerts = alerts.filter(a => a.urgency === 'HIGH')
+    for (const alert of highAlerts) {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://lettly.co'}/api/agent-content`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.CRON_SECRET}`
+          },
+          body: JSON.stringify({
+            mode: 'legislation',
+            alertSummary: alert.summary,
+            alertTopic: alert.topic,
+            alertId: alert.id || Date.now().toString()
+          })
+        })
+      } catch (agentErr) {
+        console.error('Content agent trigger failed:', agentErr?.message)
+      }
+    }
+
     return res.status(200).json({
       checked: MONITORED_TOPICS.length,
       changes: alerts.length,
