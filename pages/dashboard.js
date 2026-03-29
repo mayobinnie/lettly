@@ -605,8 +605,37 @@ function ManualEntryModal({portfolio, onMerge, onClose}){
   )
 }
 
-function QueueItem({item,onRetry,onManual}){const done=item.status==='done',err=item.status==='error',working=item.status==='reading'||item.status==='extracting';const ext=item.result?.extracted
-return<div className="scale-in" style={{display:'flex',gap:12,alignItems:'flex-start',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}><div style={{width:38,height:38,borderRadius:9,flexShrink:0,background:done?'var(--brand-light)':err?'var(--red-bg)':'var(--surface2)',display:'flex',alignItems:'center',justifyContent:'center'}}>{done&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}{err&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>}{working&&<div style={{width:18,height:18,borderRadius:'50%',border:'2px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/>}</div><div style={{flex:1,minWidth:0}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:done&&ext?5:0}}><div style={{fontSize:12,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'60%'}}>{item.name}</div><Pill type={done?'green':err?'red':item.status==='extracting'?'amber':'grey'}>{done?'Extracted':err?'Error':item.status==='extracting'?'Analysing':'Reading'}</Pill></div>{done&&ext&&<div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.6}}>{ext.summary}{ext.property?.shortName&&<span style={{marginLeft:6,color:'var(--brand)',fontWeight:500}}>- {ext.property.shortName}</span>}</div>}{done&&ext?.documentType&&<div style={{marginTop:6}}><DocBadge type={ext.documentType}/></div>}{err&&<div style={{display:'flex',alignItems:'center',gap:8,marginTop:3,flexWrap:'wrap'}}>
+function QueueItem({item,onRetry,onManual,onConfirm,onReject}){
+  const done=item.status==='done',err=item.status==='error',confirm=item.status==='confirm',working=item.status==='reading'||item.status==='extracting'
+  const ext=item.result?.extracted
+
+  if(confirm&&item.changes){
+    return<div className="scale-in" style={{background:'var(--surface)',border:'0.5px solid var(--brand)',borderRadius:12,padding:'12px 14px'}}>
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+        <div style={{width:8,height:8,borderRadius:'50%',background:'var(--brand)',flexShrink:0}}/>
+        <div style={{fontSize:12,fontWeight:500,color:'var(--text)',flex:1}}>{item.name}</div>
+        <div style={{fontSize:11,background:'var(--brand-light)',color:'var(--brand)',borderRadius:6,padding:'2px 8px',fontWeight:500}}>{ext?.documentType?.replace(/_/g,' ')}</div>
+      </div>
+      <div style={{fontSize:11,color:'var(--text-2)',marginBottom:10,lineHeight:1.8,background:'var(--surface2)',borderRadius:8,padding:'8px 10px'}}>
+        {item.changes.map(ch=><div key={ch} style={{display:'flex',gap:6,alignItems:'center'}}>
+          <span style={{color:'var(--brand)',fontSize:10,fontWeight:600}}>+</span>
+          <span>{ch}</span>
+        </div>)}
+        {item.matchedProp
+          ? <div style={{marginTop:4,paddingTop:4,borderTop:'0.5px solid var(--border)',color:'var(--brand)',fontSize:11}}><strong>Matched to:</strong> {item.matchedProp.shortName}</div>
+          : <div style={{marginTop:4,paddingTop:4,borderTop:'0.5px solid var(--border)',color:'var(--text-3)',fontSize:11}}>Will create a new property entry</div>
+        }
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <button onClick={()=>onConfirm(item)} style={{flex:1,background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 0',fontSize:12,fontWeight:500,cursor:'pointer'}}>Save this data</button>
+        <button onClick={()=>onManual&&onManual()} style={{flex:1,background:'var(--surface2)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 0',fontSize:12,cursor:'pointer'}}>Enter manually instead</button>
+        <button onClick={()=>onReject(item)} style={{background:'var(--surface2)',color:'var(--text-3)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 10px',fontSize:12,cursor:'pointer'}}>Discard</button>
+      </div>
+    </div>
+  }
+
+  const done2=item.status==='done',err2=item.status==='error',working2=item.status==='reading'||item.status==='extracting'
+  return<div className="scale-in" style={{display:'flex',gap:12,alignItems:'flex-start',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}><div style={{width:38,height:38,borderRadius:9,flexShrink:0,background:done2?'var(--brand-light)':err2?'var(--red-bg)':'var(--surface2)',display:'flex',alignItems:'center',justifyContent:'center'}}>{done2&&<svg width="18"return<div className="scale-in" style={{display:'flex',gap:12,alignItems:'flex-start',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}><div style={{width:38,height:38,borderRadius:9,flexShrink:0,background:done?'var(--brand-light)':err?'var(--red-bg)':'var(--surface2)',display:'flex',alignItems:'center',justifyContent:'center'}}>{done&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}{err&&<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>}{working&&<div style={{width:18,height:18,borderRadius:'50%',border:'2px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/>}</div><div style={{flex:1,minWidth:0}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:done&&ext?5:0}}><div style={{fontSize:12,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'60%'}}>{item.name}</div><Pill type={done?'green':err?'red':item.status==='extracting'?'amber':'grey'}>{done?'Extracted':err?'Error':item.status==='extracting'?'Analysing':'Reading'}</Pill></div>{done&&ext&&<div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.6}}>{ext.summary}{ext.property?.shortName&&<span style={{marginLeft:6,color:'var(--brand)',fontWeight:500}}>- {ext.property.shortName}</span>}</div>}{done&&ext?.documentType&&<div style={{marginTop:6}}><DocBadge type={ext.documentType}/></div>}{err&&<div style={{display:'flex',alignItems:'center',gap:8,marginTop:3,flexWrap:'wrap'}}>
           <span style={{fontSize:11,color:'var(--red)',lineHeight:1.5,display:'block',marginBottom:4}}>{item.result?.error||'Could not read this file.'}</span>
           <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
             {onRetry&&<button onClick={()=>onRetry(item)} style={{fontSize:10,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:5,padding:'3px 9px',cursor:'pointer',whiteSpace:'nowrap'}}>Try again</button>}
@@ -3298,7 +3327,34 @@ export default function Dashboard(){
         const res=await fetch('/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,data:b64,mediaType:detectedType||file.type})})
         const result=await res.json()
         setQueue(q=>q.map(x=>x.id===id?{...x,status:result.success?'done':'error',result}:x))
-        if(result.success&&result.extracted)setPortfolio(prev=>mergeDoc(prev,result.extracted))
+        if(result.success&&result.extracted){
+          // Show what was extracted before saving
+          const extracted = result.extracted
+          const prop = extracted.property
+          const matchedProp = prop ? portfolio.properties?.find(p=>{
+            const pn = (p.address||'').toLowerCase()
+            const en = (prop.address||'').toLowerCase()
+            const shortN = (prop.shortName||'').toLowerCase()
+            return pn.includes(shortN.split(' ')[0]) && shortN.length > 3
+          }) : null
+
+          // Build a summary of what will be saved
+          const changes = []
+          if(prop?.shortName) changes.push('Property: '+prop.shortName)
+          const t = extracted.tenancy||{}
+          const cx = extracted.compliance||{}
+          const f2 = extracted.finance||{}
+          if(t.rent) changes.push('Rent: £'+t.rent+'/mo')
+          if(t.tenantName) changes.push('Tenant: '+t.tenantName)
+          if(cx.gas?.due) changes.push('Gas cert due: '+cx.gas.due)
+          if(cx.eicr?.due) changes.push('EICR due: '+cx.eicr.due)
+          if(cx.epc?.rating) changes.push('EPC: '+cx.epc.rating)
+          if(cx.insurance?.insurer) changes.push('Insurer: '+cx.insurance.insurer)
+          if(f2.mortgage) changes.push('Mortgage: £'+f2.mortgage)
+          if(f2.lender) changes.push('Lender: '+f2.lender)
+
+          setQueue(q=>q.map(x=>x.id===id?{...x,status:'confirm',result,extracted,changes,matchedProp}:x))
+        }
         // Small pause between files to avoid rate limits
         if(valid.indexOf(file)<valid.length-1) await new Promise(r=>setTimeout(r,500))
       }catch{
@@ -3352,7 +3408,7 @@ export default function Dashboard(){
               <button onClick={()=>setQueue([])} style={{fontSize:11,color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}}>Clear all</button>
             </div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onRetry={async(failedItem)=>{
+          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onConfirm={(confirmedItem)=>{setPortfolio(prev=>mergeDoc(prev,confirmedItem.extracted));setQueue(q=>q.map(x=>x.id===confirmedItem.id?{...x,status:'done'}:x))}} onReject={(rejectedItem)=>{setQueue(q=>q.filter(x=>x.id!==rejectedItem.id))}} onRetry={async(failedItem)=>{
               setQueue(q=>q.map(x=>x.id===failedItem.id?{...x,status:'reading',result:null}:x))
               try{
                 const file=new File([],failedItem.name)

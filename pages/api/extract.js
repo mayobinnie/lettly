@@ -3,130 +3,187 @@ import { getAuth } from '@clerk/nextjs/server'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const PROMPT = `You are a UK property management compliance expert. READ EVERY PAGE OF THIS DOCUMENT thoroughly. Extract ALL information relevant to property management and return ONLY a valid JSON object.
+const PROMPT = `You are a UK property management compliance expert. READ EVERY PAGE OF THIS DOCUMENT thoroughly before extracting anything. Return ONLY a valid JSON object — no markdown, no explanation, no commentary.
 
-CRITICAL RULES:
-- READ ALL PAGES. Do not stop at page 1. Every page may contain critical compliance data, dates, or obligations.
-- The property address is the ADDRESS BEING LET OR MANAGED : not the landlord's address, not the solicitor's, not an agent's office
-- For completion statements, mortgage offers, tenancy agreements: property = the one being purchased/mortgaged/let
-- For gas certs, EICRs, EPCs: property = where the work was carried out
-- For insurance: property = the insured premises (not the policyholder's correspondence address)
-- shortName MUST start with house number: "11 Northfield Avenue" not "Northfield Avenue"
-- CRITICAL HOUSE NUMBER RULE: You must read the house number character by character. "3", "11", and "31" are completely different properties even if they share the same street. Do not guess or approximate. If a document contains multiple addresses with the same street name, extract ONLY the number that appears immediately before that street name in the context of the primary property. A page number, reference number, clause number, or any other number in the document is NOT the house number.
-- If you find multiple different house numbers in a document (e.g. landlord address vs property address), always use the property address number, not the landlord/agent/solicitor address number.
-- address MUST include full address with house number, street, town, postcode
-- CRITICAL: Do NOT create a property for access roads, rights of way, easements, or ancillary land described in title documents. Only extract a property if it is the PRIMARY dwelling being purchased, let, or managed.
-- CRITICAL: If a document describes "access via X road" or "right of way over X" : X is NOT the property address. The property is the main dwelling the document is fundamentally about.
-- If you cannot identify a specific house/flat number for the property, omit the property field entirely rather than guessing a road name.
-- NEVER use a document type as a property name. shortName must NEVER be "Rental Contract", "Tenancy Agreement", "Lease", "Document", "Contract", "Mortgage", "Unknown", or any variation of these. If you cannot identify a real street address with a house number, omit the property field entirely.
-- A valid shortName looks like: "11 Northfield Avenue" or "7 Tower Hill Mews" or "602 Hotham Road South". It starts with a number and ends with a street name.
-- If the document is a generic template, a terms of business document, or does not refer to a specific identifiable property address with a house number, omit the property field entirely.
-- Extract EVERY date, certificate number, reference, name, amount . Do not skip anything.
-- For compliance docs: extract engineer/inspector name, registration numbers, test results, observations, and any defects noted
-- For tenancy agreements: extract ALL tenant names (the RENTERS, not the owner), ALL clauses about obligations, break clauses, permitted use. The tenant is the person paying rent. The landlord is the person receiving rent. Never confuse them. If the document says "The Landlord: Mayo Binnie" and "The Tenant: John Smith", tenantName = "John Smith" and landlordName = "Mayo Binnie".
-- For insurance: extract ALL covered risks, exclusions, excess amounts, and any special conditions
-- For leases: extract lease length, ground rent, service charge, review dates, landlord covenants, tenant covenants
-- Do not guess. Omit fields you cannot find. But look hard: the data is there across multiple pages.
+═══ PROPERTY ADDRESS — READ THIS CAREFULLY ═══
+The property address is WHERE THE WORK WAS DONE or WHERE THE TENANCY IS — not the landlord address, not the agent address, not the solicitor address.
+- Gas cert / EICR / EPC: the address of the property inspected (printed at the top of the certificate)
+- Tenancy agreement: the property being rented (not the landlord correspondence address)
+- Insurance: the insured premises address (not the policyholder postal address)
+- Mortgage / completion: the property being purchased or mortgaged
 
-Use this exact structure (omit any field you cannot find : but search ALL pages before omitting):
+HOUSE NUMBER RULES (critical — read character by character):
+- "3", "11" and "31" are COMPLETELY DIFFERENT properties on the same street
+- Copy the house number digit-by-digit from the document. Never guess.
+- Page numbers, clause numbers, reference numbers are NOT house numbers
+- If a document mentions both "11 Northfield Avenue" (the property) and "3 Elm Street" (the landlord's home), the property field must be "11 Northfield Avenue"
+- shortName MUST start with the house number: "11 Northfield Avenue" not "Northfield Avenue"
+- If you cannot find a house number, omit the property field entirely
+
+INVALID property names — NEVER use these as shortName:
+Rental Contract, Tenancy Agreement, Lease, Document, Contract, Mortgage, Unknown, Not stated, Insurance, Gas Certificate, EICR, EPC, Report, Form, Certificate, Deed, Notice, Section, Schedule
+
+═══ DOCUMENT-SPECIFIC EXTRACTION RULES ═══
+
+GAS SAFETY CERTIFICATE:
+- "date of inspection" = gas.date (when the engineer visited)
+- "next inspection due" or "valid until" = gas.due (12 months after inspection date)
+- If "due" date is not printed, calculate it: gas.date + 12 months
+- Engineer name and Gas Safe registration number must both be extracted
+- List every appliance inspected (boiler, hob, fire, etc)
+- Result: Immediately Dangerous (ID) = Fail, At Risk (AR) = Fail, Not to Current Standard (NCS) = Advisory, all satisfactory = Pass
+
+EICR (ELECTRICAL INSTALLATION CONDITION REPORT):
+- Date of inspection = eicr.date
+- Next inspection due = eicr.due (usually 5 years after inspection)
+- If "due" not printed, calculate: eicr.date + 5 years
+- Result must be exactly "Satisfactory" or "Unsatisfactory"
+- Extract all C1, C2, C3, FI observations if listed
+
+EPC (ENERGY PERFORMANCE CERTIFICATE):
+- Current energy rating = single letter A B C D E F G — extract the CURRENT rating not the potential rating
+- Valid until / expiry date = epc.expiry
+- EPC reference number if shown
+
+TENANCY AGREEMENT:
+- Tenant = the person PAYING rent and LIVING there (labelled "The Tenant", "Lessee", "Contract-Holder")
+- Landlord = the person RECEIVING rent (labelled "The Landlord", "Lessor", "Licensor")
+- NEVER put the landlord name in tenantName. NEVER put the tenant name in landlordName.
+- rent = the monthly (or weekly) amount in £ as a NUMBER only (e.g. 850, not "£850 per month")
+- rentFrequency = "monthly" or "weekly"
+- depositAmount = the deposit in £ as a NUMBER only
+- startDate = tenancy commencement date DD/MM/YYYY
+- Extract the deposit scheme name exactly as written (DPS, TDS, MyDeposits, SafeDeposits Scotland, etc)
+
+INSURANCE POLICY:
+- insurer = the insurance company name (not the broker)
+- policyNumber = the policy reference number
+- renewal = the renewal / expiry date DD/MM/YYYY
+- premium = annual premium as a NUMBER in £
+- sumInsured = total buildings sum insured as a NUMBER in £
+- excess = the standard excess as a NUMBER in £
+- Read EVERY PAGE for exclusions — they are often on later pages
+- unoccupancyClause = exact wording of any clause about unoccupied properties
+
+MORTGAGE OFFER / COMPLETION STATEMENT:
+- mortgage = the loan amount as a NUMBER in £
+- rate = interest rate as a NUMBER (e.g. 4.5 not "4.5%")
+- fixedEnd = the date the fixed rate ends DD/MM/YYYY
+- monthlyPayment = monthly payment amount as a NUMBER in £
+- lender = the bank or building society name
+- completionDate = the completion date DD/MM/YYYY
+
+═══ NUMBER FORMATTING RULES ═══
+All monetary amounts must be NUMBERS not strings:
+- rent: 850 (not "£850" not "850 per month")
+- depositAmount: 1200 (not "£1,200")
+- mortgage: 150000 (not "£150,000")
+- premium: 450 (not "£450.00")
+All dates must be DD/MM/YYYY format.
+If a value is not found, omit the field entirely — do not use null, 0, or "unknown".
+
+═══ JSON STRUCTURE ═══
 {
   "documentType": "gas_certificate|eicr|insurance|epc_certificate|tenancy_agreement|mortgage_offer|completion_statement|lease|section_notice|inventory|other",
   "property": {
-    "address": "full property address as written in the document",
-    "shortName": "short display name e.g. 11 Northfield Avenue",
+    "address": "full address exactly as printed in document",
+    "shortName": "e.g. 11 Northfield Avenue — starts with house number",
+    "postcode": "postcode extracted separately for matching accuracy",
     "uprn": "if present",
     "tenure": "Freehold|Leasehold|if stated"
   },
   "compliance": {
     "gas": {
-      "date": "DD/MM/YYYY", "due": "DD/MM/YYYY", "engineer": "name",
-      "gasSafeNo": "number", "appliances": ["list of appliances inspected"],
-      "result": "Pass|Fail|Advisory", "defects": "any defects or advisories noted"
+      "date": "DD/MM/YYYY",
+      "due": "DD/MM/YYYY",
+      "engineer": "full name",
+      "gasSafeNo": "registration number",
+      "appliances": ["boiler model", "gas hob", "etc"],
+      "result": "Pass|Fail|Advisory",
+      "defects": "any ID/AR/NCS observations"
     },
     "eicr": {
-      "date": "DD/MM/YYYY", "due": "DD/MM/YYYY",
-      "result": "Satisfactory|Unsatisfactory", "inspector": "name",
-      "circuits": "number of circuits tested", "observations": "C1/C2/C3 codes if listed"
+      "date": "DD/MM/YYYY",
+      "due": "DD/MM/YYYY",
+      "result": "Satisfactory|Unsatisfactory",
+      "inspector": "name",
+      "circuits": "number tested",
+      "observations": "C1/C2/C3 codes"
     },
     "insurance": {
-      "insurer": "name",
-      "policyNumber": "number",
+      "insurer": "company name",
+      "policyNumber": "reference",
       "renewal": "DD/MM/YYYY",
       "startDate": "DD/MM/YYYY",
       "type": "Landlord|Home|Other",
       "premium": 0,
-      "premiumBreakdown": "any breakdown of premium components if shown",
-      "paymentFrequency": "annual|monthly",
       "sumInsured": 0,
       "buildingsSum": 0,
-      "contentsSum": 0,
       "liabilitySum": 0,
       "excess": 0,
-      "voluntaryExcess": 0,
-      "compulsoryExcess": 0,
-      "cover": "full list of covers included : buildings, contents, liability, loss of rent, legal, etc",
       "lossOfRentCover": 0,
-      "lossOfRentPeriod": "max period covered e.g. 12 months",
+      "lossOfRentPeriod": "e.g. 12 months",
       "legalExpensesCover": 0,
-      "emergencyCover": "yes/no and what is covered",
+      "emergencyCover": "yes/no and detail",
       "floodCover": "yes/no",
-      "subsidence": "yes/no",
-      "accidentalDamage": "yes/no : buildings",
-      "accidentalDamagContents": "yes/no : contents",
-      "maliciousDamage": "yes/no",
-      "theftCover": "yes/no",
-      "unoccupancyClause": "any unoccupancy restrictions e.g. 30 consecutive days",
-      "exclusions": "list ALL notable exclusions found anywhere in the document",
-      "conditions": "any important policy conditions or warranties",
-      "claimsLine": "claims phone number if shown",
-      "broker": "broker name if different from insurer",
-      "insurerAddress": "insurer address if shown"
+      "unoccupancyClause": "exact clause wording",
+      "exclusions": "all exclusions listed",
+      "broker": "broker name if different from insurer"
     },
     "epc": {
-      "rating": "A|B|C|D|E|F|G", "expiry": "DD/MM/YYYY",
-      "score": 0, "referenceNo": "if present",
-      "recommendations": "key improvement recommendations if listed"
+      "rating": "A|B|C|D|E|F|G",
+      "expiry": "DD/MM/YYYY",
+      "score": 0,
+      "referenceNo": "if present"
     }
   },
   "tenancy": {
-    "tenantName": "ONLY the name(s) of the person(s) RENTING the property (the tenant/lessee/contract-holder). In a tenancy agreement there are typically two parties: the LANDLORD (also called lessor, licensor) and the TENANT (also called lessee, licensee, contract-holder). Extract ONLY the tenant party. NEVER put the landlord name, property owner name, letting agent name, or solicitor name in this field. In a standard AST: the tenant is the person paying rent and living at the property. Look for labels like: Tenant, Lessee, Contract-Holder, The Tenant. The landlord is the person receiving rent who owns the property.",
-    "tenantPhone": "number", "tenantEmail": "email",
-    "landlordName": "full name", "landlordAddress": "address",
+    "tenantName": "tenant full name(s) — the person paying rent",
+    "tenantPhone": "number",
+    "tenantEmail": "email",
+    "landlordName": "landlord full name — the person receiving rent",
+    "landlordAddress": "landlord address",
     "agentName": "if applicable",
-    "rent": 0, "rentFrequency": "monthly|weekly",
-    "depositAmount": 0, "depositScheme": "DPS Custodial|TDS|MyDeposits|etc",
-    "depositRef": "scheme reference number",
-    "startDate": "DD/MM/YYYY", "endDate": "DD/MM/YYYY",
+    "rent": 0,
+    "rentFrequency": "monthly|weekly",
+    "depositAmount": 0,
+    "depositScheme": "DPS Custodial|TDS|MyDeposits|SafeDeposits Scotland|etc",
+    "depositRef": "scheme reference",
+    "startDate": "DD/MM/YYYY",
+    "endDate": "DD/MM/YYYY",
     "breakClause": "terms if present",
-    "noticeRequired": "weeks/months notice required",
-    "permittedOccupants": "if specified",
-    "keyObligations": "any critical tenant/landlord obligations noted"
+    "noticeRequired": "notice period"
   },
   "finance": {
-    "purchasePrice": 0, "mortgage": 0, "lender": "name",
-    "rate": 0, "rateType": "Fixed|Variable|Tracker",
-    "fixedEnd": "DD/MM/YYYY", "completionDate": "DD/MM/YYYY",
-    "monthlyPayment": 0, "term": "years",
-    "ltv": 0, "accountNo": "if present"
+    "purchasePrice": 0,
+    "mortgage": 0,
+    "lender": "name",
+    "rate": 0,
+    "rateType": "Fixed|Variable|Tracker",
+    "fixedEnd": "DD/MM/YYYY",
+    "completionDate": "DD/MM/YYYY",
+    "monthlyPayment": 0,
+    "term": "years",
+    "accountNo": "if present"
   },
   "lease": {
-    "leaseLength": "e.g. 125 years", "startDate": "DD/MM/YYYY",
-    "expiryDate": "DD/MM/YYYY", "yearsRemaining": 0,
-    "groundRent": 0, "groundRentReviewDate": "DD/MM/YYYY",
-    "serviceCharge": 0, "managingAgent": "name",
-    "freeholder": "name", "titleNumber": "e.g. HS292736"
+    "leaseLength": "e.g. 125 years",
+    "startDate": "DD/MM/YYYY",
+    "expiryDate": "DD/MM/YYYY",
+    "yearsRemaining": 0,
+    "groundRent": 0,
+    "serviceCharge": 0,
+    "managingAgent": "name",
+    "freeholder": "name",
+    "titleNumber": "e.g. HS292736"
   },
-  "actions": [
-    "List any action items, obligations, or deadlines found anywhere in the document"
-  ],
   "keyDates": [
-    { "label": "description of date", "date": "DD/MM/YYYY" }
+    { "label": "what this date is", "date": "DD/MM/YYYY" }
   ],
-  "rawNotes": "Any other important information found in the document that does not fit above fields",
-  "summary": "2-3 sentences: what this document is, the property it relates to, and the most critical compliance/financial details found."
+  "summary": "One sentence: document type, property address, and single most important fact."
 }
 
-Return ONLY the JSON object. Nothing else.`
+Return ONLY the JSON object. No markdown fences. No explanation. Nothing before or after the JSON.`
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
