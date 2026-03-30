@@ -217,9 +217,9 @@ export default function Landing() {
           </div>
 
           {/* Feature strip */}
-          <div style={{ borderTop:'0.5px solid var(--border)', paddingTop:32 }}>
-            <div style={{ fontSize:12, color:'var(--text-3)', marginBottom:18, textTransform:'uppercase', letterSpacing:'0.8px', fontWeight:500 }}>Everything included on every plan</div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:'10px 16px', textAlign:'left', maxWidth:780, margin:'0 auto' }}>
+          <div style={{ borderTop:'1px solid var(--border)', paddingTop:40 }}>
+            <div style={{ fontSize:13, color:'var(--text-2)', marginBottom:28, textTransform:'uppercase', letterSpacing:'1px', fontWeight:700 }}>Everything included on every plan</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))', gap:'16px 24px', textAlign:'left', maxWidth:860, margin:'0 auto' }}>
               {[
                 { icon:'📄', label:'AI document extraction' },
                 { icon:'⚖️', label:'Nation-specific compliance' },
@@ -234,14 +234,14 @@ export default function Landing() {
                 { icon:'🏚️', label:'Void period tracker' },
                 { icon:'🔧', label:'Contractor directory' },
               ].map(f => (
-                <div key={f.label} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ fontSize:15, flexShrink:0 }}>{f.icon}</span>
-                  <span style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.4 }}>{f.label}</span>
+                <div key={f.label} style={{ display:'flex', alignItems:'center', gap:10, background:'var(--surface)', borderRadius:10, padding:'10px 14px', border:'0.5px solid var(--border)' }}>
+                  <span style={{ fontSize:18, flexShrink:0 }}>{f.icon}</span>
+                  <span style={{ fontSize:14, fontWeight:500, color:'var(--text)', lineHeight:1.4 }}>{f.label}</span>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop:18, fontSize:13, color:'var(--text-3)' }}>
-              and more, <a href="#features" style={{ color:'var(--brand)', textDecoration:'none', fontWeight:500 }}>see all features →</a>
+            <div style={{ marginTop:24, fontSize:14, color:'var(--text-3)' }}>
+              and more, <a href="#features" style={{ color:'var(--brand)', textDecoration:'none', fontWeight:600 }}>see all features →</a>
             </div>
           </div>
         </section>
