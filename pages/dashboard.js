@@ -4886,8 +4886,16 @@ export default function Dashboard(){
     setPortfolio(prev=>({...prev,checklist:{...prev.checklist,[id]:!prev.checklist[id]}}))
   }
 
-  function updateProperty(prop){setPortfolio(prev=>{const props=prev.properties||[];const idx=props.findIndex(p=>p.id===prop.id);if(idx>=0){const updated=[...props];updated[idx]=prop;return{...prev,properties:updated}}// Block adding new property if at limit
-  const limit=subscription?.maxProperties||((['active','trialing'].includes(subscription?.status))?999:1)||1;if(props.length>=limit){setShowUpgrade(true);return prev}return{...prev,properties:[...props,prop]}})}}
+  function updateProperty(prop){
+    const limit = subscription?.maxProperties || ((['active','trialing'].includes(subscription?.status)) ? ({starter:2,standard:5,portfolio:10,pro:999}[subscription?.plan]||2) : 1) || 1
+    setPortfolio(prev=>{
+      const props=prev.properties||[]
+      const idx=props.findIndex(p=>p.id===prop.id)
+      if(idx>=0){const updated=[...props];updated[idx]=prop;return{...prev,properties:updated}}
+      if(props.length>=limit){setShowUpgrade(true);return prev}
+      return{...prev,properties:[...props,prop]}
+    })
+  }
   function deleteProperty(id){setPortfolio(prev=>({...prev,properties:(prev.properties||[]).filter(p=>p.id!==id)}))}
 
   async function handleFiles(files){
@@ -5026,7 +5034,7 @@ export default function Dashboard(){
     }
   }
 
-    if(!isLoaded||!isSignedIn)return<div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{width:28,height:28,borderRadius:'50%',border:'2.5px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/></div>
+  if(!isLoaded||!isSignedIn)return<div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{width:28,height:28,borderRadius:'50%',border:'2.5px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/></div>
   // Camera scanner overlay
 
 
