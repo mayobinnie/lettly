@@ -233,6 +233,9 @@ export default function Landing() {
                 { icon:'📋', label:'Document generator' },
                 { icon:'🏚️', label:'Void period tracker' },
                 { icon:'🔧', label:'Contractor directory' },
+                { icon:'🏠', label:'HMO management suite' },
+                { icon:'🔥', label:'Fire safety tracking' },
+                { icon:'📜', label:'HMO licence tracker' },
               ].map(f => (
                 <div key={f.label} style={{ display:'flex', alignItems:'center', gap:10, background:'var(--surface)', borderRadius:10, padding:'10px 14px', border:'0.5px solid var(--border)' }}>
                   <span style={{ fontSize:18, flexShrink:0 }}>{f.icon}</span>
@@ -500,7 +503,7 @@ export default function Landing() {
             <p className="section-sub" style={{ maxWidth:500, margin:'0 auto' }}>Built specifically for UK private landlords. No tech skills needed.</p>
           </div>
 
-          <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+          <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:16 }}>
             {[
               {
                 icon:'🧾',
@@ -517,10 +520,17 @@ export default function Landing() {
                 title:'All-in-one dashboard',
                 items:['No spreadsheets, ever','No WhatsApp chaos','Finance and P&L tracker',"Renters' Rights Bill guidance",'Works on phone and computer'],
               },
+              {
+                icon:'🏠',
+                title:'HMO management suite',
+                items:['Room-by-room tenant and rent tracking','HMO licence number and expiry tracking','Fire risk assessment and review dates','PAT testing and emergency lighting records','10-point fire safety compliance checklist','Room size checker against mandatory minimums'],
+                highlight:true,
+              },
             ].map(f => (
-              <div key={f.title} className="feature-block">
+              <div key={f.title} className="feature-block" style={f.highlight?{border:'1.5px solid var(--brand)',background:'var(--brand-subtle)'}:{}}>
+                {f.highlight&&<div style={{fontSize:11,fontWeight:700,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:10}}>New feature</div>}
                 <div style={{ fontSize:34, marginBottom:20 }}>{f.icon}</div>
-                <div style={{ fontFamily:'var(--display)', fontSize:22, fontWeight:400, color:'var(--text)', marginBottom:20 }}>{f.title}</div>
+                <div style={{ fontFamily:'var(--display)', fontSize:22, fontWeight:400, color:f.highlight?'var(--brand)':'var(--text)', marginBottom:20 }}>{f.title}</div>
                 <div style={{ display:'flex', flexDirection:'column', gap:11 }}>
                   {f.items.map(item => (
                     <div key={item} style={{ display:'flex', gap:10, alignItems:'flex-start', fontSize:14, color:'var(--text-2)', lineHeight:1.5 }}>
@@ -546,7 +556,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+            <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:16 }}>
               {[
                 {
                   flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',

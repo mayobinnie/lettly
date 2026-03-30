@@ -122,7 +122,7 @@ function DropZone({onFiles,compact,onScan,onManual}){
           </div>
           <div style={{flex:1}}>
             <div style={{fontSize:14,fontWeight:600,color:'var(--brand)'}}>Drop or click to add documents</div>
-            <div style={{fontSize:12,color:'var(--brand)',opacity:0.75,marginTop:2}}>Gas cert, EICR, EPC, insurance, tenancy, mortgage — AI reads it automatically</div>
+            <div style={{fontSize:12,color:'var(--brand)',opacity:0.75,marginTop:2}}>Gas cert, EICR, EPC, insurance, tenancy, mortgage, AI reads it automatically</div>
           </div>
           <div style={{fontSize:12,fontWeight:600,flexShrink:0,whiteSpace:'nowrap',background:'var(--brand)',color:'#fff',padding:'7px 16px',borderRadius:8}}>{over?'Release':'Browse'}</div>
         </div>
@@ -626,6 +626,7 @@ function QueueItem({item,onRetry,onManual,onConfirm,onReject}){
           :<div style={{marginTop:4,paddingTop:4,borderTop:'0.5px solid var(--border)',color:'var(--text-3)',fontSize:11}}>Will create a new property entry</div>
         }
       </div>
+      <div style={{fontSize:11,color:'var(--text-3)',marginBottom:8,lineHeight:1.5}}>Please verify all extracted data before saving. AI extraction may not be 100% accurate. You are responsible for ensuring your property records are correct.</div>
       <div style={{display:'flex',gap:8}}>
         <button onClick={()=>onConfirm(item)} style={{flex:1,background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 0',fontSize:12,fontWeight:500,cursor:'pointer'}}>Save this data</button>
         <button onClick={()=>onManual&&onManual()} style={{flex:1,background:'var(--surface2)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 0',fontSize:12,cursor:'pointer'}}>Enter manually</button>
@@ -2040,7 +2041,8 @@ function FinanceTab({portfolio,setPortfolio}){
       </div>
       {props.filter(p=>p.ownership==='Personal'&&p.mortgage).length===0
         ?<div style={{fontSize:14,color:'var(--text-3)',padding:'8px 0'}}>Add personal properties with mortgage details to use this calculator.</div>
-        :<div style={{fontSize:15,color:'var(--text-2)',marginBottom:12}}>{props.filter(p=>p.ownership==='Personal').length} personal propert{props.filter(p=>p.ownership==='Personal').length===1?'y':'ies'}  and {props.filter(p=>p.ownership==='Ltd Company').length} Ltd Company</div>
+        :<div style={{fontSize:15,color:'var(--text-2)',marginBottom:12}}>{props.filter(p=>p.ownership==='Personal').length} personal propert{props.filter(p=>p.ownership==='Personal').length===1?'y':'ies'}  and {props.filter(p=>p.ownership==='Ltd Company').length} Ltd Company
+      <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.6,padding:'8px 12px',background:'var(--surface2)',borderRadius:8,margin:'8px 0'}}>Section 24 figures are estimates only. Your actual tax position depends on your total income, allowances and other reliefs. Always consult a qualified accountant or tax adviser before making decisions.</div></div>
       }
       {s24Result&&<div style={{background:'var(--surface2)',borderRadius:10,padding:14,fontSize:14,lineHeight:1.8,whiteSpace:'pre-wrap',color:'var(--text-2)',marginTop:8}}>{s24Result}</div>}
     </div>}
@@ -3497,6 +3499,734 @@ function ReferralPanel(){
   </div>
 }
 
+
+/* ================================================================
+   HMO TAB, Full HMO management dashboard
+   Shows only when portfolio has at least one HMO property
+   ================================================================ */
+
+/* ================================================================
+   INVOICING TAB
+   ================================================================ */
+function InvoicingTab({portfolio}){
+  const props=portfolio.properties||[]
+  const[invoices,setInvoices]=useState([])
+  const[loading,setLoading]=useState(true)
+  const[view,setView]=useState('list') // list | create | preview
+  const[invType,setInvType]=useState('rent')
+  const[selProp,setSelProp]=useState(props[0]?.id||'')
+  const[preview,setPreview]=useState(null)
+  const[previewNum,setPreviewNum]=useState('')
+  const[sending,setSending]=useState(false)
+  const[filterStatus,setFilterStatus]=useState('all')
+
+  // Landlord settings (pulled from portfolio)
+  const[landlord,setLandlord]=useState({
+    name:portfolio.landlordName||'',
+    address:portfolio.landlordAddress||'',
+    email:portfolio.landlordEmail||portfolio.contactEmail||'',
+    phone:portfolio.landlordPhone||'',
+    utr:portfolio.utr||'',
+    company:portfolio.company||'',
+    bankDetails:portfolio.bankDetails||'',
+    vatNumber:portfolio.vatNumber||'',
+  })
+
+  const prop=props.find(p=>p.id===selProp)||props[0]
+
+  // Invoice form state
+  const today=new Date().toISOString().split('T')[0]
+  const nextMonth=new Date(new Date().setMonth(new Date().getMonth()+1)).toISOString().split('T')[0]
+
+  const defaultItems={
+    rent:[{description:'Monthly rent',qty:1,unitPrice:prop?.rent||'',amount:prop?.rent||''}],
+    contractor:[{description:'',qty:1,unitPrice:'',amount:''}],
+    expense:[{description:'',qty:1,unitPrice:'',amount:''}],
+  }
+
+  const[form,setForm]=useState({
+    type:'rent',
+    recipientName:prop?.tenantName||'',
+    recipientEmail:prop?.tenantEmail||'',
+    recipientAddress:'',
+    date:today,
+    dueDate:nextMonth,
+    period:'',
+    paymentTerms:'Payment due within 14 days of invoice date',
+    bankDetails:portfolio.bankDetails||'',
+    vatRate:'',
+    notes:'',
+    items:defaultItems.rent,
+  })
+
+  useEffect(()=>{
+    fetch('/api/invoices').then(r=>r.json()).then(d=>setInvoices(d.invoices||[])).finally(()=>setLoading(false))
+  },[])
+
+  useEffect(()=>{
+    if(prop){
+      setForm(f=>({...f,
+        recipientName:invType==='rent'?prop.tenantName||'':f.recipientName,
+        recipientEmail:invType==='rent'?prop.tenantEmail||'':f.recipientEmail,
+        items:defaultItems[invType]||f.items,
+      }))
+    }
+  },[selProp,invType])
+
+  function setItem(idx,field,val){
+    setForm(f=>{
+      const items=[...f.items]
+      items[idx]={...items[idx],[field]:val}
+      // Auto-calc amount from qty * unitPrice
+      if(field==='qty'||field==='unitPrice'){
+        const q=Number(field==='qty'?val:items[idx].qty)||1
+        const u=Number(field==='unitPrice'?val:items[idx].unitPrice)||0
+        items[idx].amount=String(q*u)
+      }
+      if(field==='amount'){items[idx].unitPrice=val}
+      return{...f,items}
+    })
+  }
+
+  function addItem(){setForm(f=>({...f,items:[...f.items,{description:'',qty:1,unitPrice:'',amount:''}]}))}
+  function removeItem(idx){setForm(f=>({...f,items:f.items.filter((_,i)=>i!==idx)}))}
+
+  const totalNet=form.items.reduce((s,i)=>s+(Number(i.amount)||0),0)
+  const vatAmt=form.vatRate?totalNet*(Number(form.vatRate)/100):0
+  const totalGross=totalNet+vatAmt
+  const fmt=n=>'£'+Number(n).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2})
+
+  async function handlePreview(){
+    setSending(true)
+    const res=await fetch('/api/invoices',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'preview',invoice:{...form,type:invType,propId:selProp},landlord,property:prop})})
+    const d=await res.json()
+    setPreview(d.html)
+    setPreviewNum(d.invoiceNumber)
+    setView('preview')
+    setSending(false)
+  }
+
+  async function handleSend(action){
+    setSending(true)
+    const res=await fetch('/api/invoices',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action,invoice:{...form,type:invType,propId:selProp},landlord,property:prop})})
+    const d=await res.json()
+    if(d.invoiceNumber){
+      setInvoices(prev=>[d.invoice,...prev])
+      if(d.html){setPreview(d.html);setPreviewNum(d.invoiceNumber);setView('preview')}
+      else{setView('list')}
+    }
+    setSending(false)
+  }
+
+  async function markPaid(id){
+    await fetch('/api/invoices',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status:'paid'})})
+    setInvoices(prev=>prev.map(inv=>inv.id===id?{...inv,status:'paid'}:inv))
+  }
+
+  async function deleteInv(id){
+    if(!confirm('Delete this invoice?')) return
+    await fetch('/api/invoices',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})})
+    setInvoices(prev=>prev.filter(inv=>inv.id!==id))
+  }
+
+  function StatusPill({status}){
+    const colors={draft:['var(--text-3)','var(--surface2)'],sent:['#0C447C','#E6F1FB'],paid:['var(--green)','var(--green-bg)'],overdue:['var(--red)','#fce8e6']}
+    const[fg,bg]=colors[status]||colors.draft
+    return<span style={{fontSize:11,padding:'3px 10px',borderRadius:20,fontWeight:600,color:fg,background:bg,textTransform:'uppercase',letterSpacing:'0.5px'}}>{status||'draft'}</span>
+  }
+
+  function IInput({label,value,onChange,placeholder,type,span}){
+    return<div style={{marginBottom:12,gridColumn:span?'1/-1':''}}>
+      <div style={{fontSize:12,color:'var(--text-3)',marginBottom:4,fontWeight:500}}>{label}</div>
+      <input type={type||'text'} value={value||''} onChange={e=>onChange(e.target.value)} placeholder={placeholder||''}
+        style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'9px 12px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',boxSizing:'border-box'}}/>
+    </div>
+  }
+
+  function ITextarea({label,value,onChange,placeholder,rows}){
+    return<div style={{marginBottom:12}}>
+      <div style={{fontSize:12,color:'var(--text-3)',marginBottom:4,fontWeight:500}}>{label}</div>
+      <textarea value={value||''} onChange={e=>onChange(e.target.value)} placeholder={placeholder||''} rows={rows||3}
+        style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'9px 12px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',boxSizing:'border-box',resize:'vertical'}}/>
+    </div>
+  }
+
+  const filtered=filterStatus==='all'?invoices:invoices.filter(i=>i.status===filterStatus)
+  const totalUnpaid=invoices.filter(i=>i.status!=='paid').reduce((s,i)=>s+(Number(i.amount)||0),0)
+  const totalPaid=invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+(Number(i.amount)||0),0)
+
+  return<div className="fade-up">
+    {/* ── PREVIEW MODE ── */}
+    {view==='preview'&&preview&&<div>
+      <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}>
+        <button onClick={()=>setView('create')} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border)',borderRadius:8,padding:'8px 14px',fontSize:13,cursor:'pointer'}}>
+          Back to edit
+        </button>
+        <button onClick={()=>{const w=window.open('','_blank');w.document.write(preview);w.document.close();setTimeout(()=>w.print(),500)}}
+          style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 18px',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+          Download PDF
+        </button>
+        <button onClick={()=>handleSend('send')} disabled={!form.recipientEmail||sending}
+          style={{background:'#0C447C',color:'#fff',border:'none',borderRadius:8,padding:'8px 18px',fontSize:13,fontWeight:500,cursor:'pointer',opacity:!form.recipientEmail||sending?0.6:1}}>
+          {sending?'Sending...':'Send by email'}
+        </button>
+        <button onClick={()=>handleSend('save')} disabled={sending}
+          style={{background:'var(--surface)',color:'var(--text)',border:'0.5px solid var(--border)',borderRadius:8,padding:'8px 14px',fontSize:13,cursor:'pointer'}}>
+          Save as draft
+        </button>
+        <span style={{fontSize:12,color:'var(--text-3)',marginLeft:4}}>{previewNum}</span>
+      </div>
+      <div style={{border:'0.5px solid var(--border)',borderRadius:12,overflow:'hidden'}}>
+        <iframe srcDoc={preview} style={{width:'100%',height:700,border:'none'}} title="Invoice preview"/>
+      </div>
+    </div>}
+
+    {/* ── CREATE MODE ── */}
+    {view==='create'&&<div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:8}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:600}}>New invoice</div>
+          <div style={{fontSize:12,color:'var(--text-3)',marginTop:2}}>Fill in details below then preview before sending</div>
+        </div>
+        <button onClick={()=>setView('list')} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border)',borderRadius:8,padding:'7px 14px',fontSize:13,cursor:'pointer'}}>
+          Cancel
+        </button>
+      </div>
+
+      {/* Invoice type */}
+      <div style={{display:'flex',gap:6,marginBottom:20}}>
+        {[['rent','Rent invoice'],['contractor','Contractor invoice'],['expense','Expense receipt']].map(([id,label])=>(
+          <button key={id} onClick={()=>setInvType(id)}
+            style={{padding:'8px 16px',borderRadius:20,fontSize:13,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+              borderColor:invType===id?'var(--brand)':'var(--border)',
+              background:invType===id?'var(--brand)':'var(--surface)',
+              color:invType===id?'#fff':'var(--text-2)'}}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+        {/* Left: invoice details */}
+        <div>
+          <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:12}}>Property</div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:12,color:'var(--text-3)',marginBottom:4,fontWeight:500}}>Property</div>
+              <select value={selProp} onChange={e=>setSelProp(e.target.value)}
+                style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'9px 12px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)'}}>
+                {props.map(p=><option key={p.id} value={p.id}>{p.shortName}</option>)}
+              </select>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+              <IInput label="Invoice date" value={form.date} onChange={v=>setForm(f=>({...f,date:v}))} type="date"/>
+              <IInput label="Due date" value={form.dueDate} onChange={v=>setForm(f=>({...f,dueDate:v}))} type="date"/>
+            </div>
+            <IInput label="Period (e.g. April 2026)" value={form.period} onChange={v=>setForm(f=>({...f,period:v}))} placeholder="e.g. April 2026 rent" span/>
+          </div>
+
+          <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:12}}>{invType==='rent'?'Tenant':'Recipient'} details</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+              <IInput label="Name" value={form.recipientName} onChange={v=>setForm(f=>({...f,recipientName:v}))} placeholder="Full name"/>
+              <IInput label="Email" value={form.recipientEmail} onChange={v=>setForm(f=>({...f,recipientEmail:v}))} placeholder="email@example.com"/>
+            </div>
+            <ITextarea label="Address" value={form.recipientAddress} onChange={v=>setForm(f=>({...f,recipientAddress:v}))} placeholder="Address" rows={2}/>
+          </div>
+
+          <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:12}}>Payment & terms</div>
+            <IInput label="Payment terms" value={form.paymentTerms} onChange={v=>setForm(f=>({...f,paymentTerms:v}))} placeholder="e.g. Payment due within 14 days"/>
+            <ITextarea label="Bank details (shown on invoice)" value={form.bankDetails} onChange={v=>setForm(f=>({...f,bankDetails:v}))} placeholder={'Sort code: 12-34-56\nAccount: 12345678\nName: J. Bloggs'} rows={3}/>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+              <IInput label="VAT rate % (if applicable)" value={form.vatRate} onChange={v=>setForm(f=>({...f,vatRate:v}))} placeholder="Leave blank if not VAT registered" type="number"/>
+            </div>
+            <ITextarea label="Additional notes" value={form.notes} onChange={v=>setForm(f=>({...f,notes:v}))} placeholder="Any additional information" rows={2}/>
+          </div>
+        </div>
+
+        {/* Right: line items + landlord */}
+        <div>
+          <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:12}}>Line items</div>
+            {form.items.map((item,idx)=><div key={idx} style={{background:'var(--surface2)',borderRadius:10,padding:10,marginBottom:8}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 60px 90px',gap:6,marginBottom:6}}>
+                <input placeholder="Description" value={item.description} onChange={e=>setItem(idx,'description',e.target.value)}
+                  style={{background:'#fff',border:'0.5px solid var(--border-strong)',borderRadius:6,padding:'6px 8px',fontSize:12,fontFamily:'var(--font)',color:'var(--text)'}}/>
+                <input placeholder="Qty" type="number" value={item.qty} onChange={e=>setItem(idx,'qty',e.target.value)}
+                  style={{background:'#fff',border:'0.5px solid var(--border-strong)',borderRadius:6,padding:'6px 8px',fontSize:12,fontFamily:'var(--font)',color:'var(--text)'}}/>
+                <input placeholder="£ amount" type="number" value={item.amount} onChange={e=>setItem(idx,'amount',e.target.value)}
+                  style={{background:'#fff',border:'0.5px solid var(--border-strong)',borderRadius:6,padding:'6px 8px',fontSize:12,fontFamily:'var(--font)',color:'var(--text)',textAlign:'right'}}/>
+              </div>
+              {form.items.length>1&&<button onClick={()=>removeItem(idx)} style={{fontSize:11,color:'var(--red)',background:'none',border:'none',cursor:'pointer'}}>Remove</button>}
+            </div>)}
+            <button onClick={addItem} style={{fontSize:12,color:'var(--brand)',background:'none',border:'0.5px dashed var(--brand)',borderRadius:7,padding:'6px 14px',cursor:'pointer',width:'100%'}}>
+              + Add line item
+            </button>
+            {/* Totals */}
+            <div style={{borderTop:'0.5px solid var(--border)',marginTop:12,paddingTop:12}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}>
+                <span style={{color:'var(--text-3)'}}>Subtotal</span>
+                <span style={{fontFamily:'var(--mono)'}}>{fmt(totalNet)}</span>
+              </div>
+              {vatAmt>0&&<div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}>
+                <span style={{color:'var(--text-3)'}}>VAT ({form.vatRate}%)</span>
+                <span style={{fontFamily:'var(--mono)'}}>{fmt(vatAmt)}</span>
+              </div>}
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:600,color:'var(--brand)',borderTop:'0.5px solid var(--border)',paddingTop:8,marginTop:4}}>
+                <span>Total</span>
+                <span style={{fontFamily:'var(--mono)'}}>{fmt(totalGross)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:12}}>Your details (landlord)</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+              <IInput label="Your name" value={landlord.name} onChange={v=>setLandlord(l=>({...l,name:v}))} placeholder="Full name or company"/>
+              <IInput label="Email" value={landlord.email} onChange={v=>setLandlord(l=>({...l,email:v}))} placeholder="your@email.com"/>
+              <IInput label="Phone" value={landlord.phone} onChange={v=>setLandlord(l=>({...l,phone:v}))} placeholder="e.g. 07700 900000"/>
+              <IInput label="UTR (if self-assessment)" value={landlord.utr} onChange={v=>setLandlord(l=>({...l,utr:v}))} placeholder="e.g. 1234567890"/>
+            </div>
+            <ITextarea label="Address" value={landlord.address} onChange={v=>setLandlord(l=>({...l,address:v}))} placeholder="Your address" rows={2}/>
+            <IInput label="Company name (if Ltd)" value={landlord.company} onChange={v=>setLandlord(l=>({...l,company:v}))} placeholder="e.g. Hannat Property Limited" span/>
+          </div>
+
+          <div style={{display:'flex',gap:8}}>
+            <button onClick={handlePreview} disabled={sending||totalNet===0}
+              style={{flex:1,background:'var(--brand)',color:'#fff',border:'none',borderRadius:10,padding:'12px',fontSize:14,fontWeight:600,cursor:totalNet===0||sending?'not-allowed':'pointer',opacity:totalNet===0||sending?0.6:1}}>
+              {sending?'Loading...':'Preview invoice'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>}
+
+    {/* ── LIST MODE ── */}
+    {view==='list'&&<>
+      {/* Stats */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:10,marginBottom:16}}>
+        {[
+          {label:'Total invoiced',value:fmt(totalNet+totalPaid),icon:'📄'},
+          {label:'Outstanding',value:fmt(totalUnpaid),icon:'⏳',color:'var(--amber)'},
+          {label:'Paid',value:fmt(totalPaid),icon:'✅',color:'var(--green)'},
+          {label:'Total invoices',value:String(invoices.length),icon:'🗂️'},
+        ].map(s=><div key={s.label} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px'}}>
+          <div style={{fontSize:11,color:'var(--text-3)',marginBottom:6}}>{s.icon} {s.label}</div>
+          <div style={{fontSize:18,fontWeight:600,fontFamily:'var(--mono)',color:s.color||'var(--text)'}}>{s.value}</div>
+        </div>)}
+      </div>
+
+      {/* Actions */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14,flexWrap:'wrap',gap:8}}>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {['all','draft','sent','paid','overdue'].map(s=>(
+            <button key={s} onClick={()=>setFilterStatus(s)}
+              style={{padding:'5px 12px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+                borderColor:filterStatus===s?'var(--brand)':'var(--border)',
+                background:filterStatus===s?'var(--brand-light)':'var(--surface)',
+                color:filterStatus===s?'var(--brand)':'var(--text-2)',
+                textTransform:'capitalize'}}>
+              {s}
+            </button>
+          ))}
+        </div>
+        <button onClick={()=>setView('create')}
+          style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'9px 18px',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+          + New invoice
+        </button>
+      </div>
+
+      {loading?<div style={{fontSize:13,color:'var(--text-3)',padding:'24px 0',textAlign:'center'}}>Loading invoices...</div>
+      :filtered.length===0?<div style={{textAlign:'center',padding:'40px 0',color:'var(--text-3)'}}>
+        <div style={{fontSize:32,marginBottom:12}}>📄</div>
+        <div style={{fontSize:14,fontWeight:500,marginBottom:6}}>No invoices yet</div>
+        <div style={{fontSize:12}}>Create your first invoice to send rent receipts to tenants or record contractor invoices.</div>
+      </div>
+      :<div style={{display:'flex',flexDirection:'column',gap:8}}>
+        {filtered.map(inv=><div key={inv.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px',display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
+          <div style={{flex:1,minWidth:200}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+              <span style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:600}}>{inv.invoice_number}</span>
+              <StatusPill status={inv.status}/>
+              <span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:'var(--surface2)',color:'var(--text-3)',textTransform:'capitalize'}}>{inv.type}</span>
+            </div>
+            <div style={{fontSize:13,color:'var(--text-2)',marginBottom:2}}>{inv.recipient_name} {inv.period&&'· '+inv.period}</div>
+            <div style={{fontSize:11,color:'var(--text-3)'}}>{inv.date&&new Date(inv.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+          </div>
+          <div style={{fontSize:16,fontWeight:600,fontFamily:'var(--mono)',color:inv.status==='paid'?'var(--green)':'var(--text)',flexShrink:0}}>
+            {fmt(inv.amount)}
+          </div>
+          <div style={{display:'flex',gap:6,flexShrink:0}}>
+            {inv.status!=='paid'&&<button onClick={()=>markPaid(inv.id)}
+              style={{fontSize:12,padding:'5px 10px',borderRadius:7,border:'0.5px solid var(--green)',background:'var(--green-bg)',cursor:'pointer',color:'var(--green)',fontWeight:500}}>
+              Mark paid
+            </button>}
+            <button onClick={()=>deleteInv(inv.id)}
+              style={{fontSize:12,padding:'5px 10px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--red)'}}>
+              Delete
+            </button>
+          </div>
+        </div>)}
+      </div>}
+    </>}
+  </div>
+}
+
+function HMOTab({portfolio,setPortfolio}){
+  const props=(portfolio.properties||[]).filter(p=>p.isHMO)
+  const[selProp,setSelProp]=useState(props[0]?.id||'')
+  const[view,setView]=useState('overview')
+  const[showRoomForm,setShowRoomForm]=useState(false)
+  const[editRoom,setEditRoom]=useState(null)
+  const[roomForm,setRoomForm]=useState({name:'',sizeSqm:'',tenant:'',tenantEmail:'',tenantPhone:'',rent:'',depositAmount:'',depositScheme:'',depositRef:'',tenancyStart:'',notes:''})
+
+  const prop=props.find(p=>p.id===selProp)||props[0]
+  const rooms=prop?.rooms||[]
+
+  function updateProp(updates){
+    setPortfolio(prev=>({...prev,properties:(prev.properties||[]).map(p=>p.id===prop?.id?{...p,...updates}:p)}))
+  }
+
+  function saveRoom(room){
+    const existing=rooms.find(r=>r.id===room.id)
+    const updated=existing?rooms.map(r=>r.id===room.id?room:r):[...rooms,{...room,id:'room_'+Date.now()}]
+    updateProp({rooms:updated})
+    setShowRoomForm(false)
+    setEditRoom(null)
+    setRoomForm({name:'',sizeSqm:'',tenant:'',tenantEmail:'',tenantPhone:'',rent:'',depositAmount:'',depositScheme:'',depositRef:'',tenancyStart:'',notes:''})
+  }
+
+  function deleteRoom(id){
+    if(!confirm('Delete this room?')) return
+    updateProp({rooms:rooms.filter(r=>r.id!==id)})
+  }
+
+  function HMOInput({label,value,onChange,placeholder,type}){
+    return<div style={{marginBottom:12}}>
+      <div style={{fontSize:12,color:'var(--text-3)',marginBottom:4,fontWeight:500}}>{label}</div>
+      <input type={type||'text'} value={value||''} onChange={e=>onChange(e.target.value)} placeholder={placeholder||''}
+        style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'9px 12px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',boxSizing:'border-box'}}/>
+    </div>
+  }
+
+  const totalRent=rooms.reduce((s,r)=>s+(Number(r.rent)||0),0)
+  const occupiedRooms=rooms.filter(r=>r.tenant).length
+  const MIN_ROOM_SIZE_1=6.51
+  const MIN_ROOM_SIZE_2=10.22
+  const smallRooms=rooms.filter(r=>r.sizeSqm&&Number(r.sizeSqm)<MIN_ROOM_SIZE_1)
+
+  function dueDays(dateStr){
+    if(!dateStr) return null
+    const parts=dateStr.split('/')
+    if(parts.length!==3) return null
+    const d=new Date(parts[2],parts[1]-1,parts[0])
+    return Math.ceil((d-new Date())/(1000*60*60*24))
+  }
+
+  function StatusBadge({days,label}){
+    if(days===null) return<span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:'var(--surface2)',color:'var(--text-3)'}}>Not set</span>
+    const color=days<0?'var(--red)':days<=30?'#EF9F27':'var(--green)'
+    const bg=days<0?'#fce8e6':days<=30?'#FFF3E0':'var(--green-bg)'
+    return<span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:bg,color}}>{days<0?'EXPIRED':'Due in '+days+'d'}</span>
+  }
+
+  if(!prop) return<div style={{padding:40,textAlign:'center',color:'var(--text-3)'}}>No HMO properties found. Enable HMO mode on a property in the Properties tab.</div>
+
+  const licenceDays=dueDays(prop.hmoLicenceExpiry)
+  const fireDays=dueDays(prop.fireRiskReviewDate)
+  const patDays=dueDays(prop.patExpiry)
+  const emergencyDays=dueDays(prop.emergencyLightingDate)
+
+  return<div className="fade-up">
+    {/* HMO Header Banner */}
+    <div style={{background:'linear-gradient(135deg,#1b3a2d 0%,#1b5e3b 100%)',borderRadius:16,padding:'20px 24px',marginBottom:20,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
+      <div style={{display:'flex',alignItems:'center',gap:14}}>
+        <div style={{width:44,height:44,background:'rgba(255,255,255,0.15)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <span style={{fontSize:22}}>🏠</span>
+        </div>
+        <div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:3}}>HMO Management</div>
+          <div style={{fontSize:18,fontWeight:600,color:'#fff',fontFamily:'var(--display)'}}>House in Multiple Occupation</div>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+        {props.map(p=><button key={p.id} onClick={()=>setSelProp(p.id)}
+          style={{padding:'7px 16px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'1px solid',
+            borderColor:selProp===p.id?'#fff':'rgba(255,255,255,0.3)',
+            background:selProp===p.id?'rgba(255,255,255,0.2)':'transparent',
+            color:'#fff'}}>
+          {p.shortName}
+        </button>)}
+      </div>
+    </div>
+
+    {/* Sub nav */}
+    <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
+      {[['overview','Overview'],['rooms','Rooms'],['licence','Licence'],['fire','Fire safety'],['finance','Income & finances'],['docs','Documents']].map(([id,label])=>(
+        <button key={id} onClick={()=>setView(id)} style={{padding:'8px 16px',borderRadius:20,fontSize:13,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+          borderColor:view===id?'var(--brand)':'var(--border)',
+          background:view===id?'var(--brand)':'var(--surface)',
+          color:view===id?'#fff':'var(--text-2)'}}>
+          {label}
+        </button>
+      ))}
+    </div>
+
+    {/* ── OVERVIEW ── */}
+    {view==='overview'&&<>
+      {/* Key stats */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:10,marginBottom:16}}>
+        {[
+          {label:'Total rooms',value:rooms.length||'-',icon:'🛏️'},
+          {label:'Occupied',value:rooms.length?`${occupiedRooms}/${rooms.length}`:'0/0',icon:'👤',color:occupiedRooms===rooms.length&&rooms.length>0?'var(--green)':'var(--amber)'},
+          {label:'Monthly income',value:totalRent?'£'+totalRent.toLocaleString('en-GB'):'-',icon:'💷',color:'var(--green)'},
+          {label:'Void rooms',value:rooms.length-occupiedRooms||'0',icon:'🔑',color:(rooms.length-occupiedRooms)>0?'var(--red)':'var(--green)'},
+        ].map(s=><div key={s.label} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px'}}>
+          <div style={{fontSize:11,color:'var(--text-3)',marginBottom:6}}>{s.icon} {s.label}</div>
+          <div style={{fontSize:20,fontWeight:600,fontFamily:'var(--mono)',color:s.color||'var(--text)'}}>{s.value}</div>
+        </div>)}
+      </div>
+
+      {/* Compliance status */}
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:14}}>Compliance status</div>
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {[
+            {label:'HMO Licence',sub:prop.hmoLicence?`#${prop.hmoLicence}`:'Not recorded',days:licenceDays,icon:'📋'},
+            {label:'Fire Risk Assessment',sub:prop.fireRiskDate?`Completed ${prop.fireRiskDate}`:'Not recorded',days:fireDays,icon:'🔥'},
+            {label:'PAT Testing',sub:prop.patDate?`Last tested ${prop.patDate}`:'Not recorded',days:patDays,icon:'🔌'},
+            {label:'Emergency Lighting',sub:prop.emergencyLightingDate?`Due ${prop.emergencyLightingDate}`:'Not recorded',days:emergencyDays,icon:'💡'},
+            {label:'Gas Certificate',sub:prop.gasDue?`Due ${prop.gasDue}`:'Not recorded',days:dueDays(prop.gasDue),icon:'🔥'},
+            {label:'EICR',sub:prop.eicrDue?`Due ${prop.eicrDue}`:'Not recorded',days:dueDays(prop.eicrDue),icon:'⚡'},
+          ].map(item=><div key={item.label} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 0',borderBottom:'0.5px solid var(--border)'}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontSize:16}}>{item.icon}</span>
+              <div>
+                <div style={{fontSize:13,fontWeight:500}}>{item.label}</div>
+                <div style={{fontSize:11,color:'var(--text-3)'}}>{item.sub}</div>
+              </div>
+            </div>
+            <StatusBadge days={item.days}/>
+          </div>)}
+        </div>
+      </div>
+
+      {/* Warnings */}
+      {smallRooms.length>0&&<div style={{background:'#fce8e6',border:'1px solid #f5b8b4',borderRadius:12,padding:'12px 16px',marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:600,color:'var(--red)',marginBottom:6}}>Room size warning</div>
+        {smallRooms.map(r=><div key={r.id} style={{fontSize:12,color:'#791F1F'}}>{r.name}: {r.sizeSqm}m² is below the minimum 6.51m² required for a single occupant</div>)}
+      </div>}
+    </>}
+
+    {/* ── ROOMS ── */}
+    {view==='rooms'&&<>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:600}}>Room management</div>
+          <div style={{fontSize:12,color:'var(--text-3)',marginTop:2}}>Track each room, tenant, rent and deposit separately</div>
+        </div>
+        <button onClick={()=>{setEditRoom(null);setRoomForm({name:'',sizeSqm:'',tenant:'',tenantEmail:'',tenantPhone:'',rent:'',depositAmount:'',depositScheme:'',depositRef:'',tenancyStart:'',notes:''});setShowRoomForm(true)}}
+          style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 16px',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+          + Add room
+        </button>
+      </div>
+
+      {showRoomForm&&<div style={{background:'var(--surface)',border:'1.5px solid var(--brand)',borderRadius:14,padding:20,marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:14,color:'var(--brand)'}}>{editRoom?'Edit room':'Add room'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}}>
+          <HMOInput label="Room name" value={roomForm.name} onChange={v=>setRoomForm(f=>({...f,name:v}))} placeholder="e.g. Room 1, Bedroom A"/>
+          <HMOInput label="Size (m²)" value={roomForm.sizeSqm} onChange={v=>setRoomForm(f=>({...f,sizeSqm:v}))} placeholder="e.g. 8.5" type="number"/>
+          <HMOInput label="Tenant name" value={roomForm.tenant} onChange={v=>setRoomForm(f=>({...f,tenant:v}))} placeholder="Full name"/>
+          <HMOInput label="Tenant email" value={roomForm.tenantEmail} onChange={v=>setRoomForm(f=>({...f,tenantEmail:v}))} placeholder="email@example.com"/>
+          <HMOInput label="Tenant phone" value={roomForm.tenantPhone} onChange={v=>setRoomForm(f=>({...f,tenantPhone:v}))} placeholder="e.g. 07700 900000"/>
+          <HMOInput label="Monthly rent (£)" value={roomForm.rent} onChange={v=>setRoomForm(f=>({...f,rent:v}))} placeholder="e.g. 550" type="number"/>
+          <HMOInput label="Deposit amount (£)" value={roomForm.depositAmount} onChange={v=>setRoomForm(f=>({...f,depositAmount:v}))} placeholder="e.g. 550" type="number"/>
+          <HMOInput label="Deposit scheme" value={roomForm.depositScheme} onChange={v=>setRoomForm(f=>({...f,depositScheme:v}))} placeholder="e.g. DPS, MyDeposits, TDS"/>
+          <HMOInput label="Deposit reference" value={roomForm.depositRef} onChange={v=>setRoomForm(f=>({...f,depositRef:v}))} placeholder="e.g. DPS-12345"/>
+          <HMOInput label="Tenancy start" value={roomForm.tenancyStart} onChange={v=>setRoomForm(f=>({...f,tenancyStart:v}))} placeholder="DD/MM/YYYY"/>
+        </div>
+        <HMOInput label="Notes" value={roomForm.notes} onChange={v=>setRoomForm(f=>({...f,notes:v}))} placeholder="Any additional notes"/>
+        <div style={{display:'flex',gap:8,marginTop:8}}>
+          <button onClick={()=>saveRoom(editRoom?{...editRoom,...roomForm}:{...roomForm,id:'room_'+Date.now()})}
+            style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+            {editRoom?'Save changes':'Add room'}
+          </button>
+          <button onClick={()=>{setShowRoomForm(false);setEditRoom(null)}}
+            style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border)',borderRadius:8,padding:'8px 16px',fontSize:13,cursor:'pointer'}}>
+            Cancel
+          </button>
+        </div>
+      </div>}
+
+      {rooms.length===0?<div style={{textAlign:'center',padding:'40px 0',color:'var(--text-3)',fontSize:13}}>No rooms added yet. Click Add room to get started.</div>
+      :<div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {rooms.map(room=>{
+          const sizeOk=!room.sizeSqm||Number(room.sizeSqm)>=MIN_ROOM_SIZE_1
+          return<div key={room.id} style={{background:'var(--surface)',border:'0.5px solid '+(sizeOk?'var(--border)':'var(--red)'),borderRadius:12,padding:'14px 16px'}}>
+            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12,flexWrap:'wrap'}}>
+              <div style={{flex:1,minWidth:200}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                  <span style={{fontSize:14,fontWeight:600}}>{room.name||'Unnamed room'}</span>
+                  {room.sizeSqm&&<span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:sizeOk?'var(--surface2)':'#fce8e6',color:sizeOk?'var(--text-3)':'var(--red)'}}>{room.sizeSqm}m²</span>}
+                  <span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:room.tenant?'var(--green-bg)':'var(--surface2)',color:room.tenant?'var(--green)':'var(--text-3)'}}>{room.tenant?'Occupied':'Vacant'}</span>
+                </div>
+                {room.tenant&&<div style={{fontSize:12,color:'var(--text-2)',marginBottom:2}}>{room.tenant}{room.tenantEmail&&' · '+room.tenantEmail}</div>}
+                <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
+                  {room.rent&&<span style={{fontSize:12,color:'var(--text-3)'}}>Rent: <strong style={{color:'var(--brand)'}}>£{Number(room.rent).toLocaleString('en-GB')}/mo</strong></span>}
+                  {room.depositAmount&&<span style={{fontSize:12,color:'var(--text-3)'}}>Deposit: £{Number(room.depositAmount).toLocaleString('en-GB')}</span>}
+                  {room.depositScheme&&<span style={{fontSize:12,color:'var(--text-3)'}}>{room.depositScheme}{room.depositRef&&' #'+room.depositRef}</span>}
+                  {room.tenancyStart&&<span style={{fontSize:12,color:'var(--text-3)'}}>From: {room.tenancyStart}</span>}
+                </div>
+                {!sizeOk&&<div style={{fontSize:11,color:'var(--red)',marginTop:4}}>Room below minimum size of {MIN_ROOM_SIZE_1}m² for single occupancy</div>}
+              </div>
+              <div style={{display:'flex',gap:6,flexShrink:0}}>
+                <button onClick={()=>{setEditRoom(room);setRoomForm(room);setShowRoomForm(true)}}
+                  style={{fontSize:12,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text)'}}>Edit</button>
+                <button onClick={()=>deleteRoom(room.id)}
+                  style={{fontSize:12,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--red)'}}>Remove</button>
+              </div>
+            </div>
+          </div>
+        })}
+        <div style={{background:'var(--brand-subtle)',border:'0.5px solid var(--brand)',borderRadius:10,padding:'10px 14px',display:'flex',justifyContent:'space-between'}}>
+          <span style={{fontSize:13,color:'var(--brand)',fontWeight:500}}>Total monthly income</span>
+          <span style={{fontSize:13,fontWeight:600,fontFamily:'var(--mono)',color:'var(--brand)'}}>£{totalRent.toLocaleString('en-GB')}/mo</span>
+        </div>
+      </div>}
+    </>}
+
+    {/* ── LICENCE ── */}
+    {view==='licence'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:14}}>HMO licence details</div>
+        <HMOInput label="Licence number" value={prop.hmoLicence} onChange={v=>updateProp({hmoLicence:v})} placeholder="e.g. HMO/2024/00123"/>
+        <HMOInput label="Issuing council" value={prop.hmoCouncil} onChange={v=>updateProp({hmoCouncil:v})} placeholder="e.g. Leeds City Council"/>
+        <HMOInput label="Licence issue date" value={prop.hmoLicenceIssued} onChange={v=>updateProp({hmoLicenceIssued:v})} placeholder="DD/MM/YYYY"/>
+        <HMOInput label="Licence expiry date" value={prop.hmoLicenceExpiry} onChange={v=>updateProp({hmoLicenceExpiry:v})} placeholder="DD/MM/YYYY"/>
+        <HMOInput label="Licence type" value={prop.hmoLicenceType} onChange={v=>updateProp({hmoLicenceType:v})} placeholder="e.g. Mandatory / Additional / Selective"/>
+        <HMOInput label="Max permitted occupants" value={prop.hmoMaxOccupants} onChange={v=>updateProp({hmoMaxOccupants:v})} placeholder="e.g. 6" type="number"/>
+      </div>
+      <div>
+        <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:12}}>
+          <div style={{fontSize:13,fontWeight:600,marginBottom:14}}>Licence status</div>
+          {licenceDays===null?<div style={{fontSize:13,color:'var(--text-3)'}}>Enter expiry date to track status</div>
+          :<div style={{textAlign:'center',padding:'16px 0'}}>
+            <div style={{fontSize:36,fontWeight:700,fontFamily:'var(--mono)',color:licenceDays<0?'var(--red)':licenceDays<=60?'#EF9F27':'var(--green)',marginBottom:8}}>
+              {licenceDays<0?'EXPIRED':licenceDays+' days'}
+            </div>
+            <div style={{fontSize:12,color:'var(--text-3)'}}>{licenceDays<0?'Licence has expired. Renew immediately.':licenceDays<=60?'Renewal due soon. Apply at least 2 months before expiry.':'Licence valid. No action required.'}</div>
+          </div>}
+        </div>
+        <div style={{background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:12,padding:'12px 14px'}}>
+          <div style={{fontSize:12,fontWeight:600,color:'#633806',marginBottom:6}}>Licence renewal tips</div>
+          <div style={{fontSize:11,color:'#633806',lineHeight:1.7}}>
+            Apply at least 2 months before expiry. You will need: current gas cert, EICR, fire risk assessment, floor plan with room sizes, fit and proper person declaration, and council application fee (typically £500-£1,200). Operating without a licence is a criminal offence.
+          </div>
+        </div>
+      </div>
+    </div>}
+
+    {/* ── FIRE SAFETY ── */}
+    {view==='fire'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:14}}>Fire safety records</div>
+        <HMOInput label="Fire risk assessment date" value={prop.fireRiskDate} onChange={v=>updateProp({fireRiskDate:v})} placeholder="DD/MM/YYYY"/>
+        <HMOInput label="Next review date" value={prop.fireRiskReviewDate} onChange={v=>updateProp({fireRiskReviewDate:v})} placeholder="DD/MM/YYYY"/>
+        <HMOInput label="Assessor name / company" value={prop.fireRiskAssessor} onChange={v=>updateProp({fireRiskAssessor:v})} placeholder="e.g. SafeCheck Ltd"/>
+        <HMOInput label="PAT test date" value={prop.patDate} onChange={v=>updateProp({patDate:v})} placeholder="DD/MM/YYYY"/>
+        <HMOInput label="PAT next due" value={prop.patExpiry} onChange={v=>updateProp({patExpiry:v})} placeholder="DD/MM/YYYY"/>
+        <HMOInput label="Emergency lighting check date" value={prop.emergencyLightingDate} onChange={v=>updateProp({emergencyLightingDate:v})} placeholder="DD/MM/YYYY"/>
+      </div>
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:14}}>Fire safety checklist</div>
+        {[
+          'Mains-wired interlinked smoke alarms on every storey',
+          'Heat detector in kitchen',
+          'Carbon monoxide alarms in all rooms with combustion appliances',
+          'Fire doors (FD30) with intumescent strips and self-closers',
+          'Emergency lighting on escape routes (5+ occupants)',
+          'Fire blanket in kitchen',
+          'Fire extinguisher on each level',
+          'Clear escape routes at all times',
+          'Written fire risk assessment in place',
+          'Tenants given fire safety briefing at move-in',
+        ].map((item,i)=>{
+          const key='fireSafety_'+i
+          return<label key={item} style={{display:'flex',alignItems:'flex-start',gap:10,marginBottom:10,cursor:'pointer'}}>
+            <input type="checkbox" checked={!!(prop.fireSafetyChecks||{})[key]}
+              onChange={e=>updateProp({fireSafetyChecks:{...(prop.fireSafetyChecks||{}),[key]:e.target.checked}})}
+              style={{marginTop:2,accentColor:'var(--brand)',flexShrink:0}}/>
+            <span style={{fontSize:12,color:'var(--text-2)',lineHeight:1.5}}>{item}</span>
+          </label>
+        })}
+        <div style={{marginTop:8,fontSize:11,color:'var(--text-3)',padding:'8px 10px',background:'var(--surface2)',borderRadius:8}}>
+          Tick each item you have in place. Keep photographic evidence and inspection records for council visits.
+        </div>
+      </div>
+    </div>}
+
+    {/* ── INCOME & FINANCES ── */}
+    {view==='finance'&&<div>
+      <div style={{background:'var(--brand)',borderRadius:14,padding:'16px 20px',marginBottom:16,display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:16,textAlign:'center'}}>
+        {[
+          {label:'Total monthly rent',value:'£'+totalRent.toLocaleString('en-GB'),sub:rooms.length+' rooms'},
+          {label:'Annual income',value:'£'+(totalRent*12).toLocaleString('en-GB'),sub:'before expenses'},
+          {label:'Occupied rooms',value:occupiedRooms+'/'+rooms.length,sub:rooms.length-occupiedRooms+' void'},
+          {label:'Avg rent per room',value:rooms.length?'£'+Math.round(totalRent/(rooms.length||1)).toLocaleString('en-GB'):'-',sub:'per month'},
+        ].map(s=><div key={s.label}>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',marginBottom:4}}>{s.label}</div>
+          <div style={{fontSize:22,fontWeight:600,color:'#fff',fontFamily:'var(--mono)'}}>{s.value}</div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.5)'}}>{s.sub}</div>
+        </div>)}
+      </div>
+      <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:12}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:12}}>Room-by-room breakdown</div>
+        {rooms.length===0?<div style={{fontSize:12,color:'var(--text-3)',padding:'16px 0',textAlign:'center'}}>Add rooms in the Rooms tab to see the breakdown here</div>
+        :rooms.map(room=><div key={room.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 0',borderBottom:'0.5px solid var(--border)'}}>
+          <div>
+            <div style={{fontSize:13,fontWeight:500}}>{room.name}</div>
+            <div style={{fontSize:11,color:'var(--text-3)'}}>{room.tenant||'Vacant'}</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:13,fontWeight:600,fontFamily:'var(--mono)',color:room.tenant?'var(--brand)':'var(--text-3)'}}>{room.rent?'£'+Number(room.rent).toLocaleString('en-GB')+'/mo':'Void'}</div>
+            {room.depositAmount&&<div style={{fontSize:11,color:'var(--text-3)'}}>Deposit: £{Number(room.depositAmount).toLocaleString('en-GB')}</div>}
+          </div>
+        </div>)}
+      </div>
+      <div style={{background:'var(--surface2)',borderRadius:10,padding:'10px 14px',fontSize:12,color:'var(--text-3)',lineHeight:1.7}}>
+        HMO yield, mortgage analysis, CGT and Section 24 calculations use the property values set in your Properties tab. The Finance tab in the main navigation also includes these tools for all your properties including HMOs.
+      </div>
+    </div>}
+
+    {/* ── DOCUMENTS ── */}
+    {view==='docs'&&<div>
+      <div style={{fontSize:13,color:'var(--text-2)',marginBottom:16,lineHeight:1.7}}>
+        HMO-specific documents are stored alongside your standard property documents. Drop any document below and Lettly will extract dates and details automatically.
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:10,marginBottom:16}}>
+        {[
+          {icon:'📋',label:'HMO Licence',desc:'Council-issued licence document'},
+          {icon:'🔥',label:'Fire Risk Assessment',desc:'Written FRA document'},
+          {icon:'🔌',label:'PAT Test Certificate',desc:'Annual appliance test records'},
+          {icon:'💡',label:'Emergency Lighting',desc:'Annual test certificate'},
+          {icon:'📐',label:'Floor Plans',desc:'Room sizes for licence application'},
+          {icon:'🚨',label:'Fire Alarm Certificate',desc:'Installation and test records'},
+        ].map(d=><div key={d.label} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:10,padding:'12px 14px'}}>
+          <span style={{fontSize:20}}>{d.icon}</span>
+          <div style={{fontSize:13,fontWeight:500,marginTop:6}}>{d.label}</div>
+          <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{d.desc}</div>
+        </div>)}
+      </div>
+      <div style={{background:'var(--surface2)',borderRadius:10,padding:'12px 14px',fontSize:12,color:'var(--text-3)'}}>
+        Drop documents into the main drop zone at the top of the page. Lettly will detect document type and attach to this property automatically. HMO compliance requirements vary by local authority. Always verify licence conditions with your local council. Lettly tracks and reminds but does not constitute legal advice.
+      </div>
+    </div>}
+  </div>
+}
+
 function ToolsTab({portfolio,setPortfolio}){
   const props=portfolio.properties||[]
   const[tool,setTool]=useState('remortgage')
@@ -3528,6 +4258,7 @@ function ToolsTab({portfolio,setPortfolio}){
         {maxRelease>0&&<div style={{background:'var(--brand-subtle)',border:'0.5px solid rgba(27,94,59,0.15)',borderRadius:10,padding:'12px 14px'}}><div style={{fontSize:12,fontWeight:600,color:'var(--brand)',marginBottom:6}}>Capital release scenarios</div><div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.8}}>Remortgage to 75% LTV: release {fmt(maxRelease>0?maxRelease:0)} capital<br/>{ercAmt&&Number(ercAmt)>0&&<>Wait until fixed rate ends: save the {fmt(Number(ercAmt))} ERC<br/></>}Net capital available after ERC: {fmt(maxRelease-(Number(ercAmt)||0))}</div></div>}
       </>}
       {!remProp&&<div style={{fontSize:12,color:'var(--text-3)',padding:'8px 0'}}>Select a property above to see remortgage analysis.</div>}
+      <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.6,padding:'8px 12px',background:'var(--surface2)',borderRadius:8,marginTop:4}}>For information only. Not financial advice. Always consult an independent mortgage broker before remortgaging.</div>
     </div>}
     {tool==='documents'&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16}}>
       <div style={{fontSize:13,fontWeight:500,marginBottom:14}}>Document generator</div>
@@ -3948,7 +4679,7 @@ function ConditionReport({portfolio,setPortfolio,userId}){
 }
 
 /* ---- Root ---- */
-const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'tenants',label:'Find & check tenants',short:'Tenants'},{id:'resources',label:'Resources',short:'Links'},{id:'content',label:'Content queue',short:'Content',adminOnly:true},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
+const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'tenants',label:'Find & check tenants',short:'Tenants'},{id:'resources',label:'Resources',short:'Links'},{id:'content',label:'Content queue',short:'Content',adminOnly:true},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'hmo',label:'HMO',short:'HMO',hmoOnly:true},{id:'invoicing',label:'Invoicing',short:'Invoices'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
 
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
@@ -4211,7 +4942,7 @@ export default function Dashboard(){
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
       <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:62,position:'sticky',top:0,zIndex:100,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:34,height:34,background:'var(--brand)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:16,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:20,fontWeight:400}}>Lettly</span></div>
-        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.filter(t=>!t.adminOnly||user?.publicMetadata?.admin||user?.emailAddresses?.[0]?.emailAddress?.includes('lettly.co')).map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'7px 13px',borderRadius:7,fontFamily:'var(--font)',fontSize:13,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?600:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
+        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.filter(t=>{if(t.adminOnly&&!user?.publicMetadata?.admin&&!user?.emailAddresses?.[0]?.emailAddress?.includes('lettly.co'))return false;if(t.hmoOnly&&!(portfolio.properties||[]).some(p=>p.isHMO))return false;return true;}).map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'7px 13px',borderRadius:7,fontFamily:'var(--font)',fontSize:13,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?600:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
           {saveStatus==='saving'&&<span style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
           {saveStatus==='saved'&&loaded&&<span style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
@@ -4254,6 +4985,8 @@ export default function Dashboard(){
         {tab==='conditions'  &&<div className='fade-up'><ConditionReport portfolio={portfolio} setPortfolio={setPortfolio} userId={user?.id}/></div>}
         {tab==='legislation' &&<LegislationTab portfolio={portfolio}/>}
         {tab==='ai'          &&<AITab         portfolio={portfolio}/>}
+        {tab==='hmo'         &&<HMOTab         portfolio={portfolio} setPortfolio={setPortfolio}/>}
+        {tab==='invoicing'   &&<InvoicingTab   portfolio={portfolio}/>}
         <div style={{marginTop:32,paddingTop:16,borderTop:'0.5px solid var(--border)',fontSize:11,color:'var(--text-3)',lineHeight:1.7,textAlign:'center'}}>
           Lettly provides information and tools to help you manage your properties. Nothing on this platform constitutes legal, financial, or compliance advice. You remain solely responsible for complying with all landlord obligations. Always consult a qualified solicitor or accountant before making legal or financial decisions.
           {' '}<a href="/terms" style={{color:'var(--text-3)',textDecoration:'underline'}}>Terms of Service</a>

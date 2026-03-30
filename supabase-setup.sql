@@ -116,3 +116,26 @@ create table if not exists referrals (
 alter table referrals enable row level security;
 drop policy if exists "Block direct access referrals" on referrals;
 create policy "Block direct access referrals" on referrals for all using (false);
+
+-- ============================================================
+-- INVOICES TABLE
+-- ============================================================
+create table if not exists invoices (
+  id uuid default gen_random_uuid() primary key,
+  user_id text not null,
+  invoice_number text not null,
+  type text not null, -- 'rent' | 'contractor' | 'expense'
+  prop_id text,
+  recipient_name text,
+  recipient_email text,
+  amount numeric,
+  status text default 'draft', -- 'draft' | 'sent' | 'paid' | 'overdue'
+  date date,
+  due_date date,
+  period text,
+  data jsonb, -- full invoice object
+  created_at timestamptz default now()
+);
+alter table invoices enable row level security;
+drop policy if exists "Block direct access invoices" on invoices;
+create policy "Block direct access invoices" on invoices for all using (false);
