@@ -21,14 +21,14 @@ export default function Landing() {
   return (
     <>
       <Head>
-        <title>Lettly - Manage your rental property without a letting agent</title>
+        <title>Lettly - Manage your rental property yourself, and save</title>
         <meta name="theme-color" content="#1b5e3b"/>
         <link rel="manifest" href="/manifest.json"/>
         <link rel="apple-touch-icon" href="/icon.svg"/>
         <meta name="apple-mobile-web-app-capable" content="yes"/>
         <meta name="apple-mobile-web-app-title" content="Lettly"/>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="Manage your rental property without a letting agent and stay fully compliant. Save £1,000–£3,000 a year. Built for UK landlords." />
+        <meta name="description" content="Everything UK landlords need to self-manage their properties. Compliance tracking, financial planning, AI document reading and more. Save £1,000-£3,000 a year." />
       </Head>
 
       <style>{`
@@ -183,11 +183,11 @@ export default function Landing() {
 
           <h1 className="hero-title fade-up-2" style={{ marginBottom:24 }}>
             Manage your rental property<br/>
-            <span className="hero-em">without a letting agent</span>
+            <span className="hero-em">yourself, on your terms</span>
           </h1>
 
           <p className="section-sub fade-up-3" style={{ maxWidth:580, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
-            Everything you need to manage your properties without a letting agent. Compliance tracking, AI document reading, financial planning, expense recording, CGT calculations, and more, all in one place.
+            Everything you need to self-manage your properties with confidence. Compliance tracking, AI document reading, financial planning, expense recording, CGT calculations, and more, all in one place.
           </p>
 
           <p style={{ fontSize:15, color:'var(--text-2)', marginBottom:20, fontWeight:500 }}>
@@ -195,7 +195,7 @@ export default function Landing() {
           </p>
           <div className="cta-row fade-up-3" style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap', marginBottom:22 }}>
             <a href="https://accounts.lettly.co/sign-up" className="btn-primary">
-              Stop paying letting agent fees →
+              Start self-managing your property →
             </a>
             <a href="#how-it-works" className="btn-ghost">
               See how it works
@@ -250,8 +250,8 @@ export default function Landing() {
         <section style={{ background:'var(--brand)', padding:'48px clamp(20px,4vw,48px)' }}>
           <div className="grid-4" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:24, maxWidth:900, margin:'0 auto', textAlign:'center' }}>
             {[
-              { num:'£2,000', label:'Average annual saving', sub:'vs. a high-street letting agent' },
-              { num:'10–20%', label:'Typical agent fee', sub:'of rent, every single month' },
+              { num:'£2,000', label:'Average annual saving', sub:'vs. full-service management fees' },
+              { num:'10–20%', label:'Typical agent fee', sub:'typical full-service management fee' },
               { num:'1 place', label:'Everything managed', sub:'documents, rent, compliance' },
               { num:'2 min', label:'To set up', sub:'drop your documents and go' },
             ].map(s => (
@@ -281,9 +281,9 @@ export default function Landing() {
         {/* ── PROBLEM → SOLUTION ── */}
         <section style={{ maxWidth:940, margin:'0 auto', padding:'clamp(56px,7vw,88px) clamp(20px,4vw,48px)' }}>
           <div style={{ textAlign:'center', marginBottom:52 }}>
-            <h2 className="section-title" style={{ marginBottom:16 }}>Letting agents are expensive<br/>and slow</h2>
+            <h2 className="section-title" style={{ marginBottom:16 }}>Self-managing is easier<br/>than you think</h2>
             <p className="section-sub" style={{ maxWidth:520, margin:'0 auto' }}>
-              You don't need a middleman to manage your property. You just need the right tools.
+              With the right tools, you can manage your properties professionally, stay fully compliant, and keep more of your rental income.
             </p>
           </div>
 
@@ -318,7 +318,7 @@ export default function Landing() {
             <div style={{ opacity:0.75 }}>
               <div style={{ fontSize:13, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:16 }}>Without Lettly</div>
               {[
-                { icon:'💸', title:'Paying 10-20% in agent fees', body:"On a £1,200/month property, that's up to £2,880/year straight out of your pocket." },
+                { icon:'💸', title:'Paying 10-20% in management fees', body:"On a £1,200/month property, that's up to £2,880/year straight out of your pocket." },
                 { icon:'📁', title:'Chasing paperwork', body:'Gas certs, EICRs, EPCs, insurance renewals. All in different places, easy to miss.' },
                 { icon:'😰', title:'Three different sets of landlord law', body:'One missed requirement can mean fines, an invalid notice, or losing your case in court.' },
                 { icon:'📱', title:'Managing everything manually', body:'WhatsApp chains, sticky notes, and spreadsheets that only you understand.' },
@@ -339,7 +339,7 @@ export default function Landing() {
           <div style={{ textAlign:'center' }}>
             <div style={{ display:'inline-block', background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.15)', borderRadius:16, padding:'20px 36px' }}>
               <div style={{ fontFamily:'var(--display)', fontSize:'clamp(18px,2.5vw,23px)', fontWeight:300, color:'var(--brand)', lineHeight:1.5 }}>
-                Lettly replaces your letting agent with a simple,<br/><em style={{fontStyle:'italic'}}>all-in-one dashboard.</em>
+                Lettly gives self-managing landlords a simple,<br/><em style={{fontStyle:'italic'}}>all-in-one dashboard.</em>
               </div>
             </div>
           </div>
@@ -350,7 +350,7 @@ export default function Landing() {
           <div style={{ maxWidth:860, margin:'0 auto' }}>
             <div style={{ textAlign:'center', marginBottom:44 }}>
               <h2 className="section-title" style={{ marginBottom:14 }}>What you actually pay</h2>
-              <p className="section-sub" style={{ maxWidth:500, margin:'0 auto' }}>A letting agent charges a percentage of every rent payment, every month. Lettly is a flat annual fee.</p>
+              <p className="section-sub" style={{ maxWidth:500, margin:'0 auto' }}>Full-service management charges a percentage of every rent payment. Lettly is a flat annual fee.</p>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:28 }}>
               {/* Lettly column - LEFT */}
@@ -377,7 +377,7 @@ export default function Landing() {
               </div>
               {/* Agent column - RIGHT, muted */}
               <div style={{ background:'#fce8e6', border:'1px solid #f5b8b4', borderRadius:20, padding:'clamp(24px,3vw,36px)', opacity:0.82 }}>
-                <div style={{ fontSize:13, fontWeight:700, color:'#791F1F', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:20 }}>High-street letting agent</div>
+                <div style={{ fontSize:13, fontWeight:700, color:'#791F1F', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:20 }}>Full-service management</div>
                 {[
                   { label:'Management fee', value:'10–15% of rent monthly' },
                   { label:'Let-only fee', value:'50–100% of first month rent' },
@@ -394,7 +394,7 @@ export default function Landing() {
             </div>
             <div style={{ textAlign:'center', background:'var(--brand)', borderRadius:16, padding:'20px 28px' }}>
               <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,3vw,28px)', fontWeight:300, color:'#fff', marginBottom:6 }}>
-                Switch to Lettly and keep <span style={{ fontStyle:'italic' }}>£924–£1,524</span> more every year
+                Self-manage with Lettly and keep <span style={{ fontStyle:'italic' }}>£924–£1,524</span> more every year
               </div>
               <div style={{ fontSize:14, color:'rgba(255,255,255,0.7)' }}>Based on a £900/month property. Your saving depends on your current agent fee.</div>
             </div>
@@ -625,8 +625,8 @@ export default function Landing() {
             </div>
             <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20 }}>
               {[
-                { stat:'£2,000+', label:'Saved per year', body:'Compared to a typical high-street letting agent charging 10–15% of rent.' },
-                { stat:'100%', label:'Control of your property', body:'No middleman. You talk directly to your tenant and make all the decisions.' },
+                { stat:'£2,000+', label:'Saved per year', body:'Compared to typical full-service management fees of 10-15% of rent.' },
+                { stat:'100%', label:'Control of your property', body:'Full control. You manage the relationship with your tenant and make all the decisions.' },
                 { stat:'2 min', label:'To feel the benefit', body:'Upload your first document and your compliance dashboard populates instantly.' },
               ].map(s => (
                 <div key={s.stat} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, padding:'36px 28px', textAlign:'center' }}>
@@ -669,7 +669,7 @@ export default function Landing() {
             <div style={{ background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.15)', borderRadius:20, padding:'32px 28px' }}>
               <div style={{ fontSize:28, color:'var(--brand)', marginBottom:14, fontFamily:'Georgia, serif', lineHeight:1, fontWeight:300 }}>&ldquo;</div>
               <div style={{ fontFamily:'var(--display)', fontSize:'clamp(16px,2vw,20px)', fontWeight:300, fontStyle:'italic', color:'var(--brand)', marginBottom:16, lineHeight:1.6 }}>
-                I was paying £180 a month to my letting agent. Lettly does the same job for £8. I wish I had found it sooner.
+                I was paying £180 a month in management fees. Lettly gives me all the tools I need for £8. I wish I had found it sooner.
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--brand)', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -708,7 +708,7 @@ export default function Landing() {
                 Starts at £8/month for 1-2 properties. All features included. 14-day free trial. No contract. Tax year export included on all plans.
               </p>
               <div style={{ display:'inline-block', background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.2)', borderRadius:12, padding:'12px 28px', fontSize:15, fontWeight:600, color:'var(--brand)' }}>
-                Compare to agent fees of £100 to £200/month per property
+                Compare to management fees of £100 to £200/month per property
               </div>
             </div>
 
@@ -755,7 +755,7 @@ export default function Landing() {
             Start managing your rental today
           </h2>
           <p className="section-sub" style={{ maxWidth:480, margin:'0 auto 44px' }}>
-            Join landlords who have taken back control and stopped paying agent fees. Free to start. Takes 2 minutes.
+            Join landlords who self-manage with confidence and keep more of their rental income. Free to start. Takes 2 minutes.
           </p>
           <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:19, padding:'22px 56px' }}>
             Get started in 2 minutes →
