@@ -2249,6 +2249,7 @@ function VoidTrackerPanel({portfolio,setPortfolio}){
 
 /* ---- Tax Export Panel ---- */
 function TaxExportPanel({portfolio}){
+  const props=portfolio.properties||[]
   const expenses=portfolio.expenses||[]
   const rentLedger=portfolio.rentLedger||{}
   const now=new Date()
@@ -2996,6 +2997,7 @@ function AffordabilityChecker({props}){
    EXPENSES PANEL
    ================================================================ */
 function ExpensesPanel({portfolio,setPortfolio}){
+  const props=portfolio.properties||[]
   const[expenses,setExpenses]=useState([])
   const[loading,setLoading]=useState(true)
   const[selProp,setSelProp]=useState(props[0]?.id||'')
@@ -3280,6 +3282,7 @@ function LtdVsPersonal({portfolio}){
   const[expenses,setExpenses]=useState(200)
   const[taxBand,setTaxBand]=useState('higher')
   const[salary,setSalary]=useState(50000)
+  const[extracting,setExtracting]=useState(true)
 
   const annualRent=Number(rent)*12
   const annualMortgage=Number(mortgage)*12
@@ -3299,7 +3302,7 @@ function LtdVsPersonal({portfolio}){
   const ltdProfitAfterTax=ltdProfit-corpTax
   const dividendAllowance=500
   const dividendTaxable=Math.max(0,ltdProfitAfterTax-dividendAllowance)
-  const dividendTax=taxBand==='higher'?dividendTaxable*0.3375:dividendTaxable*0.0875
+  const dividendTax=extracting?(taxBand==='higher'?dividendTaxable*0.3375:dividendTaxable*0.0875):0
   const ltdNetAfterTax=ltdProfitAfterTax-dividendTax
 
   const saving=ltdNetAfterTax-personalNetAfterTax
@@ -3334,6 +3337,13 @@ function LtdVsPersonal({portfolio}){
             <option value="higher">Higher rate (40%)</option>
           </select>
         </div>
+        <div>
+          <div style={{fontSize:12,color:'var(--text-3)',marginBottom:6}}>Extract as dividends?</div>
+          <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',background:'var(--surface2)',padding:'8px 10px',borderRadius:8,border:'0.5px solid var(--border-strong)'}}>
+            <input type="checkbox" checked={extracting} onChange={e=>setExtracting(e.target.checked)} style={{accentColor:'var(--brand)',width:14,height:14}}/>
+            <span style={{fontSize:12,color:'var(--text-2)'}}>{extracting?'Yes, paying dividends':'No, retaining profit'}</span>
+          </label>
+        </div>
       </div>
     </div>
     {/* Comparison */}
@@ -3353,7 +3363,7 @@ function LtdVsPersonal({portfolio}){
         <Row label="Mortgage interest (fully deductible)" value={'-'+fmt(annualMortgage)}/>
         <Row label="Allowable expenses" value={'-'+fmt(annualExpenses)}/>
         <Row label="Corporation tax (19%)" value={'-'+fmt(corpTax)} color="var(--red)"/>
-        <Row label="Dividend tax on extraction" value={'-'+fmt(dividendTax)} color="var(--red)"/>
+        {extracting&&<Row label="Dividend tax on extraction" value={'-'+fmt(dividendTax)} color="var(--red)"/>}
         <Row label="Net after all tax" value={fmt(ltdNetAfterTax)} bold color="var(--brand)"/>
       </div>
     </div>
@@ -3363,7 +3373,7 @@ function LtdVsPersonal({portfolio}){
       </div>
     </div>
     <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.6,padding:'8px 12px',background:'var(--surface2)',borderRadius:8}}>
-      Simplified model. Does not include: CGT on incorporation transfer, loss of mortgage relief (lenders often charge higher rates for Ltd companies), accountancy costs (approx. £800-1,500/yr for Ltd), or all personal tax implications. Always take professional advice before incorporating. Not financial or tax advice.
+      Simplified model. Assumes all Ltd profit is extracted as dividends each year (worst case for Ltd). Corporation tax applies regardless. Does not include: CGT on incorporation transfer, loss of mortgage relief (lenders often charge higher rates for Ltd companies), accountancy costs (approx. £800-1,500/yr for Ltd), or all personal tax implications. Always take professional advice before incorporating. Not financial or tax advice.
     </div>
   </div>
 }
@@ -3372,6 +3382,7 @@ function LtdVsPersonal({portfolio}){
    CONTRACTOR DIRECTORY
    ================================================================ */
 function ContractorDirectory({portfolio}){
+  const props=portfolio.properties||[]
   const[selProp,setSelProp]=useState(props[0]?.id||'')
   const[category,setCategory]=useState('gas')
   const prop=props.find(p=>p.id===selProp)
@@ -3513,6 +3524,7 @@ function ReferralPanel(){
    INVOICING TAB
    ================================================================ */
 function InvoicingTab({portfolio}){
+  const props=portfolio.properties||[]
   const[invoices,setInvoices]=useState([])
   const[loading,setLoading]=useState(true)
   const[view,setView]=useState('list') // list | create | preview
@@ -4410,6 +4422,7 @@ function ToolsTab({portfolio,setPortfolio}){
 
 /* ---- Legislation ---- */
 function LegislationTab({portfolio}){
+  const props=portfolio.properties||[]
   const nations=[...new Set(props.map(p=>p.nation||'England'))]
   const defaultNation=nations[0]||'England'
   const[nation,setNation]=useState(defaultNation)
