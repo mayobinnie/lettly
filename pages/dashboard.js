@@ -115,24 +115,24 @@ function DropZone({onFiles,compact,onScan,onManual}){
     return(
       <div style={{display:'flex',gap:8,alignItems:'stretch'}}>
         <div onDragOver={dragOver} onDragLeave={dragLeave} onDrop={drop} onClick={pickFile}
-          style={{flex:1,border:'1.5px dashed '+(over?'var(--brand)':'var(--border-strong)'),borderRadius:12,padding:'12px 16px',cursor:'pointer',background:over?'var(--brand-subtle)':'var(--surface)',display:'flex',alignItems:'center',gap:12,transition:'all 0.15s'}}>
+          style={{flex:1,border:'2px dashed var(--brand)',borderRadius:14,padding:'16px 20px',cursor:'pointer',background:'var(--brand-subtle)',display:'flex',alignItems:'center',gap:14,transition:'all 0.15s'}}>
           {input}
-          <div style={{width:30,height:30,borderRadius:8,background:over?'var(--brand)':'var(--brand-light)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-            <UpIcon color={over?'#fff':'var(--brand)'} size={14}/>
+          <div style={{width:38,height:38,borderRadius:10,background:'var(--brand)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <UpIcon color='#fff' size={18}/>
           </div>
           <div style={{flex:1}}>
-            <div style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>Drop or click to add documents</div>
-            <div style={{fontSize:11,color:'var(--text-3)'}}>PDF, JPEG, HEIC: gas cert, EICR, EPC, insurance, tenancy</div>
+            <div style={{fontSize:14,fontWeight:600,color:'var(--brand)'}}>Drop or click to add documents</div>
+            <div style={{fontSize:12,color:'var(--brand)',opacity:0.75,marginTop:2}}>Gas cert, EICR, EPC, insurance, tenancy, mortgage — AI reads it automatically</div>
           </div>
-          <div style={{fontSize:11,color:'var(--brand)',fontWeight:500,flexShrink:0,whiteSpace:'nowrap'}}>{over?'Release':'Browse'}</div>
+          <div style={{fontSize:12,fontWeight:600,flexShrink:0,whiteSpace:'nowrap',background:'var(--brand)',color:'#fff',padding:'7px 16px',borderRadius:8}}>{over?'Release':'Browse'}</div>
         </div>
         {onScan&&hasCamera&&<button onClick={onScan} style={{flexShrink:0,border:'1.5px solid var(--border-strong)',borderRadius:12,padding:'0 16px',background:'var(--surface)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,transition:'all 0.15s',minWidth:60}} onMouseEnter={e=>{e.currentTarget.style.background='var(--brand-light)';e.currentTarget.style.borderColor='var(--brand)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--surface)';e.currentTarget.style.borderColor='var(--border-strong)'}}>
           <span style={{fontSize:18}}>📷</span>
-          <span style={{fontSize:10,color:'var(--brand)',fontWeight:500}}>Scan</span>
+          <span style={{fontSize:11,color:'var(--brand)',fontWeight:600}}>Scan</span>
         </button>}
         {onManual&&<button onClick={onManual} style={{flexShrink:0,border:'1.5px solid var(--border-strong)',borderRadius:12,padding:'0 16px',background:'var(--surface)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,transition:'all 0.15s',minWidth:60}} onMouseEnter={e=>{e.currentTarget.style.background='var(--brand-light)';e.currentTarget.style.borderColor='var(--brand)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--surface)';e.currentTarget.style.borderColor='var(--border-strong)'}}>
           <span style={{fontSize:18}}>✏️</span>
-          <span style={{fontSize:10,color:'var(--brand)',fontWeight:500}}>Manual</span>
+          <span style={{fontSize:11,color:'var(--brand)',fontWeight:600}}>Manual</span>
         </button>}
       </div>
     )
@@ -613,7 +613,7 @@ function QueueItem({item,onRetry,onManual,onConfirm,onReject}){
     return<div className="scale-in" style={{background:'var(--surface)',border:'0.5px solid var(--brand)',borderRadius:12,padding:'12px 14px'}}>
       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
         <div style={{width:8,height:8,borderRadius:'50%',background:'var(--brand)',flexShrink:0}}/>
-        <div style={{fontSize:12,fontWeight:500,color:'var(--text)',flex:1}}>{item.name}</div>
+        <div style={{fontSize:14,fontWeight:600,color:'var(--brand)',flex:1}}>{item.name}</div>
         <div style={{fontSize:11,background:'var(--brand-light)',color:'var(--brand)',borderRadius:6,padding:'2px 8px',fontWeight:500}}>{ext?.documentType?.replace(/_/g,' ')}</div>
       </div>
       <div style={{fontSize:11,color:'var(--text-2)',marginBottom:10,lineHeight:1.8,background:'var(--surface2)',borderRadius:8,padding:'8px 10px'}}>
@@ -1239,7 +1239,7 @@ function GrowthCards({props}){
       const in5 = projectValue(val,rate,5)[5]
       const in10 = projectValue(val,rate,10)[10]
       return <div key={p.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:14}}>
-        <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:1}}>{p.shortName}</div>
+        <div style={{fontSize:14,fontWeight:600,color:'var(--brand)',marginBottom:1}}>{p.shortName}</div>
         <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10}}>{rate}% avg annual · {p.nation||'England'}</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:5}}>
           {[['Now',val,null],['1yr',in1,in1-val],['5yr',in5,in5-val],['10yr',in10,in10-val]].map(([label,v,gain])=>(
@@ -1412,7 +1412,7 @@ function PortfolioScore({props,checklist,urgent}){
                   <div key={i} style={{display:'flex',gap:10,padding:'8px 10px',background:'var(--red-bg)',borderRadius:8,marginBottom:6,alignItems:'flex-start'}}>
                     <span style={{fontSize:14,flexShrink:0}}>{item.icon}</span>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:2}}>{item.prop}: {item.issue}</div>
+                      <div style={{fontSize:14,fontWeight:600,color:'var(--brand)',marginBottom:2}}>{item.prop}: {item.issue}</div>
                       {item.fix&&<div style={{fontSize:11,color:'var(--text-2)',lineHeight:1.5}}>How to fix: {item.fix}</div>}
                     </div>
                   </div>
@@ -1530,7 +1530,7 @@ function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab
     {/* Per-property growth cards - always show 1/5/10yr */}
     {props.filter(p=>p.currentValue).length>0&&<>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-        <div style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>Property growth projections</div>
+        <div style={{fontSize:14,fontWeight:600,color:'var(--brand)'}}>Property growth projections</div>
         <div style={{fontSize:10,color:'var(--text-3)'}}>Based on ONS HPI 5yr avg by postcode · <button onClick={()=>setTab&&setTab('finance')} style={{background:'none',border:'none',color:'var(--brand)',fontSize:10,cursor:'pointer',padding:0}}>update values →</button></div>
       </div>
       <GrowthCards props={props}/>
@@ -1582,7 +1582,7 @@ function InsuranceDetail({p}){
     {/* Header row: always visible */}
     <button onClick={()=>setOpen(v=>!v)} style={{width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'none',border:'none',cursor:'pointer',fontFamily:'var(--font)'}}>
       <div style={{display:'flex',alignItems:'center',gap:10}}>
-        <span style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>Insurance detail</span>
+        <span style={{fontSize:14,fontWeight:600,color:'var(--brand)'}}>Insurance detail</span>
         {keyFacts.slice(0,2).map(f=><span key={f.label} style={{fontSize:11,color:'var(--text-3)'}}>{f.label}: <span style={{color:'var(--text-2)',fontWeight:500}}>{f.value}</span></span>)}
       </div>
       <span style={{fontSize:11,color:'var(--brand)',fontWeight:500}}>{open?'Hide':'Show full policy'}</span>
@@ -2105,7 +2105,7 @@ function MaintenanceTab({portfolio,setPortfolio,userId}){
       <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button><button onClick={addJob} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Log repair</button></div>
     </div>}
     {jobs.length===0?<div style={{textAlign:'center',padding:'40px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}><div style={{fontSize:13,color:'var(--text-3)'}}>No maintenance jobs logged yet. Add a repair or share a tenant link.</div></div>:<>
-      {open.length>0&&<><div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:10}}>Open ({open.length})</div>
+      {open.length>0&&<><div style={{fontSize:14,fontWeight:600,color:'var(--brand)',marginBottom:10}}>Open ({open.length})</div>
       {open.map(j=><div key={j.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px',marginBottom:8}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12}}>
           <div style={{flex:1,minWidth:0}}>
@@ -2517,7 +2517,7 @@ function ContentQueueTab({user}){
                 <span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,background:statusBg[item.status]||'var(--surface2)',color:statusCol[item.status]||'var(--text-2)',flexShrink:0,textTransform:'capitalize'}}>{item.status}</span>
                 {item.urgency==='HIGH'&&<span style={{fontSize:10,color:'var(--red)',fontWeight:600}}>URGENT</span>}
               </div>
-              <div style={{fontSize:12,fontWeight:500,color:'var(--text)',marginBottom:2,lineHeight:1.4}}>{item.title}</div>
+              <div style={{fontSize:14,fontWeight:600,color:'var(--brand)',marginBottom:2,lineHeight:1.4}}>{item.title}</div>
               <div style={{fontSize:11,color:'var(--text-3)'}}>{new Date(item.created_at).toLocaleDateString('en-GB')} {item.source&&'· '+item.source.replace('_',' ')}</div>
               {item.status==='draft'&&<div style={{display:'flex',gap:6,marginTop:8}}>
                 <button onClick={e=>{e.stopPropagation();updateItem(item.id,{status:'approved'})}} style={{background:'var(--green-bg)',color:'var(--green)',border:'none',borderRadius:6,padding:'4px 10px',fontSize:11,fontWeight:500,cursor:'pointer'}}>Approve</button>
@@ -3542,7 +3542,7 @@ function ToolsTab({portfolio,setPortfolio}){
       {docType==='letter_rent_increase'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}><Input label="New rent (£/mo)" value={extra.newRent||''} onChange={v=>setExtra(p=>({...p,newRent:v}))} placeholder="e.g. 900" type="number"/><Input label="Effective date" value={extra.effectiveDate||''} onChange={v=>setExtra(p=>({...p,effectiveDate:v}))} placeholder="DD/MM/YYYY"/></div>}
       {docType==='letter_entry'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}><Input label="Proposed visit date" value={extra.visitDate||''} onChange={v=>setExtra(p=>({...p,visitDate:v}))} placeholder="DD/MM/YYYY"/><Input label="Reason for visit" value={extra.reason||''} onChange={v=>setExtra(p=>({...p,reason:v}))} placeholder="e.g. Annual inspection"/></div>}
       <button onClick={generateDoc} disabled={generating} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'9px 22px',fontSize:13,fontWeight:500,cursor:generating?'not-allowed':'pointer',opacity:generating?0.6:1,marginBottom:generating||generated?14:0}}>{generating?'Generating...':'Generate document'}</button>
-      {generated&&<><div style={{background:'#fce8e6',border:'0.5px solid #E24B4A',borderRadius:8,padding:'10px 14px',marginBottom:8,fontSize:11,color:'#791F1F',lineHeight:1.6}}><strong>Important:</strong> This is a draft document for reference only. It does not constitute legal advice. Review with a qualified solicitor before use. You remain solely responsible for ensuring any document is legally valid and appropriate for your circumstances.</div><div style={{background:'var(--surface2)',borderRadius:10,padding:16,fontSize:12,lineHeight:1.9,whiteSpace:'pre-wrap',color:'var(--text-2)',fontFamily:'var(--mono)'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div style={{fontSize:12,fontWeight:500,color:'var(--text)',fontFamily:'var(--font)'}}>Generated document</div><button onClick={()=>navigator.clipboard.writeText(generated)} style={{fontSize:11,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:6,padding:'4px 10px',cursor:'pointer'}}>Copy</button></div>{generated}</div></> }
+      {generated&&<><div style={{background:'#fce8e6',border:'0.5px solid #E24B4A',borderRadius:8,padding:'10px 14px',marginBottom:8,fontSize:11,color:'#791F1F',lineHeight:1.6}}><strong>Important:</strong> This is a draft document for reference only. It does not constitute legal advice. Review with a qualified solicitor before use. You remain solely responsible for ensuring any document is legally valid and appropriate for your circumstances.</div><div style={{background:'var(--surface2)',borderRadius:10,padding:16,fontSize:12,lineHeight:1.9,whiteSpace:'pre-wrap',color:'var(--text-2)',fontFamily:'var(--mono)'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div style={{fontSize:14,fontWeight:600,color:'var(--brand)',fontFamily:'var(--font)'}}>Generated document</div><button onClick={()=>navigator.clipboard.writeText(generated)} style={{fontSize:11,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:6,padding:'4px 10px',cursor:'pointer'}}>Copy</button></div>{generated}</div></> }
     </div>}
     {tool==='voids'&&<VoidTrackerPanel portfolio={portfolio} setPortfolio={setPortfolio}/>}
     {tool==='taxexport'&&<TaxExportPanel portfolio={portfolio}/>}
@@ -4209,9 +4209,9 @@ export default function Dashboard(){
     {showWizard&&<OnboardingWizard onComplete={completeWizard} firstName={user?.firstName}/>}
 
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
-      <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,gap:8}}>
-        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:30,height:30,background:'var(--brand)',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:14,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:17,fontWeight:400}}>Lettly</span></div>
-        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.filter(t=>!t.adminOnly||user?.publicMetadata?.admin||user?.emailAddresses?.[0]?.emailAddress?.includes('lettly.co')).map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'5px 10px',borderRadius:7,fontFamily:'var(--font)',fontSize:11,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?500:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
+      <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:62,position:'sticky',top:0,zIndex:100,gap:8}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:34,height:34,background:'var(--brand)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:16,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:20,fontWeight:400}}>Lettly</span></div>
+        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.filter(t=>!t.adminOnly||user?.publicMetadata?.admin||user?.emailAddresses?.[0]?.emailAddress?.includes('lettly.co')).map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'7px 13px',borderRadius:7,fontFamily:'var(--font)',fontSize:13,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?600:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
           {saveStatus==='saving'&&<span style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
           {saveStatus==='saved'&&loaded&&<span style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
@@ -4220,7 +4220,7 @@ export default function Dashboard(){
           <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/>
         </div>
       </nav>
-      {showDrop&&<div className="fade-in" style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 16px'}}><div style={{maxWidth:700,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)}/></div></div>}
+      <div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 20px'}}><div style={{maxWidth:800,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)}/></div></div>
       {queue.length>0&&<div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'10px 16px'}}>
         <div style={{maxWidth:700,margin:'0 auto'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
