@@ -1702,11 +1702,18 @@ function PropertyDropZone({propName,propId,onFiles,onManual}){
   </div>
 }
 
-function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,onAdd}){
+function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,onAdd,maxProps,onUpgrade}){
   const props=portfolio.properties||[]
   const col=s=>s==='valid'?'var(--green)':s==='due-soon'?'var(--amber)':s==='overdue'?'var(--red)':'var(--text-3)'
   return<div className="fade-up">
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}><div style={{fontSize:13,color:'var(--text-2)'}}>{props.length} propert{props.length===1?'y':'ies'}</div><button onClick={onAdd} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add property</button></div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}><div style={{display:'flex',alignItems:'center',gap:8}}>
+      <div style={{fontSize:13,color:'var(--text-2)'}}>{props.length} propert{props.length===1?'y':'ies'}</div>
+      {maxProps&&maxProps<999&&<span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:props.length>=maxProps?'#fce8e6':'var(--surface2)',color:props.length>=maxProps?'var(--red)':'var(--text-3)',fontWeight:500}}>{props.length}/{maxProps} on your plan</span>}
+    </div>
+    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+      {maxProps&&props.length>=maxProps&&<button onClick={onUpgrade} style={{fontSize:12,padding:'6px 12px',borderRadius:8,border:'0.5px solid var(--brand)',background:'var(--brand-light)',color:'var(--brand)',cursor:'pointer',fontWeight:500}}>Upgrade to add more</button>}
+      <button onClick={onAdd} style={{background:props.length>=(maxProps||999)?'var(--surface2)':'var(--brand)',color:props.length>=(maxProps||999)?'var(--text-3)':'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add property</button>
+    </div></div>
     {props.length===0?null:props.map(p=>{
       const gasC=dueSoon(p.gasDue),eicrC=dueSoon(p.eicrDue),insC=dueSoon(p.insuranceRenewal)
       const epcStatus=p.epcRating?(['A','B','C'].includes(p.epcRating.toUpperCase())?'green':p.epcRating.toUpperCase()==='D'?'amber':'red'):null
@@ -3875,6 +3882,110 @@ function InvoicingTab({portfolio}){
   </div>
 }
 
+
+/* ================================================================
+   PAYWALL GATE + CHECKOUT FLOW
+   ================================================================ */
+function PaywallBanner({subscription,user,onUpgrade,propCount,maxProps}){
+  const status=subscription?.status
+  const isActive=['active','trialing'].includes(status)
+  if(isActive) return null
+
+  return<div style={{background:'linear-gradient(135deg,#1b3a2d 0%,#1b5e3b 100%)',margin:'0 0 20px',borderRadius:14,padding:'20px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap'}}>
+    <div style={{flex:1}}>
+      <div style={{fontSize:15,fontWeight:600,color:'#fff',marginBottom:4}}>
+        {status==='none'||!status?'Start your 14-day free trial':'Your trial has ended'}
+      </div>
+      <div style={{fontSize:13,color:'rgba(255,255,255,0.7)',lineHeight:1.5}}>
+        {status==='none'||!status
+          ?`You are using the free preview (${propCount||0}/${maxProps||1} propert${(maxProps||1)===1?'y':'ies'}). Choose a plan to unlock all features and add more properties.`
+          :'Upgrade to continue accessing your portfolio, compliance alerts, AI assistant and more.'}
+      </div>
+    </div>
+    <button onClick={onUpgrade} style={{background:'#fff',color:'var(--brand)',border:'none',borderRadius:10,padding:'10px 22px',fontSize:14,fontWeight:600,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
+      {status==='none'||!status?'Start free trial':'Choose a plan'}
+    </button>
+  </div>
+}
+
+function UpgradeModal({onClose,user,currentPlan}){
+  const[selPlan,setSelPlan]=useState('standard')
+  const[addHmo,setAddHmo]=useState(false)
+  const[loading,setLoading]=useState(false)
+
+  const PLANS=[
+    {id:'starter',name:'Starter',price:8,props:'1-2 properties'},
+    {id:'standard',name:'Standard',price:16,props:'3-5 properties'},
+    {id:'portfolio',name:'Portfolio',price:28,props:'6-10 properties',popular:true},
+    {id:'pro',name:'Pro',price:40,props:'Unlimited'},
+  ]
+
+  async function startCheckout(){
+    setLoading(true)
+    try{
+      const r=await fetch('/api/stripe/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({plan:selPlan,addHmo,email:user?.emailAddresses?.[0]?.emailAddress})})
+      const d=await r.json()
+      if(d.url) window.location.href=d.url
+      else alert('Could not start checkout. Please try again.')
+    }catch(e){alert('Could not start checkout. Please try again.')}
+    setLoading(false)
+  }
+
+  const plan=PLANS.find(p=>p.id===selPlan)
+  const total=(plan?.price||0)+(addHmo?12.50:0)
+
+  return<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div style={{background:'var(--surface)',borderRadius:20,padding:'32px 28px',maxWidth:520,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:24}}>
+        <div>
+          <div style={{fontFamily:'var(--display)',fontSize:22,fontWeight:400,marginBottom:4}}>Choose your plan</div>
+          <div style={{fontSize:13,color:'var(--text-3)'}}>14-day free trial, no credit card required</div>
+        </div>
+        <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--text-3)',padding:'0 4px'}}>x</button>
+      </div>
+
+      {/* Plan selector */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
+        {PLANS.map(p=><button key={p.id} onClick={()=>setSelPlan(p.id)}
+          style={{padding:'12px 14px',borderRadius:12,border:'1.5px solid',textAlign:'left',cursor:'pointer',
+            borderColor:selPlan===p.id?'var(--brand)':'var(--border)',
+            background:selPlan===p.id?'var(--brand-subtle)':'var(--surface)',
+            position:'relative'}}>
+          {p.popular&&<span style={{position:'absolute',top:8,right:8,fontSize:10,background:'var(--brand)',color:'#fff',padding:'1px 6px',borderRadius:20,fontWeight:600}}>Popular</span>}
+          <div style={{fontSize:13,fontWeight:600,color:selPlan===p.id?'var(--brand)':'var(--text)',marginBottom:2}}>{p.name}</div>
+          <div style={{fontSize:18,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{p.price}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
+          <div style={{fontSize:11,color:'var(--text-3)'}}>{p.props}</div>
+        </button>)}
+      </div>
+
+      {/* HMO add-on */}
+      <label style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',background:'var(--surface2)',borderRadius:10,cursor:'pointer',marginBottom:20,border:'0.5px solid '+(addHmo?'var(--brand)':'var(--border)')}}>
+        <input type="checkbox" checked={addHmo} onChange={e=>setAddHmo(e.target.checked)} style={{accentColor:'var(--brand)',width:16,height:16}}/>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13,fontWeight:500}}>Add HMO management suite</div>
+          <div style={{fontSize:11,color:'var(--text-3)'}}>Room tracking, licence manager, fire safety checklist, PAT testing</div>
+        </div>
+        <div style={{fontSize:13,fontWeight:600,color:'var(--brand)',flexShrink:0}}>+£12.50/mo</div>
+      </label>
+
+      {/* Total */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 0',borderTop:'0.5px solid var(--border)',marginBottom:16}}>
+        <span style={{fontSize:13,color:'var(--text-2)'}}>Total after 14-day trial</span>
+        <span style={{fontSize:20,fontWeight:700,fontFamily:'var(--mono)',color:'var(--brand)'}}>£{total.toFixed(2).replace('.00','')}/mo</span>
+      </div>
+
+      <button onClick={startCheckout} disabled={loading}
+        style={{width:'100%',background:'var(--brand)',color:'#fff',border:'none',borderRadius:12,padding:'14px',fontSize:15,fontWeight:600,cursor:loading?'not-allowed':'pointer',opacity:loading?0.7:1,marginBottom:12}}>
+        {loading?'Redirecting to checkout...':'Start 14-day free trial →'}
+      </button>
+      <div style={{fontSize:11,color:'var(--text-3)',textAlign:'center',lineHeight:1.6}}>
+        No credit card required to start. Cancel anytime. You will be redirected to Stripe for secure payment.
+      </div>
+    </div>
+  </div>
+}
+
 function HMOTab({portfolio,setPortfolio}){
   const props=(portfolio.properties||[]).filter(p=>p.isHMO)
   const[selProp,setSelProp]=useState(props[0]?.id||'')
@@ -4684,20 +4795,31 @@ const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label
 export default function Dashboard(){
   const{isLoaded,isSignedIn,user}=useUser();const router=useRouter()
   const[tab,setTab]=useState('overview')
+  const[subscription,setSubscription]=useState(null)
+  const[subLoading,setSubLoading]=useState(true)
+  const[showUpgrade,setShowUpgrade]=useState(false)
+  // Derive property limit from subscription plan
+  const maxProps=subscription?.maxProperties||(subscription?.status==='active'||subscription?.status==='trialing'?subscription?.maxProperties:1)||1
+  const isActive=['active','trialing'].includes(subscription?.status)
+  const props=portfolio.properties||[]
+  const atLimit=props.length>=maxProps
   const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:'',voids:[],applicants:[]})
   const[queue,setQueue]=useState([])
   const[showDrop,setShowDrop]=useState(false)
   const[loaded,setLoaded]=useState(false)
+  const[justSubscribed,setJustSubscribed]=useState(false)
   const[formProp,setFormProp]=useState(null)
   const[showWizard,setShowWizard]=useState(false)
 
-  useEffect(()=>{if(isLoaded&&!isSignedIn)router.replace('/')},[isLoaded,isSignedIn,router])
+  useEffect(()=>{if(isLoaded&&!isSignedIn)router.replace('/')
+    if(typeof window!=='undefined'&&window.location.search.includes('subscribed=1'))setJustSubscribed(true)},[isLoaded,isSignedIn,router])
   useEffect(()=>{
     if(!user?.id)return
     // localStorage check is instant - prevents wizard flash on every login
     const wizardDone = typeof window !== 'undefined' && (localStorage.getItem('lettly_wizard_'+user.id) || localStorage.getItem('lettly_wizard_done'))
     if(!wizardDone){
       // Only show wizard after Supabase confirms no onboarding data
+      fetch('/api/stripe/subscription').then(r=>r.json()).then(d=>setSubscription(d.subscription)).finally(()=>setSubLoading(false))
       fetch('/api/data').then(r=>r.json()).then(({data})=>{
         const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
         const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[],applicants:p.applicants||[]}
@@ -4706,6 +4828,7 @@ export default function Dashboard(){
         if(!p.onboarding){setShowWizard(true)}
       })
     } else {
+      fetch('/api/stripe/subscription').then(r=>r.json()).then(d=>setSubscription(d.subscription)).finally(()=>setSubLoading(false))
       fetch('/api/data').then(r=>r.json()).then(({data})=>{
         const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
         const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[],applicants:p.applicants||[]}
@@ -4777,7 +4900,8 @@ export default function Dashboard(){
     setPortfolio(prev=>({...prev,checklist:{...prev.checklist,[id]:!prev.checklist[id]}}))
   }
 
-  function updateProperty(prop){setPortfolio(prev=>{const props=prev.properties||[];const idx=props.findIndex(p=>p.id===prop.id);if(idx>=0){const updated=[...props];updated[idx]=prop;return{...prev,properties:updated}}return{...prev,properties:[...props,prop]}})}
+  function updateProperty(prop){setPortfolio(prev=>{const props=prev.properties||[];const idx=props.findIndex(p=>p.id===prop.id);if(idx>=0){const updated=[...props];updated[idx]=prop;return{...prev,properties:updated}}// Block adding new property if at limit
+  const limit=subscription?.maxProperties||((['active','trialing'].includes(subscription?.status))?999:1)||1;if(props.length>=limit){setShowUpgrade(true);return prev}return{...prev,properties:[...props,prop]}})}}
   function deleteProperty(id){setPortfolio(prev=>({...prev,properties:(prev.properties||[]).filter(p=>p.id!==id)}))}
 
   async function handleFiles(files){
@@ -4948,10 +5072,16 @@ export default function Dashboard(){
           {saveStatus==='saved'&&loaded&&<span style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
           {saveStatus==='error'&&<span style={{fontSize:11,color:'var(--red)'}}>Save failed</span>}
           <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button>
+          {(!subscription||subscription.status==='none')&&<button onClick={()=>setShowUpgrade(true)} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--brand)',background:'var(--brand-light)',cursor:'pointer',color:'var(--brand)',fontWeight:600,whiteSpace:'nowrap'}}>Upgrade</button>}
+          {subscription&&['active','trialing'].includes(subscription.status)&&<button onClick={async()=>{const r=await fetch('/api/stripe/portal',{method:'POST'});const d=await r.json();if(d.url)window.location.href=d.url}} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)',whiteSpace:'nowrap'}}>Billing</button>}
           <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/>
         </div>
       </nav>
       <div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 20px'}}><div style={{maxWidth:800,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)}/></div></div>
+      <div className="dash-content" style={{paddingTop:0}}>
+        {showUpgrade&&<UpgradeModal onClose={()=>setShowUpgrade(false)} user={user} currentPlan={subscription?.plan}/>}
+        <PaywallBanner subscription={subscription} user={user} onUpgrade={()=>setShowUpgrade(true)} propCount={props.length} maxProps={maxProps}/>
+      </div>
       {queue.length>0&&<div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'10px 16px'}}>
         <div style={{maxWidth:700,margin:'0 auto'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
@@ -4972,9 +5102,9 @@ export default function Dashboard(){
         </div>
       </div>}
       <div className="dash-content">
-        {tab==='overview'&&<div style={{marginBottom:20,paddingBottom:20,borderBottom:'0.5px solid var(--border)'}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(26px,4vw,38px)',fontWeight:400,marginBottom:6,color:'var(--text)',letterSpacing:'-0.3px'}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:14,color:'var(--text-2)',fontWeight:500}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} in your portfolio`}</p></div>}
+        {tab==='overview'&&<div style={{marginBottom:20,paddingBottom:20,borderBottom:'0.5px solid var(--border)'}}>{justSubscribed&&<div style={{background:'var(--green-bg)',border:'0.5px solid var(--green)',borderRadius:10,padding:'10px 16px',marginBottom:14,fontSize:13,color:'var(--green)',fontWeight:500,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span>Welcome to Lettly! Your 14-day free trial has started.</span><button onClick={()=>setJustSubscribed(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--green)',fontSize:16}}>x</button></div>}<h1 style={{fontFamily:'var(--display)',fontSize:'clamp(26px,4vw,38px)',fontWeight:400,marginBottom:6,color:'var(--text)',letterSpacing:'-0.3px'}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:14,color:'var(--text-2)',fontWeight:500}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} in your portfolio`}</p></div>}
         {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
-        {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onAddDocsToProp={handleFilesForProp} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
+        {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onAddDocsToProp={handleFilesForProp} onEdit={setFormProp} onAdd={()=>{if(atLimit){setShowUpgrade(true)}else{setFormProp({})}}} maxProps={maxProps} onUpgrade={()=>setShowUpgrade(true)}/>}
         {tab==='tenants'     &&<TenantsTab    portfolio={portfolio} setPortfolio={setPortfolio}/>}
         {tab==='resources'   &&<ResourcesTab/>}
         {tab==='content'    &&<ContentQueueTab user={user}/>}

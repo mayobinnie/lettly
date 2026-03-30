@@ -11,6 +11,7 @@ const isPublicRoute = createRouteMatcher([
   '/sitemap.xml',
   '/api/tenant-report(.*)',
   '/api/webhooks(.*)',
+  '/api/stripe/webhook',
   '/api/newsletter',
   '/api/ping',
   '/api/valuation',

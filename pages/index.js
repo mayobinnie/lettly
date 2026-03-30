@@ -503,7 +503,7 @@ export default function Landing() {
             <p className="section-sub" style={{ maxWidth:500, margin:'0 auto' }}>Built specifically for UK private landlords. No tech skills needed.</p>
           </div>
 
-          <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:16 }}>
+          <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:16, alignItems:'stretch' }}>
             {[
               {
                 icon:'🧾',
@@ -527,7 +527,7 @@ export default function Landing() {
                 highlight:true,
               },
             ].map(f => (
-              <div key={f.title} className="feature-block" style={f.highlight?{border:'1.5px solid var(--brand)',background:'var(--brand-subtle)'}:{}}>
+              <div key={f.title} className="feature-block" style={f.highlight?{border:'1.5px solid var(--brand)',background:'var(--brand-subtle)',display:'flex',flexDirection:'column'}:{display:'flex',flexDirection:'column'}}>
                 {f.highlight&&<div style={{fontSize:11,fontWeight:700,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:10}}>New feature</div>}
                 <div style={{ fontSize:34, marginBottom:20 }}>{f.icon}</div>
                 <div style={{ fontFamily:'var(--display)', fontSize:22, fontWeight:400, color:f.highlight?'var(--brand)':'var(--text)', marginBottom:20 }}>{f.title}</div>
@@ -556,7 +556,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:16 }}>
+            <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:16, alignItems:'stretch' }}>
               {[
                 {
                   flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',
@@ -725,9 +725,9 @@ export default function Landing() {
             <div className="grid-4" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
               {[
                 { name:'Starter',   price:'£8',  props:'1–2 properties',          popular:false },
-                { name:'Standard',  price:'£16', props:'3–4 properties',           popular:false },
-                { name:'Portfolio', price:'£28', props:'5–7 properties',           popular:true  },
-                { name:'Pro',       price:'£40', props:'8+ properties unlimited',  popular:false },
+                { name:'Standard',  price:'£16', props:'3–5 properties',           popular:false },
+                { name:'Portfolio', price:'£28', props:'6–10 properties',          popular:true  },
+                { name:'Pro',       price:'£40', props:'Unlimited properties',     popular:false },
               ].map(plan => (
                 <div key={plan.name} style={{
                   background: plan.popular ? 'var(--brand)' : 'var(--surface)',
@@ -756,6 +756,23 @@ export default function Landing() {
             <p style={{ textAlign:'center', fontSize:13, color:'var(--text-3)' }}>
               14-day free trial on all plans · No credit card required · Cancel anytime
             </p>
+
+            {/* HMO Add-on */}
+            <div style={{ maxWidth:640, margin:'28px auto 0', background:'var(--brand-subtle)', border:'1.5px solid var(--brand)', borderRadius:16, padding:'20px 28px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:20, flexWrap:'wrap' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                <span style={{ fontSize:28 }}>🏠</span>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:600, color:'var(--brand)', marginBottom:3 }}>HMO management suite, add-on</div>
+                  <div style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.6 }}>Room-by-room tracking, HMO licence management, fire safety checklist, PAT testing records. Add to any plan.</div>
+                </div>
+              </div>
+              <div style={{ textAlign:'center', flexShrink:0 }}>
+                <div style={{ fontFamily:'var(--display)', fontSize:28, fontWeight:300, color:'var(--brand)', lineHeight:1 }}>£12.50</div>
+                <div style={{ fontSize:12, color:'var(--text-3)', marginBottom:10 }}>per month</div>
+                <a href="https://accounts.lettly.co/sign-up" style={{ display:'inline-block', background:'var(--brand)', color:'#fff', borderRadius:8, padding:'8px 20px', fontSize:13, fontWeight:600, textDecoration:'none' }}>Start free trial →</a>
+              </div>
+            </div>
+
           </div>
         </section>
 

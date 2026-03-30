@@ -139,3 +139,23 @@ create table if not exists invoices (
 alter table invoices enable row level security;
 drop policy if exists "Block direct access invoices" on invoices;
 create policy "Block direct access invoices" on invoices for all using (false);
+
+-- ============================================================
+-- SUBSCRIPTIONS TABLE
+-- ============================================================
+create table if not exists subscriptions (
+  id uuid default gen_random_uuid() primary key,
+  user_id text not null unique,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  status text default 'none',
+  plan text default 'starter',
+  hmo_addon boolean default false,
+  max_properties integer default 2,
+  current_period_end timestamptz,
+  updated_at timestamptz default now(),
+  created_at timestamptz default now()
+);
+alter table subscriptions enable row level security;
+drop policy if exists "Block direct access subscriptions" on subscriptions;
+create policy "Block direct access subscriptions" on subscriptions for all using (false);
