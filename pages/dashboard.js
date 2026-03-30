@@ -4241,7 +4241,7 @@ export default function Dashboard(){
         </div>
       </div>}
       <div className="dash-content">
-        {tab==='overview'&&<div style={{marginBottom:14}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(20px,4vw,28px)',fontWeight:300,marginBottom:3}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:13,color:'var(--text-3)'}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} saved`}</p></div>}
+        {tab==='overview'&&<div style={{marginBottom:20,paddingBottom:20,borderBottom:'0.5px solid var(--border)'}}><h1 style={{fontFamily:'var(--display)',fontSize:'clamp(26px,4vw,38px)',fontWeight:400,marginBottom:6,color:'var(--text)',letterSpacing:'-0.3px'}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:14,color:'var(--text-2)',fontWeight:500}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} in your portfolio`}</p></div>}
         {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
         {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onAddDocsToProp={handleFilesForProp} onEdit={setFormProp} onAdd={()=>setFormProp({})}/>}
         {tab==='tenants'     &&<TenantsTab    portfolio={portfolio} setPortfolio={setPortfolio}/>}
