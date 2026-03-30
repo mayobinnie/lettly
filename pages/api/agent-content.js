@@ -1,3 +1,4 @@
+import { getAuth } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 
@@ -120,12 +121,16 @@ async function saveToQueue(supabase, items) {
 }
 
 export default async function handler(req, res) {
-  // Auth check
+  // Auth check - require CRON_SECRET for all access
   const authHeader = req.headers.authorization
-  const isManual = req.method === 'POST' && req.body?.manual === true
   const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
+  
+  // Allow admin manual trigger with valid Clerk session
+  const { userId } = getAuth(req)
+  const ADMIN_USER_ID = process.env.ADMIN_CLERK_USER_ID
+  const isAdmin = userId && ADMIN_USER_ID && userId === ADMIN_USER_ID
 
-  if (!isCron && !isManual) {
+  if (!isCron && !isAdmin) {
     return res.status(401).json({ error: 'Unauthorised' })
   }
 

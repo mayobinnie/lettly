@@ -23,10 +23,9 @@ const GOV_SOURCES = [
 ]
 
 export default async function handler(req, res) {
-  // Allow GET for manual testing, require auth for automated cron
-  const isManual = req.method === 'GET'
+  // Require CRON_SECRET for all requests
   const authHeader = req.headers.authorization
-  if (!isManual && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorised' })
   }
 

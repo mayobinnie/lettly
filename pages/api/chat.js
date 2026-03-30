@@ -1,6 +1,18 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { getAuth } from '@clerk/nextjs/server'
 
+// Simple rate limit: max 10 AI requests per user per minute
+const rateLimitMap = new Map()
+function checkRateLimit(userId) {
+  const now = Date.now()
+  const key = userId
+  const entry = rateLimitMap.get(key) || { count: 0, resetAt: now + 60000 }
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + 60000 }
+  entry.count++
+  rateLimitMap.set(key, entry)
+  return entry.count <= 10
+}
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 function buildSystemPrompt(portfolio) {
@@ -47,6 +59,7 @@ export default async function handler(req, res) {
 
   const { userId } = getAuth(req)
   if (!userId) return res.status(401).json({ error: 'Unauthorised' })
+  if (!checkRateLimit(userId)) return res.status(429).json({ error: 'Too many requests. Please wait a minute.' })
 
   const { messages, portfolio } = req.body
   if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: 'Invalid messages' })

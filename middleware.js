@@ -15,7 +15,6 @@ const isPublicRoute = createRouteMatcher([
   '/api/newsletter',
   '/api/ping',
   '/api/valuation',
-  '/api/legislation-monitor',
 ])
 
 export default clerkMiddleware((auth, req) => {
