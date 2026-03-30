@@ -1442,7 +1442,6 @@ function PortfolioScore({props,checklist,urgent}){
 }
 
 function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab}){
-  const props=portfolio.properties||[]
   const totalRent=props.reduce((s,p)=>s+(Number(p.rent)||0),0)
   const totalPayment=props.reduce((s,p)=>s+(Number(p.monthlyPayment)||0),0)
   const totalValue=props.reduce((s,p)=>s+(Number(p.currentValue)||0),0)
@@ -1703,7 +1702,6 @@ function PropertyDropZone({propName,propId,onFiles,onManual}){
 }
 
 function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,onAdd,maxProps,onUpgrade}){
-  const props=portfolio.properties||[]
   const col=s=>s==='valid'?'var(--green)':s==='due-soon'?'var(--amber)':s==='overdue'?'var(--red)':'var(--text-3)'
   return<div className="fade-up">
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}><div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -1762,7 +1760,6 @@ function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,
 
 /* ---- Finance ---- */
 function FinanceTab({portfolio,setPortfolio}){
-  const props=portfolio.properties||[]
   const expenses=portfolio.expenses||[]
   const[showForm,setShowForm]=useState(false)
   const[newExp,setNewExp]=useState({date:'',property:'',category:'',description:'',amount:''})
@@ -2061,7 +2058,6 @@ function fileToB64m(file){return new Promise((res,rej)=>{const r=new FileReader(
 async function compressImgM(file,maxW=1200){const b64=await fileToB64m(file);return new Promise(res=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,maxW/img.width);const c=document.createElement('canvas');c.width=img.width*scale;c.height=img.height*scale;c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.75))};img.src=b64})}
 
 function MaintenanceTab({portfolio,setPortfolio,userId}){
-  const props=portfolio.properties||[]
   const jobs=portfolio.maintenance||[]
   const[showForm,setShowForm]=useState(false)
   const[newJob,setNewJob]=useState({date:'',property:'',category:'',description:'',contractor:'',cost:'',status:'Open'})
@@ -2249,7 +2245,6 @@ function VoidTrackerPanel({portfolio,setPortfolio}){
 
 /* ---- Tax Export Panel ---- */
 function TaxExportPanel({portfolio}){
-  const props=portfolio.properties||[]
   const expenses=portfolio.expenses||[]
   const rentLedger=portfolio.rentLedger||{}
   const now=new Date()
@@ -2997,7 +2992,6 @@ function AffordabilityChecker({props}){
    EXPENSES PANEL
    ================================================================ */
 function ExpensesPanel({portfolio,setPortfolio}){
-  const props=portfolio.properties||[]
   const[expenses,setExpenses]=useState([])
   const[loading,setLoading]=useState(true)
   const[selProp,setSelProp]=useState(props[0]?.id||'')
@@ -3374,7 +3368,6 @@ function LtdVsPersonal({portfolio}){
    CONTRACTOR DIRECTORY
    ================================================================ */
 function ContractorDirectory({portfolio}){
-  const props=portfolio.properties||[]
   const[selProp,setSelProp]=useState(props[0]?.id||'')
   const[category,setCategory]=useState('gas')
   const prop=props.find(p=>p.id===selProp)
@@ -3516,7 +3509,6 @@ function ReferralPanel(){
    INVOICING TAB
    ================================================================ */
 function InvoicingTab({portfolio}){
-  const props=portfolio.properties||[]
   const[invoices,setInvoices]=useState([])
   const[loading,setLoading]=useState(true)
   const[view,setView]=useState('list') // list | create | preview
@@ -4339,7 +4331,6 @@ function HMOTab({portfolio,setPortfolio}){
 }
 
 function ToolsTab({portfolio,setPortfolio}){
-  const props=portfolio.properties||[]
   const[tool,setTool]=useState('remortgage')
   const[docType,setDocType]=useState('section8')
   const[selProp,setSelProp]=useState('')
@@ -4414,7 +4405,6 @@ function ToolsTab({portfolio,setPortfolio}){
 
 /* ---- Legislation ---- */
 function LegislationTab({portfolio}){
-  const props=portfolio.properties||[]
   const nations=[...new Set(props.map(p=>p.nation||'England'))]
   const defaultNation=nations[0]||'England'
   const[nation,setNation]=useState(defaultNation)
@@ -4452,7 +4442,6 @@ function LegislationTab({portfolio}){
 
 /* ---- AI ---- */
 function AITab({portfolio}){
-  const props=portfolio.properties||[]
   const nations=[...new Set(props.map(p=>p.nation||'England'))]
   const n=props.length
   const[messages,setMessages]=useState([{role:'assistant',content:n>0?`I can see your portfolio of ${n} propert${n===1?'y':'ies'} across ${nations.join(', ')}. Ask me anything about compliance, legislation, finances, or remortgage strategy.\n\nNote: I provide general information and guidance only, not legal or financial advice. Always verify important decisions with a qualified solicitor or accountant.`:`Welcome to Lettly AI. Add properties first and I can give specific advice for your portfolio.\n\nNote: I provide general information and guidance only, not legal or financial advice. Always verify important decisions with a qualified solicitor or accountant.`}])
@@ -4671,7 +4660,6 @@ function RentTracker({portfolio, setPortfolio}){
 
 /* ---- Condition Report ---- */
 function ConditionReport({portfolio,setPortfolio,userId}){
-  const props=portfolio.properties||[]
   const reports=portfolio.conditionReports||[]
   const[showForm,setShowForm]=useState(false)
   const[selProp,setSelProp]=useState('')
@@ -4799,10 +4787,8 @@ export default function Dashboard(){
   const[subLoading,setSubLoading]=useState(true)
   const[showUpgrade,setShowUpgrade]=useState(false)
   // Derive property limit from subscription plan
-  const maxProps=subscription?.maxProperties||(subscription?.status==='active'||subscription?.status==='trialing'?subscription?.maxProperties:1)||1
-  const isActive=['active','trialing'].includes(subscription?.status)
-  const props=portfolio.properties||[]
-  const atLimit=props.length>=maxProps
+  const maxProps=subscription?.maxProperties||((['active','trialing'].includes(subscription?.status))?{starter:2,standard:5,portfolio:10,pro:999}[subscription?.plan]||2:1)||1
+  const atLimit=(portfolio.properties||[]).length>=maxProps
   const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:'',voids:[],applicants:[]})
   const[queue,setQueue]=useState([])
   const[showDrop,setShowDrop]=useState(false)

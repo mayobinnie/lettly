@@ -1,6 +1,6 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { buffer } from 'micro'
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
@@ -14,7 +14,9 @@ export default async function handler(req, res) {
 
   let event
   try {
-    const buf = await buffer(req)
+    const chunks = []
+  for await (const chunk of req) { chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk) }
+  const buf = Buffer.concat(chunks)
     event = stripe.webhooks.constructEvent(buf, sig, webhookSecret)
   } catch (err) {
     console.error('Stripe webhook error:', err.message)
