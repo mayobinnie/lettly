@@ -1441,8 +1441,8 @@ function PortfolioScore({props,checklist,urgent}){
   </div>
 }
 
-function Overview({
-  const props=portfolio.properties||[]portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab}){
+function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab}){
+  const props=portfolio.properties||[]
   const totalRent=props.reduce((s,p)=>s+(Number(p.rent)||0),0)
   const totalPayment=props.reduce((s,p)=>s+(Number(p.monthlyPayment)||0),0)
   const totalValue=props.reduce((s,p)=>s+(Number(p.currentValue)||0),0)
@@ -1761,8 +1761,8 @@ function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,
 }
 
 /* ---- Finance ---- */
-function FinanceTab({
-  const props=portfolio.properties||[]portfolio,setPortfolio}){
+function FinanceTab({portfolio,setPortfolio}){
+  const props=portfolio.properties||[]
   const expenses=portfolio.expenses||[]
   const[showForm,setShowForm]=useState(false)
   const[newExp,setNewExp]=useState({date:'',property:'',category:'',description:'',amount:''})
@@ -2060,8 +2060,8 @@ function FinanceTab({
 function fileToB64m(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
 async function compressImgM(file,maxW=1200){const b64=await fileToB64m(file);return new Promise(res=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,maxW/img.width);const c=document.createElement('canvas');c.width=img.width*scale;c.height=img.height*scale;c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.75))};img.src=b64})}
 
-function MaintenanceTab({
-  const props=portfolio.properties||[]portfolio,setPortfolio,userId}){
+function MaintenanceTab({portfolio,setPortfolio,userId}){
+  const props=portfolio.properties||[]
   const jobs=portfolio.maintenance||[]
   const[showForm,setShowForm]=useState(false)
   const[newJob,setNewJob]=useState({date:'',property:'',category:'',description:'',contractor:'',cost:'',status:'Open'})
@@ -4334,8 +4334,8 @@ function HMOTab({portfolio,setPortfolio}){
   </div>
 }
 
-function ToolsTab({
-  const props=portfolio.properties||[]portfolio,setPortfolio}){
+function ToolsTab({portfolio,setPortfolio}){
+  const props=portfolio.properties||[]
   const[tool,setTool]=useState('remortgage')
   const[docType,setDocType]=useState('section8')
   const[selProp,setSelProp]=useState('')
@@ -4446,8 +4446,8 @@ function LegislationTab({portfolio}){
 }
 
 /* ---- AI ---- */
-function AITab({
-  const props=portfolio.properties||[]portfolio}){
+function AITab({portfolio}){
+  const props=portfolio.properties||[]
   const nations=[...new Set(props.map(p=>p.nation||'England'))]
   const n=props.length
   const[messages,setMessages]=useState([{role:'assistant',content:n>0?`I can see your portfolio of ${n} propert${n===1?'y':'ies'} across ${nations.join(', ')}. Ask me anything about compliance, legislation, finances, or remortgage strategy.\n\nNote: I provide general information and guidance only, not legal or financial advice. Always verify important decisions with a qualified solicitor or accountant.`:`Welcome to Lettly AI. Add properties first and I can give specific advice for your portfolio.\n\nNote: I provide general information and guidance only, not legal or financial advice. Always verify important decisions with a qualified solicitor or accountant.`}])
