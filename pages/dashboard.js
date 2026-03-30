@@ -4797,8 +4797,8 @@ export default function Dashboard(){
   const[formProp,setFormProp]=useState(null)
   const[showWizard,setShowWizard]=useState(false)
 
-  useEffect(()=>{if(isLoaded&&!isSignedIn)router.replace('/')
-    if(typeof window!=='undefined'&&window.location.search.includes('subscribed=1'))setJustSubscribed(true)},[isLoaded,isSignedIn,router])
+  useEffect(()=>{if(isLoaded&&!isSignedIn){router.replace('/');return}
+    if(isLoaded&&isSignedIn&&typeof window!=='undefined'&&window.location.search.includes('subscribed=1'))setJustSubscribed(true)},[isLoaded,isSignedIn,router])
   useEffect(()=>{
     if(!user?.id)return
     // localStorage check is instant - prevents wizard flash on every login
@@ -5124,3 +5124,5 @@ export default function Dashboard(){
   </>
 }
 function getGreeting(){const h=new Date().getHours();return h<12?'morning':h<18?'afternoon':'evening'}
+
+export async function getServerSideProps(){return{props:{}}}
