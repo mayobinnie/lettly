@@ -4786,14 +4786,14 @@ export default function Dashboard(){
   const[subscription,setSubscription]=useState(null)
   const[subLoading,setSubLoading]=useState(true)
   const[showUpgrade,setShowUpgrade]=useState(false)
-  // Derive property limit from subscription plan
-  const maxProps=subscription?.maxProperties||((['active','trialing'].includes(subscription?.status))?{starter:2,standard:5,portfolio:10,pro:999}[subscription?.plan]||2:1)||1
-  const atLimit=(portfolio.properties||[]).length>=maxProps
   const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:'',voids:[],applicants:[]})
   const[queue,setQueue]=useState([])
   const[showDrop,setShowDrop]=useState(false)
   const[loaded,setLoaded]=useState(false)
   const[justSubscribed,setJustSubscribed]=useState(false)
+  // Derive property limit from subscription plan - must be after all useState
+  const maxProps=subscription?.maxProperties||((['active','trialing'].includes(subscription?.status))?({starter:2,standard:5,portfolio:10,pro:999}[subscription?.plan]||2):1)||1
+  const atLimit=(portfolio.properties||[]).length>=maxProps
   const[formProp,setFormProp]=useState(null)
   const[showWizard,setShowWizard]=useState(false)
 
