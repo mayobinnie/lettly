@@ -1702,6 +1702,7 @@ function PropertyDropZone({propName,propId,onFiles,onManual}){
 }
 
 function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,onAdd,maxProps,onUpgrade}){
+  const props=portfolio.properties||[]
   const col=s=>s==='valid'?'var(--green)':s==='due-soon'?'var(--amber)':s==='overdue'?'var(--red)':'var(--text-3)'
   return<div className="fade-up">
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}><div style={{display:'flex',alignItems:'center',gap:8}}>
