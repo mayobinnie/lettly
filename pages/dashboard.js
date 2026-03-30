@@ -4951,8 +4951,6 @@ export default function Dashboard(){
     }
   }
 
-  if(!isLoaded||!isSignedIn)return<div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{width:28,height:28,borderRadius:'50%',border:'2.5px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/></div>
-  // Camera scanner overlay
   // Property-scoped file handler: skips address matching, goes direct to property
   async function handleFilesForProp(files, propId) {
     const valid = files.filter(f => {
@@ -5028,6 +5026,10 @@ export default function Dashboard(){
     }
   }
 
+    if(!isLoaded||!isSignedIn)return<div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{width:28,height:28,borderRadius:'50%',border:'2.5px solid var(--brand)',borderTopColor:'transparent',animation:'spin 0.75s linear infinite'}}/></div>
+  // Camera scanner overlay
+
+
   if(showCamera)return<CameraScanner onFiles={f=>{handleFiles(f)}} onClose={()=>setShowCamera(false)}/>
   // iOS safe area support
   const safeAreaStyle = typeof window !== 'undefined' ? {paddingBottom:'env(safe-area-inset-bottom,0px)'} : {}
@@ -5066,7 +5068,7 @@ export default function Dashboard(){
       <div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 20px'}}><div style={{maxWidth:800,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)}/></div></div>
       <div className="dash-content" style={{paddingTop:0}}>
         {showUpgrade&&<UpgradeModal onClose={()=>setShowUpgrade(false)} user={user} currentPlan={subscription?.plan}/>}
-        <PaywallBanner subscription={subscription} user={user} onUpgrade={()=>setShowUpgrade(true)} propCount={props.length} maxProps={maxProps}/>
+        <PaywallBanner subscription={subscription} user={user} onUpgrade={()=>setShowUpgrade(true)} propCount={(portfolio.properties||[]).length} maxProps={maxProps}/>
       </div>
       {queue.length>0&&<div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'10px 16px'}}>
         <div style={{maxWidth:700,margin:'0 auto'}}>
