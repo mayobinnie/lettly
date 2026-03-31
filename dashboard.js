@@ -5145,11 +5145,11 @@ export default function Dashboard(){
           position:fixed;
           bottom:0;left:0;right:0;
           z-index:150;
-          background:var(--surface);
-          border-top:1px solid var(--border);
+          background:#1b5e3b;
+          border-top:none;
           padding:8px 0;
           padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
-          box-shadow:0 -4px 20px rgba(0,0,0,0.08);
+          box-shadow:0 -4px 24px rgba(0,0,0,0.18);
         }
 
         /* Hide top tab strip on mobile */
@@ -5181,12 +5181,12 @@ export default function Dashboard(){
         -webkit-tap-highlight-color:transparent;
       }
       .bnav-btn span.bnav-icon{font-size:24px;line-height:1}
-      .bnav-btn span.bnav-label{font-size:11px;letter-spacing:0.1px;color:var(--text-3)}
-      .bnav-btn.active span.bnav-label{font-weight:700;color:var(--brand)}
-      .bnav-btn.active span.bnav-icon{filter:drop-shadow(0 0 4px rgba(27,94,59,0.35))}
+      .bnav-btn span.bnav-label{font-size:11px;letter-spacing:0.1px;color:rgba(255,255,255,0.55)}
+      .bnav-btn.active span.bnav-label{font-weight:700;color:#fff}
+      .bnav-btn.active span.bnav-icon{filter:drop-shadow(0 0 6px rgba(255,255,255,0.4))}
       .bnav-dot{
-        position:absolute;top:6px;
-        width:5px;height:5px;border-radius:50%;background:var(--brand);
+        position:absolute;top:4px;
+        width:5px;height:5px;border-radius:50%;background:#fff;
       }
 
       /* More menu slide-up */
