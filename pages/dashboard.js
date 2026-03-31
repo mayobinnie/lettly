@@ -4796,6 +4796,63 @@ function ConditionReport({portfolio,setPortfolio,userId}){
   </div>
 }
 
+/* ---- Bottom Navigation (mobile) ---- */
+function BottomNav({tab, setTab, portfolio, user}){
+  const props = portfolio.properties || []
+  const[showMore, setShowMore]=useState(false)
+
+  const MAIN=[
+    {id:'overview',   label:'Home',       icon:'🏠'},
+    {id:'properties', label:'Properties', icon:'🏘'},
+    {id:'finance',    label:'Finance',    icon:'💷'},
+    {id:'legislation',label:'Compliance', icon:'🛡'},
+    {id:'_more',      label:'More',       icon:'⋯'},
+  ]
+
+  const visibleTabIds=['overview','properties','finance','legislation']
+
+  const MORE_TABS=TABS.filter(t=>{
+    if(visibleTabIds.includes(t.id)) return false
+    if(t.adminOnly&&!user?.publicMetadata?.admin&&!(user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co')) return false
+    if(t.hmoOnly&&!props.some(p=>p.isHMO)) return false
+    return true
+  })
+
+  function pick(id){
+    if(id==='_more'){setShowMore(v=>!v);return}
+    setTab(id)
+    setShowMore(false)
+  }
+
+  const moreIsActive=!visibleTabIds.includes(tab)
+
+  return(<>
+    {showMore&&<>
+      <div onClick={()=>setShowMore(false)} style={{position:'fixed',inset:0,zIndex:148,background:'rgba(0,0,0,0.25)'}}/>
+      <div className="more-menu">
+        <div style={{width:'100%',fontSize:11,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',padding:'0 6px 8px',borderBottom:'0.5px solid var(--border)',marginBottom:4}}>More</div>
+        {MORE_TABS.map(t=>(
+          <button key={t.id} onClick={()=>pick(t.id)} className={'more-menu-btn'+(tab===t.id?' active':'')}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+    </>}
+    <nav className="bottom-nav">
+      {MAIN.map(t=>{
+        const isActive=t.id==='_more'?moreIsActive&&showMore:tab===t.id
+        return(
+          <button key={t.id} onClick={()=>pick(t.id)} className={'bnav-btn'+(isActive?' active':'')}>
+            {isActive&&t.id!=='_more'&&<span className="bnav-dot"/>}
+            <span className="bnav-icon">{t.icon}</span>
+            <span className="bnav-label" style={{color:isActive?'var(--brand)':'var(--text-3)'}}>{t.label}</span>
+          </button>
+        )
+      })}
+    </nav>
+  </>)
+}
+
 /* ---- Root ---- */
 const TABS=[{id:'overview',label:'Overview',short:'Home'},{id:'properties',label:'Properties',short:'Props'},{id:'tenants',label:'Find & check tenants',short:'Tenants'},{id:'resources',label:'Resources',short:'Links'},{id:'content',label:'Content queue',short:'Content',adminOnly:true},{id:'rent',label:'Rent tracker',short:'Rent'},{id:'finance',label:'Finance',short:'Finance'},{id:'hmo',label:'HMO',short:'HMO',hmoOnly:true},{id:'invoicing',label:'Invoicing',short:'Invoices'},{id:'maintenance',label:'Maintenance',short:'Jobs'},{id:'conditions',label:'Conditions',short:'Conds'},{id:'tools',label:'Tools',short:'Tools'},{id:'legislation',label:'Legislation',short:'Law'},{id:'ai',label:'Lettly AI',short:'AI'}]
 
@@ -5074,25 +5131,117 @@ export default function Dashboard(){
       <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
       <meta name="apple-mobile-web-app-title" content="Lettly"/>
     </Head>
-    <style>{`.dash-content{max-width:1060px;margin:0 auto;padding:20px 20px 40px}@media(max-width:640px){.dash-content{padding:12px 12px 24px}}@media(max-width:480px){.dash-content{padding:10px 10px 20px}}`}</style>
+    <style>{`
+      .dash-content{max-width:1060px;margin:0 auto;padding:20px 20px 40px}
+      @media(max-width:640px){.dash-content{padding:12px 12px 24px}}
+      @media(max-width:480px){.dash-content{padding:10px 10px 20px}}
+
+      /* ---- Bottom nav: mobile only ---- */
+      .bottom-nav{display:none}
+
+      @media(max-width:768px){
+        .bottom-nav{
+          display:flex;
+          position:fixed;
+          bottom:0;left:0;right:0;
+          z-index:150;
+          background:var(--surface);
+          border-top:0.5px solid var(--border);
+          padding:6px 0;
+          padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));
+        }
+
+        /* Hide top tab strip on mobile */
+        .nav-tabs-desktop{display:none !important}
+
+        /* Hide secondary nav clutter on mobile */
+        .nav-save-status{display:none !important}
+        .nav-upgrade-btn{display:none !important}
+        .nav-billing-btn{display:none !important}
+
+        /* Extra bottom padding so content clears the bottom nav */
+        .dash-content{padding-bottom:90px !important}
+
+        /* Mobile upload bar: camera button is primary, drop zone hidden */
+        .upload-bar-desktop{display:none !important}
+        .upload-bar-mobile{display:flex !important}
+      }
+
+      @media(min-width:769px){
+        .upload-bar-mobile{display:none !important}
+        .upload-bar-desktop{display:block}
+      }
+
+      /* Bottom nav button base */
+      .bnav-btn{
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        gap:2px;flex:1;border:none;background:none;cursor:pointer;padding:6px 0;
+        font-family:var(--font);position:relative;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .bnav-btn span.bnav-icon{font-size:20px;line-height:1}
+      .bnav-btn span.bnav-label{font-size:10px;letter-spacing:0.1px}
+      .bnav-btn.active span.bnav-label{font-weight:600;color:var(--brand)}
+      .bnav-btn.active span.bnav-icon{filter:drop-shadow(0 0 3px rgba(27,94,59,0.3))}
+      .bnav-dot{
+        position:absolute;top:5px;
+        width:4px;height:4px;border-radius:50%;background:var(--brand);
+      }
+
+      /* More menu slide-up */
+      .more-menu{
+        position:fixed;bottom:0;left:0;right:0;
+        background:var(--surface);
+        border-top:0.5px solid var(--border);
+        border-radius:16px 16px 0 0;
+        padding:12px 8px;
+        padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));
+        z-index:149;
+        display:flex;flex-wrap:wrap;gap:4px;
+      }
+      .more-menu-btn{
+        display:flex;align-items:center;gap:10px;
+        padding:11px 14px;border-radius:10px;
+        background:transparent;border:none;cursor:pointer;
+        font-size:14px;color:var(--text);font-family:var(--font);
+        width:50%;box-sizing:border-box;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .more-menu-btn.active{background:var(--brand-light);color:var(--brand);font-weight:600}
+    `}</style>
 
     {showWizard&&<OnboardingWizard onComplete={completeWizard} firstName={user?.firstName}/>}
 
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
       <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:62,position:'sticky',top:0,zIndex:100,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:34,height:34,background:'var(--brand)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:16,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:20,fontWeight:400}}>Lettly</span></div>
-        <div style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.filter(t=>{if(t.adminOnly&&!user?.publicMetadata?.admin&&!user?.emailAddresses?.[0]?.emailAddress?.includes('lettly.co'))return false;if(t.hmoOnly&&!(portfolio.properties||[]).some(p=>p.isHMO))return false;return true;}).map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'7px 13px',borderRadius:7,fontFamily:'var(--font)',fontSize:13,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?600:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
+        <div className="nav-tabs-desktop" style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.filter(t=>{if(t.adminOnly&&!user?.publicMetadata?.admin&&!user?.emailAddresses?.[0]?.emailAddress?.includes('lettly.co'))return false;if(t.hmoOnly&&!(portfolio.properties||[]).some(p=>p.isHMO))return false;return true;}).map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'7px 13px',borderRadius:7,fontFamily:'var(--font)',fontSize:13,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?600:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
-          {saveStatus==='saving'&&<span style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
-          {saveStatus==='saved'&&loaded&&<span style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
-          {saveStatus==='error'&&<span style={{fontSize:11,color:'var(--red)'}}>Save failed</span>}
+          {saveStatus==='saving'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
+          {saveStatus==='saved'&&loaded&&<span className="nav-save-status" style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
+          {saveStatus==='error'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--red)'}}>Save failed</span>}
           <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button>
-          {(!subscription||subscription.status==='none')&&<button onClick={()=>setShowUpgrade(true)} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--brand)',background:'var(--brand-light)',cursor:'pointer',color:'var(--brand)',fontWeight:600,whiteSpace:'nowrap'}}>Upgrade</button>}
-          {subscription&&['active','trialing'].includes(subscription.status)&&<button onClick={async()=>{const r=await fetch('/api/stripe/portal',{method:'POST'});const d=await r.json();if(d.url)window.location.href=d.url}} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)',whiteSpace:'nowrap'}}>Billing</button>}
+          {(!subscription||subscription.status==='none')&&<button className="nav-upgrade-btn" onClick={()=>setShowUpgrade(true)} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--brand)',background:'var(--brand-light)',cursor:'pointer',color:'var(--brand)',fontWeight:600,whiteSpace:'nowrap'}}>Upgrade</button>}
+          {subscription&&['active','trialing'].includes(subscription.status)&&<button className="nav-billing-btn" onClick={async()=>{const r=await fetch('/api/stripe/portal',{method:'POST'});const d=await r.json();if(d.url)window.location.href=d.url}} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)',whiteSpace:'nowrap'}}>Billing</button>}
           <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/>
         </div>
       </nav>
-      <div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 20px'}}><div style={{maxWidth:800,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)}/></div></div>
+      {/* Desktop upload bar */}
+      <div className="upload-bar-desktop" style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'14px 20px'}}><div style={{maxWidth:800,margin:'0 auto'}}><DropZone onFiles={handleFiles} compact onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)}/></div></div>
+
+      {/* Mobile upload bar: camera-first */}
+      <div className="upload-bar-mobile" style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'10px 14px',gap:8,alignItems:'stretch'}}>
+        <button onClick={()=>setShowCamera(true)} style={{flex:2,display:'flex',alignItems:'center',justifyContent:'center',gap:8,background:'var(--brand)',color:'#fff',border:'none',borderRadius:12,padding:'13px 0',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'var(--font)'}}>
+          <span style={{fontSize:20}}>📷</span> Scan document
+        </button>
+        <label style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:12,padding:'13px 0',fontSize:13,fontWeight:500,cursor:'pointer',color:'var(--text-2)',fontFamily:'var(--font)'}}>
+          <span style={{fontSize:16}}>📁</span> Browse
+          <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,image/*,application/pdf" style={{display:'none'}} onChange={e=>{handleFiles(Array.from(e.target.files));e.target.value=''}}/>
+        </label>
+        <button onClick={()=>setShowManual(true)} style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:12,padding:'13px 0',fontSize:13,fontWeight:500,cursor:'pointer',color:'var(--text-2)',fontFamily:'var(--font)'}}>
+          <span style={{fontSize:16}}>✏️</span> Manual
+        </button>
+      </div>
       <div className="dash-content" style={{paddingTop:0}}>
         {showUpgrade&&<UpgradeModal onClose={()=>setShowUpgrade(false)} user={user} currentPlan={subscription?.plan}/>}
         <PaywallBanner subscription={subscription} user={user} onUpgrade={()=>setShowUpgrade(true)} propCount={(portfolio.properties||[]).length} maxProps={maxProps}/>
@@ -5140,6 +5289,7 @@ export default function Dashboard(){
     </div>
     {formProp!==null&&<PropertyForm initial={formProp} onSave={updateProperty} onDelete={deleteProperty} onClose={()=>setFormProp(null)}/>}
     {showManual&&<ManualEntryModal portfolio={portfolio} onMerge={extracted=>{setPortfolio(prev=>mergeDoc(prev,extracted))}} onClose={()=>setShowManual(false)}/>}
+    <BottomNav tab={tab} setTab={setTab} portfolio={portfolio} user={user}/>
   </>
 }
 function getGreeting(){const h=new Date().getHours();return h<12?'morning':h<18?'afternoon':'evening'}
