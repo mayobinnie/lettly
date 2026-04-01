@@ -137,6 +137,7 @@ export default function Landing() {
           .grid-3 { grid-template-columns: 1fr !important; }
           .grid-2 { grid-template-columns: 1fr !important; }
           .grid-4 { grid-template-columns: 1fr 1fr !important; }
+          .hmo-banner { grid-template-columns: 1fr !important; }
           .trust-pills { flex-direction: column; align-items: center; }
         }
         @media (max-width: 480px) {
@@ -182,12 +183,12 @@ export default function Landing() {
           </div>
 
           <h1 className="hero-title fade-up-2" style={{ marginBottom:24 }}>
-            Manage your rental property<br/>
-            <span className="hero-em">yourself, on your terms</span>
+            Do it yourself.<br/>
+            <span className="hero-em">Not by yourself.</span>
           </h1>
 
-          <p className="section-sub fade-up-3" style={{ maxWidth:580, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
-            Everything you need to self-manage your properties with confidence. Compliance tracking, AI document reading, financial planning, expense recording, CGT calculations, and more, all in one place.
+          <p className="section-sub fade-up-3" style={{ maxWidth:540, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
+            Lettly gives private landlords everything a letting agent does, without the 10% fee. Compliance, finance, maintenance and AI document reading from £8/month.
           </p>
 
           <p style={{ fontSize:15, color:'var(--text-2)', marginBottom:20, fontWeight:500 }}>
@@ -537,7 +538,7 @@ export default function Landing() {
           </div>
 
           {/* HMO full-width banner card */}
-          <div className="feature-block" style={{marginTop:16,border:'1.5px solid var(--brand)',background:'var(--brand-subtle)',borderRadius:16,padding:'28px 32px',display:'grid',gridTemplateColumns:'auto 1fr',gap:32,alignItems:'center'}}>
+          <div className="hmo-banner" style={{marginTop:16,border:'1.5px solid var(--brand)',background:'var(--brand-subtle)',borderRadius:16,padding:'28px 32px',display:'grid',gridTemplateColumns:'auto 1fr',gap:32,alignItems:'center'}}>
             <div style={{display:'flex',flexDirection:'column',gap:6,minWidth:200,flexShrink:0}}>
               <div style={{fontSize:11,fontWeight:700,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'1px'}}>New feature</div>
               <div style={{fontSize:34,marginTop:4}}>🏠</div>
