@@ -137,6 +137,7 @@ export default function Landing() {
           .grid-3 { grid-template-columns: 1fr !important; }
           .grid-2 { grid-template-columns: 1fr !important; }
           .grid-4 { grid-template-columns: 1fr 1fr !important; }
+          .hmo-banner { grid-template-columns: 1fr !important; }
           .trust-pills { flex-direction: column; align-items: center; }
         }
         @media (max-width: 480px) {
@@ -182,12 +183,12 @@ export default function Landing() {
           </div>
 
           <h1 className="hero-title fade-up-2" style={{ marginBottom:24 }}>
-            Manage your rental property<br/>
-            <span className="hero-em">yourself, on your terms</span>
+            Do it yourself.<br/>
+            <span className="hero-em">Not by yourself.</span>
           </h1>
 
-          <p className="section-sub fade-up-3" style={{ maxWidth:580, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
-            Everything you need to self-manage your properties with confidence. Compliance tracking, AI document reading, financial planning, expense recording, CGT calculations, and more, all in one place.
+          <p className="section-sub fade-up-3" style={{ maxWidth:540, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
+            Lettly gives private landlords everything a letting agent does, without the 10% fee. Compliance, finance, maintenance and AI document reading from £8/month.
           </p>
 
           <p style={{ fontSize:15, color:'var(--text-2)', marginBottom:20, fontWeight:500 }}>
@@ -503,7 +504,7 @@ export default function Landing() {
             <p className="section-sub" style={{ maxWidth:500, margin:'0 auto' }}>Built specifically for UK private landlords. No tech skills needed.</p>
           </div>
 
-          <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:16, alignItems:'stretch' }}>
+          <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, alignItems:'stretch' }}>
             {[
               {
                 icon:'🧾',
@@ -520,17 +521,10 @@ export default function Landing() {
                 title:'All-in-one dashboard',
                 items:['No spreadsheets, ever','No WhatsApp chaos','Finance and P&L tracker',"Renters' Rights Bill guidance",'Works on phone and computer'],
               },
-              {
-                icon:'🏠',
-                title:'HMO management suite',
-                items:['Room-by-room tenant and rent tracking','HMO licence number and expiry tracking','Fire risk assessment and review dates','PAT testing and emergency lighting records','10-point fire safety compliance checklist','Room size checker against mandatory minimums'],
-                highlight:true,
-              },
             ].map(f => (
-              <div key={f.title} className="feature-block" style={f.highlight?{border:'1.5px solid var(--brand)',background:'var(--brand-subtle)',display:'flex',flexDirection:'column'}:{display:'flex',flexDirection:'column'}}>
-                {f.highlight&&<div style={{fontSize:11,fontWeight:700,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'1px',marginBottom:10}}>New feature</div>}
+              <div key={f.title} className="feature-block" style={{display:'flex',flexDirection:'column'}}>
                 <div style={{ fontSize:34, marginBottom:20 }}>{f.icon}</div>
-                <div style={{ fontFamily:'var(--display)', fontSize:22, fontWeight:400, color:f.highlight?'var(--brand)':'var(--text)', marginBottom:20 }}>{f.title}</div>
+                <div style={{ fontFamily:'var(--display)', fontSize:22, fontWeight:400, color:'var(--text)', marginBottom:20 }}>{f.title}</div>
                 <div style={{ display:'flex', flexDirection:'column', gap:11 }}>
                   {f.items.map(item => (
                     <div key={item} style={{ display:'flex', gap:10, alignItems:'flex-start', fontSize:14, color:'var(--text-2)', lineHeight:1.5 }}>
@@ -541,6 +535,31 @@ export default function Landing() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* HMO full-width banner card */}
+          <div className="hmo-banner" style={{marginTop:16,border:'1.5px solid var(--brand)',background:'var(--brand-subtle)',borderRadius:16,padding:'28px 32px',display:'grid',gridTemplateColumns:'auto 1fr',gap:32,alignItems:'center'}}>
+            <div style={{display:'flex',flexDirection:'column',gap:6,minWidth:200,flexShrink:0}}>
+              <div style={{fontSize:11,fontWeight:700,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'1px'}}>New feature</div>
+              <div style={{fontSize:34,marginTop:4}}>🏠</div>
+              <div style={{fontFamily:'var(--display)',fontSize:24,fontWeight:400,color:'var(--brand)',lineHeight:1.2,marginTop:4}}>HMO management suite</div>
+              <div style={{fontSize:13,color:'var(--text-2)',marginTop:4,lineHeight:1.6}}>Add to any plan for +£12.50/mo</div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px 24px'}}>
+              {[
+                'Room-by-room tenant and rent tracking',
+                'HMO licence number and expiry tracking',
+                'Fire risk assessment and review dates',
+                'PAT testing and emergency lighting records',
+                '10-point fire safety compliance checklist',
+                'Room size checker against mandatory minimums',
+              ].map(item => (
+                <div key={item} style={{display:'flex',gap:10,alignItems:'flex-start',fontSize:14,color:'var(--text-2)',lineHeight:1.5}}>
+                  <span style={{color:'var(--brand)',fontWeight:700,flexShrink:0,marginTop:1}}>✓</span>
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
