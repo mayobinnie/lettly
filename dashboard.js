@@ -4845,7 +4845,7 @@ function BottomNav({tab, setTab, portfolio, user}){
           <button key={t.id} onClick={()=>pick(t.id)} className={'bnav-btn'+(isActive?' active':'')}>
             {isActive&&t.id!=='_more'&&<span className="bnav-dot"/>}
             <span className="bnav-icon">{t.icon}</span>
-            <span className="bnav-label" style={{color:isActive?'var(--brand)':'var(--text-3)'}}>{t.label}</span>
+            <span className="bnav-label">{t.label}</span>
           </button>
         )
       })}
