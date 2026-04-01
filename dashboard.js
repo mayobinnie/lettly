@@ -1662,7 +1662,6 @@ function RentabilityChecklist({prop}){
 
 function PropertyDropZone({propName,propId,onFiles,onManual}){
   const[over,setOver]=useState(false)
-  const[open,setOpen]=useState(false)
   const ref=useRef(null)
 
   function drop(e){
@@ -1673,33 +1672,24 @@ function PropertyDropZone({propName,propId,onFiles,onManual}){
     if(files.length) onFiles(files)
   }
 
-  if(!open) return<button onClick={()=>setOpen(true)} style={{marginTop:14,width:'100%',background:'none',border:'0.5px dashed var(--border-strong)',borderRadius:10,padding:'10px 14px',cursor:'pointer',fontSize:12,color:'var(--text-3)',fontFamily:'var(--font)',display:'flex',alignItems:'center',gap:8,transition:'all 0.15s'}}
-    onMouseEnter={e=>e.currentTarget.style.borderColor='var(--brand)'}
-    onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border-strong)'}>
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    Add documents for {propName}
-  </button>
-
-  return<div style={{marginTop:14,border:'0.5px dashed '+(over?'var(--brand)':'var(--border-strong)'),borderRadius:10,padding:'12px 14px',background:over?'var(--brand-subtle)':'var(--surface2)',transition:'all 0.15s'}}
-    onDragOver={e=>{e.preventDefault();setOver(true)}}
-    onDragLeave={()=>setOver(false)}
-    onDrop={drop}>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-      <div style={{fontSize:12,fontWeight:500,color:'var(--brand)'}}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight:5,verticalAlign:'middle'}}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Drop documents for {propName}
+  return(
+    <div onDragOver={e=>{e.preventDefault();setOver(true)}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setOver(false)}} onDrop={drop}
+      style={{marginTop:14,border:'2px dashed '+(over?'var(--brand)':'rgba(27,94,59,0.25)'),borderRadius:14,padding:'14px 18px',cursor:'pointer',background:over?'var(--brand-subtle)':'var(--brand-subtle)',display:'flex',alignItems:'center',gap:14,transition:'all 0.15s'}}
+      onClick={()=>ref.current.click()}>
+      <input ref={ref} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,image/*,application/pdf" style={{display:'none'}} onChange={e=>{onFiles(Array.from(e.target.files));e.target.value=''}}/>
+      <div style={{width:36,height:36,borderRadius:9,background:'var(--brand)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       </div>
-      <button onClick={()=>setOpen(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:16,lineHeight:1}}>x</button>
+      <div style={{flex:1}}>
+        <div style={{fontSize:13,fontWeight:600,color:'var(--brand)'}}>Add documents for {propName}</div>
+        <div style={{fontSize:11,color:'var(--brand)',opacity:0.75,marginTop:2}}>Gas cert, EICR, EPC, insurance, tenancy, mortgage. AI reads it automatically.</div>
+      </div>
+      <div style={{display:'flex',gap:6,flexShrink:0}}>
+        <div style={{fontSize:12,fontWeight:600,background:'var(--brand)',color:'#fff',padding:'6px 14px',borderRadius:8}}>{over?'Release':'Browse'}</div>
+        <button onClick={e=>{e.stopPropagation();onManual()}} style={{fontSize:12,fontWeight:500,background:'var(--surface)',color:'var(--brand)',border:'0.5px solid var(--brand)',padding:'6px 12px',borderRadius:8,cursor:'pointer',fontFamily:'var(--font)'}}>Manual</button>
+      </div>
     </div>
-    <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10}}>Gas cert, EICR, EPC, insurance, tenancy, mortgage: any document for this property. Goes straight here, no matching needed.</div>
-    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-      <label style={{background:'var(--brand)',color:'#fff',borderRadius:7,padding:'6px 14px',fontSize:11,fontWeight:500,cursor:'pointer'}}>
-        Browse files
-        <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.heic,.webp" style={{display:'none'}} onChange={e=>{const f=Array.from(e.target.files);if(f.length)onFiles(f);e.target.value=''}}/>
-      </label>
-      <button onClick={onManual} style={{background:'var(--surface)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 14px',fontSize:11,cursor:'pointer'}}>Enter manually</button>
-    </div>
-  </div>
+  )
 }
 
 function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,onAdd,maxProps,onUpgrade}){
