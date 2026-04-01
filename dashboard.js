@@ -3887,7 +3887,8 @@ function InvoicingTab({portfolio}){
 function PaywallBanner({subscription,user,onUpgrade,propCount,maxProps}){
   const status=subscription?.status
   const isActive=['active','trialing'].includes(status)
-  if(isActive) return null
+  const isAdmin=user?.publicMetadata?.admin||(user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co')
+  if(isActive||isAdmin) return null
 
   return<div style={{background:'linear-gradient(135deg,#1b3a2d 0%,#1b5e3b 100%)',margin:'0 0 20px',borderRadius:14,padding:'20px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap'}}>
     <div style={{flex:1}}>
@@ -4858,7 +4859,8 @@ export default function Dashboard(){
   const[loaded,setLoaded]=useState(false)
   const[justSubscribed,setJustSubscribed]=useState(false)
   // Derive property limit from subscription plan - must be after all useState
-  const maxProps=subscription?.maxProperties||((['active','trialing'].includes(subscription?.status))?({starter:2,standard:5,portfolio:10,pro:999}[subscription?.plan]||2):1)||1
+  const isAdmin=user?.publicMetadata?.admin||(user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co')
+  const maxProps=isAdmin?999:(subscription?.maxProperties||((['active','trialing'].includes(subscription?.status))?({starter:2,standard:5,portfolio:10,pro:999}[subscription?.plan]||2):1)||1)
   const atLimit=(portfolio.properties||[]).length>=maxProps
   const[formProp,setFormProp]=useState(null)
   const[showWizard,setShowWizard]=useState(false)
