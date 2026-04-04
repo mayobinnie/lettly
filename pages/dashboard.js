@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { fmt, dueSoon, dueDays, epcColor, mergeDoc, LEGISLATION, LEGISLATION_SCOTLAND, LEGISLATION_WALES, getGrowthRate, projectValue } from '../lib/data'
 // Portfolio loaded via /api/data (server-side auth)
 import { detectNation, NATION_LABELS, getChecklist } from '../lib/nations'
+import { savePortfolio } from '../lib/supabase'
 
 // Load PDF.js once and cache it
 async function loadPDFJS() {
