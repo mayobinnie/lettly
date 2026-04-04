@@ -5256,11 +5256,11 @@ export default function Dashboard(){
           <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onManual={()=>setShowManual(true)} onConfirm={(confirmedItem)=>{
   try {
     const ex = confirmedItem.extracted
-    const prevProps = portfolioRef.current?.properties || []
-    // Try mergeDoc first (handles matching + field mapping)
-    let next = mergeDoc(portfolioRef.current, ex)
-    // If mergeDoc didn't add a new property and there was no match, create one directly
-    if(!confirmedItem.matchedProp && next.properties.length === prevProps.length){
+    const currentPortfolio = portfolioRef.current
+    const prevProps = currentPortfolio?.properties || []
+
+    // Build patch from extracted data
+    function buildPatch(ex){
       const cx = ex.compliance||{}, t = ex.tenancy||{}, f2 = ex.finance||{}
       const patch = {}
       if(cx.gas?.due) patch.gasDue = cx.gas.due
@@ -5284,33 +5284,63 @@ export default function Dashboard(){
       if(f2.rate) patch.rate = f2.rate
       if(f2.fixedEnd) patch.fixedEnd = f2.fixedEnd
       if(f2.monthlyPayment) patch.monthlyPayment = Number(String(f2.monthlyPayment).replace(/[^0-9.]/g,''))||undefined
-      const newProp = {
-        id: Math.random().toString(36).slice(2),
-        shortName: ex.property?.shortName || ex.property?.address?.split(',')[0]?.trim() || 'New property',
-        address: ex.property?.address || '',
-        nation: 'England',
-        ownership: 'Personal',
-        docs: [ex.documentType].filter(Boolean),
-        ...patch
+      return patch
+    }
+
+    // Smart address match - same house number + same street
+    function findSimilar(props, ex){
+      const eAddr = (ex.property?.address||'').toLowerCase()
+      const eShort = (ex.property?.shortName||'').toLowerCase()
+      const eNum = (eAddr.match(/^\d+/)||eShort.match(/^\d+/)||[''])[0]
+      if(!eNum) return -1
+      return props.findIndex(p=>{
+        const pAddr = (p.address||'').toLowerCase()
+        const pShort = (p.shortName||'').toLowerCase()
+        const pNum = (pAddr.match(/^\d+/)||pShort.match(/^\d+/)||[''])[0]
+        if(pNum !== eNum) return false
+        // Check street name overlap
+        const words = eAddr.split(' ').filter(w=>w.length>3&&!/^\d+$/.test(w))
+        return words.some(w=>pAddr.includes(w)||pShort.includes(w))
+      })
+    }
+
+    // First try mergeDoc
+    let next
+    try { next = mergeDoc(currentPortfolio, ex) } catch(e2) { next = currentPortfolio }
+
+    // Check if mergeDoc actually changed something
+    const mergeWorked = next.properties.length !== prevProps.length ||
+      JSON.stringify(next.properties) !== JSON.stringify(prevProps)
+
+    if(!mergeWorked){
+      // mergeDoc failed or returned unchanged - handle ourselves
+      const patch = buildPatch(ex)
+      const docType = ex.documentType
+      // Check if a similar property already exists (avoid duplicates)
+      const similarIdx = findSimilar(prevProps, ex)
+      if(similarIdx >= 0){
+        // Merge into existing property
+        const updated = prevProps.map((p,i) => i===similarIdx
+          ? {...p, ...patch, docs: Array.from(new Set([...(p.docs||[]), docType]))}
+          : p)
+        next = {...currentPortfolio, properties: updated}
+      } else {
+        // Create new property
+        const newProp = {
+          id: Math.random().toString(36).slice(2),
+          shortName: ex.property?.shortName || ex.property?.address?.split(',')[0]?.trim() || 'New property',
+          address: ex.property?.address || '',
+          nation: 'England',
+          ownership: 'Personal',
+          docs: [docType].filter(Boolean),
+          ...patch
+        }
+        next = {...currentPortfolio, properties:[...prevProps, newProp]}
       }
-      next = {...portfolioRef.current, properties:[...prevProps, newProp]}
     }
     setPortfolio(next)
   } catch(e) {
     console.error('Save error:', e)
-    // Absolute fallback - create minimal property
-    const ex = confirmedItem.extracted
-    if(!confirmedItem.matchedProp && ex?.property?.address) {
-      const newProp = {
-        id: Math.random().toString(36).slice(2),
-        shortName: ex.property?.shortName || ex.property?.address?.split(',')[0]?.trim() || 'New property',
-        address: ex.property?.address || '',
-        nation: 'England',
-        ownership: 'Personal',
-        docs: [ex.documentType].filter(Boolean)
-      }
-      setPortfolio(prev => ({...prev, properties:[...(prev.properties||[]), newProp]}))
-    }
   }
   setQueue(q=>q.map(x=>x.id===confirmedItem.id?{...x,status:'done'}:x))
 }} onReject={(rejectedItem)=>{setQueue(q=>q.filter(x=>x.id!==rejectedItem.id))}} onRetry={async(failedItem)=>{
