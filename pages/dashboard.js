@@ -5253,7 +5253,67 @@ export default function Dashboard(){
               <button onClick={()=>setQueue([])} style={{fontSize:11,color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}}>Clear all</button>
             </div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onManual={()=>setShowManual(true)} onConfirm={(confirmedItem)=>{setPortfolio(prev=>mergeDoc(prev,confirmedItem.extracted));setQueue(q=>q.map(x=>x.id===confirmedItem.id?{...x,status:'done'}:x))}} onReject={(rejectedItem)=>{setQueue(q=>q.filter(x=>x.id!==rejectedItem.id))}} onRetry={async(failedItem)=>{
+          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onManual={()=>setShowManual(true)} onConfirm={(confirmedItem)=>{
+  try {
+    const ex = confirmedItem.extracted
+    const prevProps = portfolioRef.current?.properties || []
+    // Try mergeDoc first (handles matching + field mapping)
+    let next = mergeDoc(portfolioRef.current, ex)
+    // If mergeDoc didn't add a new property and there was no match, create one directly
+    if(!confirmedItem.matchedProp && next.properties.length === prevProps.length){
+      const cx = ex.compliance||{}, t = ex.tenancy||{}, f2 = ex.finance||{}
+      const patch = {}
+      if(cx.gas?.due) patch.gasDue = cx.gas.due
+      if(cx.gas?.date) patch.gasDate = cx.gas.date
+      if(cx.eicr?.due) patch.eicrDue = cx.eicr.due
+      if(cx.eicr?.date) patch.eicrDate = cx.eicr.date
+      if(cx.epc?.rating) patch.epcRating = cx.epc.rating?.toUpperCase()?.trim()?.charAt(0)
+      if(cx.epc?.expiry) patch.epcExpiry = cx.epc.expiry
+      if(cx.insurance?.insurer) patch.insurer = cx.insurance.insurer
+      if(cx.insurance?.renewal) patch.insuranceRenewal = cx.insurance.renewal
+      if(cx.insurance?.type) patch.insuranceType = cx.insurance.type
+      if(t.tenantName) patch.tenantName = t.tenantName
+      if(t.tenantEmail) patch.tenantEmail = t.tenantEmail
+      if(t.tenantPhone) patch.tenantPhone = t.tenantPhone
+      if(t.rent) patch.rent = Number(String(t.rent).replace(/[^0-9.]/g,''))||undefined
+      if(t.startDate) patch.tenancyStart = t.startDate
+      if(t.depositAmount) patch.depositAmount = Number(String(t.depositAmount).replace(/[^0-9.]/g,''))||undefined
+      if(t.depositScheme) patch.depositScheme = t.depositScheme
+      if(f2.lender) patch.lender = f2.lender
+      if(f2.mortgage) patch.mortgage = Number(String(f2.mortgage).replace(/[^0-9.]/g,''))||undefined
+      if(f2.rate) patch.rate = f2.rate
+      if(f2.fixedEnd) patch.fixedEnd = f2.fixedEnd
+      if(f2.monthlyPayment) patch.monthlyPayment = Number(String(f2.monthlyPayment).replace(/[^0-9.]/g,''))||undefined
+      const newProp = {
+        id: Math.random().toString(36).slice(2),
+        shortName: ex.property?.shortName || ex.property?.address?.split(',')[0]?.trim() || 'New property',
+        address: ex.property?.address || '',
+        nation: 'England',
+        ownership: 'Personal',
+        docs: [ex.documentType].filter(Boolean),
+        ...patch
+      }
+      next = {...portfolioRef.current, properties:[...prevProps, newProp]}
+    }
+    setPortfolio(next)
+  } catch(e) {
+    console.error('Save error:', e)
+    // Absolute fallback - create minimal property
+    const ex = confirmedItem.extracted
+    if(!confirmedItem.matchedProp && ex?.property?.address) {
+      const newProp = {
+        id: Math.random().toString(36).slice(2),
+        shortName: ex.property?.shortName || ex.property?.address?.split(',')[0]?.trim() || 'New property',
+        address: ex.property?.address || '',
+        nation: 'England',
+        ownership: 'Personal',
+        docs: [ex.documentType].filter(Boolean)
+      }
+      setPortfolio(prev => ({...prev, properties:[...(prev.properties||[]), newProp]}))
+    }
+  }
+  setQueue(q=>q.map(x=>x.id===confirmedItem.id?{...x,status:'done'}:x))
+}} onReject={(rejectedItem)=>{setQueue(q=>q.filter(x=>x.id!==rejectedItem.id))}} onRetry={async(failedItem)=>{
               setQueue(q=>q.map(x=>x.id===failedItem.id?{...x,status:'reading',result:null}:x))
               try{
                 const file=new File([],failedItem.name)
