@@ -178,6 +178,12 @@ export default function Landing() {
         {/* ── HERO ── */}
         <section style={{ maxWidth:860, margin:'0 auto', padding:'clamp(60px,9vw,116px) clamp(20px,4vw,48px) clamp(52px,7vw,88px)', textAlign:'center' }}>
 
+          <div className="fade-up" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:20 }}>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:600, color:'#003366', background:'#EEF3FA', border:'1px solid #c8d8ee', borderRadius:24, padding:'5px 14px', letterSpacing:'0.2px' }}>
+              🇬🇧 Built in the UK · For UK landlords only
+            </span>
+          </div>
+
           <div className="saving-badge fade-up" style={{ marginBottom:34 }}>
             <span>💰</span> Landlords save £1,000–£3,000/year switching to Lettly
           </div>
