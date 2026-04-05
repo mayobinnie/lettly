@@ -3933,22 +3933,23 @@ function PaywallBanner({subscription,user,onUpgrade,propCount,maxProps}){
 
 function UpgradeModal({onClose,user,currentPlan}){
   const[selPlan,setSelPlan]=useState('standard')
+  const[billing,setBilling]=useState('annual')
   const[addHmo,setAddHmo]=useState(false)
   const[loading,setLoading]=useState(false)
 
   const PLANS=[
-    {id:'starter',   name:'Starter',      price:8,   props:'1-2 properties',    group:'landlord'},
-    {id:'standard',  name:'Standard',     price:16,  props:'3-5 properties',    group:'landlord'},
-    {id:'portfolio', name:'Portfolio',    price:28,  props:'6-10 properties',   group:'landlord', popular:true},
-    {id:'pro',       name:'Pro landlord', price:45,  props:'11-25 properties',  group:'operator'},
-    {id:'agency',    name:'Agency',       price:120, props:'26-100 properties', group:'operator', popular:true},
+    {id:'starter',   name:'Starter',      monthly:12.50, annual:10,  props:'1-2 properties',    group:'landlord'},
+    {id:'standard',  name:'Standard',     monthly:25,    annual:20,  props:'3-5 properties',    group:'landlord'},
+    {id:'portfolio', name:'Portfolio',    monthly:44,    annual:35,  props:'6-10 properties',   group:'landlord', popular:true},
+    {id:'pro',       name:'Pro landlord', monthly:70,    annual:56,  props:'11-25 properties',  group:'operator'},
+    {id:'agency',    name:'Agency',       monthly:188,   annual:150, props:'26-100 properties', group:'operator', popular:true},
   ]
 
   async function startCheckout(){
     setLoading(true)
     try{
       const r=await fetch('/api/stripe/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({plan:selPlan,addHmo,email:user?.emailAddresses?.[0]?.emailAddress})})
+        body:JSON.stringify({plan:selPlan,billing,addHmo,email:user?.emailAddresses?.[0]?.emailAddress})})
       const d=await r.json()
       if(d.url) window.location.href=d.url
       else alert('Could not start checkout. Please try again.')
@@ -3957,16 +3958,28 @@ function UpgradeModal({onClose,user,currentPlan}){
   }
 
   const plan=PLANS.find(p=>p.id===selPlan)
-  const total=(plan?.price||0)+(addHmo?12.50:0)
+  const price=billing==='annual'?(plan?.annual||0):(plan?.monthly||0)
+  const hmoPrice=billing==='annual'?15:19
+  const total=price+(addHmo?hmoPrice:0)
 
   return<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}>
     <div style={{background:'var(--surface)',borderRadius:20,padding:'32px 28px',maxWidth:520,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:24}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
         <div>
           <div style={{fontFamily:'var(--display)',fontSize:22,fontWeight:400,marginBottom:4}}>Choose your plan</div>
           <div style={{fontSize:13,color:'var(--text-3)'}}>14-day free trial, no credit card required</div>
         </div>
         <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--text-3)',padding:'0 4px'}}>x</button>
+      </div>
+
+      {/* Billing toggle */}
+      <div style={{display:'flex',alignItems:'center',background:'var(--surface2)',borderRadius:10,padding:3,gap:2,marginBottom:20,width:'fit-content'}}>
+        <button onClick={()=>setBilling('annual')} style={{padding:'6px 16px',borderRadius:8,border:'none',fontFamily:'var(--font)',fontSize:12,fontWeight:billing==='annual'?600:400,background:billing==='annual'?'var(--brand)':'transparent',color:billing==='annual'?'#fff':'var(--text-2)',cursor:'pointer'}}>
+          Annual <span style={{fontSize:10,opacity:0.85}}>save 20%</span>
+        </button>
+        <button onClick={()=>setBilling('monthly')} style={{padding:'6px 16px',borderRadius:8,border:'none',fontFamily:'var(--font)',fontSize:12,fontWeight:billing==='monthly'?600:400,background:billing==='monthly'?'var(--brand)':'transparent',color:billing==='monthly'?'#fff':'var(--text-2)',cursor:'pointer'}}>
+          Monthly
+        </button>
       </div>
 
       {/* Private landlord plans */}
@@ -3979,7 +3992,7 @@ function UpgradeModal({onClose,user,currentPlan}){
             position:'relative'}}>
           {p.popular&&<span style={{position:'absolute',top:8,right:8,fontSize:10,background:'var(--brand)',color:'#fff',padding:'1px 6px',borderRadius:20,fontWeight:600}}>Popular</span>}
           <div style={{fontSize:12,fontWeight:600,color:selPlan===p.id?'var(--brand)':'var(--text)',marginBottom:2}}>{p.name}</div>
-          <div style={{fontSize:17,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{p.price}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
+          <div style={{fontSize:17,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{billing==='annual'?p.annual:p.monthly}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
           <div style={{fontSize:10,color:'var(--text-3)'}}>{p.props}</div>
         </button>)}
       </div>
@@ -3993,7 +4006,7 @@ function UpgradeModal({onClose,user,currentPlan}){
             position:'relative'}}>
           {p.popular&&<span style={{position:'absolute',top:8,right:8,fontSize:10,background:'var(--brand)',color:'#fff',padding:'1px 6px',borderRadius:20,fontWeight:600}}>Popular</span>}
           <div style={{fontSize:12,fontWeight:600,color:selPlan===p.id?'var(--brand)':'var(--text)',marginBottom:2}}>{p.name}</div>
-          <div style={{fontSize:17,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{p.price}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
+          <div style={{fontSize:17,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{billing==='annual'?p.annual:p.monthly}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
           <div style={{fontSize:10,color:'var(--text-3)'}}>{p.props}</div>
         </button>)}
         <a href="mailto:hello@lettly.co"
@@ -4010,14 +4023,18 @@ function UpgradeModal({onClose,user,currentPlan}){
         <div style={{flex:1}}>
           <div style={{fontSize:13,fontWeight:500}}>Add HMO management suite</div>
           <div style={{fontSize:11,color:'var(--text-3)'}}>Room tracking, licence manager, fire safety checklist, PAT testing</div>
+          <div style={{fontSize:11,color:'var(--amber)',marginTop:3,fontWeight:500}}>Priced per HMO address — add once per site</div>
         </div>
-        <div style={{fontSize:13,fontWeight:600,color:'var(--brand)',flexShrink:0}}>+£12.50/mo</div>
+        <div style={{fontSize:13,fontWeight:600,color:'var(--brand)',flexShrink:0}}>+£{billing==='annual'?15:19}/mo</div>
       </label>
 
       {/* Total */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 0',borderTop:'0.5px solid var(--border)',marginBottom:16}}>
-        <span style={{fontSize:13,color:'var(--text-2)'}}>Total after 14-day trial</span>
-        <span style={{fontSize:20,fontWeight:700,fontFamily:'var(--mono)',color:'var(--brand)'}}>£{total.toFixed(2).replace('.00','')}/mo</span>
+        <div>
+          <div style={{fontSize:13,color:'var(--text-2)'}}>Total after 14-day trial</div>
+          {billing==='annual'&&<div style={{fontSize:10,color:'var(--text-3)'}}>billed as £{(total*12).toFixed(0)}/year</div>}
+        </div>
+        <span style={{fontSize:20,fontWeight:700,fontFamily:'var(--mono)',color:'var(--brand)'}}>£{total % 1===0?total:total.toFixed(2)}/mo</span>
       </div>
 
       <button onClick={startCheckout} disabled={loading}
