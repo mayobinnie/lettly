@@ -192,7 +192,7 @@ export default function Landing() {
           </h1>
 
           <p className="section-sub fade-up-3" style={{ maxWidth:520, margin:'0 auto 16px', fontSize:'clamp(16px,2vw,19px)' }}>
-            Everything a letting agent does — compliance, finance, AI document reading — from £10/month. No agent fees.
+            Everything a letting agent does: compliance, finance, AI document reading, from £10/month. No agent fees.
           </p>
 
           <div className="fade-up-3" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginBottom:28 }}>
@@ -550,7 +550,7 @@ export default function Landing() {
               <div style={{fontSize:11,fontWeight:700,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'1px'}}>New feature</div>
               <div style={{fontSize:34,marginTop:4}}>🏠</div>
               <div style={{fontFamily:'var(--display)',fontSize:24,fontWeight:400,color:'var(--brand)',lineHeight:1.2,marginTop:4}}>HMO management suite</div>
-              <div style={{fontSize:13,color:'var(--text-2)',marginTop:4,lineHeight:1.6}}>Add to any plan — priced per HMO address</div>
+              <div style={{fontSize:13,color:'var(--text-2)',marginTop:4,lineHeight:1.6}}>Add to any plan, priced per HMO address</div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px 24px'}}>
               {[
@@ -839,7 +839,7 @@ export default function Landing() {
                 <span style={{ fontSize:28 }}>🏠</span>
                 <div>
                   <div style={{ fontSize:14, fontWeight:600, color:'var(--brand)', marginBottom:3 }}>HMO management suite, add-on</div>
-                  <div style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.6 }}>Room-by-room tracking, HMO licence management, fire safety checklist, PAT testing records. Priced per HMO address — add once per site.</div>
+                  <div style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.6 }}>Room-by-room tracking, HMO licence management, fire safety checklist, PAT testing records. Priced per HMO address, add once per site.</div>
                 </div>
               </div>
               <div style={{ textAlign:'center', flexShrink:0 }}>
