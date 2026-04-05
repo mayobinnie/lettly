@@ -1,3 +1,4 @@
+import '../styles/globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { useEffect } from 'react'
 import CookieBanner from '../components/CookieBanner'
