@@ -196,11 +196,11 @@ export default function Landing() {
           </h1>
 
           <p className="section-sub fade-up-3" style={{ maxWidth:540, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
-            Lettly gives private landlords everything a letting agent does, without the 10% fee. Compliance, finance, maintenance and AI document reading from £8/month.
+            Lettly gives private landlords everything a letting agent does, without the 10% fee. Compliance, finance, maintenance and AI document reading from £10/month (annual) or £12.50/month.
           </p>
 
           <p style={{ fontSize:15, color:'var(--text-2)', marginBottom:20, fontWeight:500 }}>
-            Typical saving: <span style={{ color:'var(--brand)', fontWeight:600 }}>£1,020/year</span> on a single £850/mo property
+            Typical saving: <span style={{ color:'var(--brand)', fontWeight:600 }}>£1,008/year</span> on a single £850/mo property (annual plan)
           </p>
           <div className="cta-row fade-up-3" style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap', marginBottom:22 }}>
             <a href="https://accounts.lettly.co/sign-up" className="btn-primary">
@@ -325,7 +325,7 @@ export default function Landing() {
                   <span style={{ fontSize:15, fontWeight:600, fontFamily:'Georgia, serif', color:'var(--brand)' }}>Lettly</span>
                 </div>
               {[
-                { icon:'✅', title:'Keep your rent, all of it', body:'Manage yourself and save £1,000 to £3,000 per year. Lettly starts at just £8/month for 1-2 properties.' },
+                { icon:'✅', title:'Keep your rent, all of it', body:'Manage yourself and save £1,000 to £3,000 per year. Lettly starts at just £10/month (annual) or £12.50/month for 1-2 properties.' },
                 { icon:'📲', title:'Drop a document, done', body:'Upload your gas cert, EICR or tenancy agreement. Lettly reads it and tracks every date automatically.' },
                 { icon:'🛡️', title:'Stay compliant automatically', body:'Lettly reads your property postcode and applies the right law for England, Scotland or Wales. Reminders before every deadline.' },
                 { icon:'📊', title:'One place for everything', body:'Tenants, rent, expenses, maintenance, documents, CGT, deal analysis. All in one dashboard.' },
@@ -391,11 +391,11 @@ export default function Landing() {
                   <span style={{ fontSize:15, fontWeight:600, fontFamily:'Georgia, serif', color:'var(--brand)' }}>Lettly</span>
                 </div>
                 {[
-                  { label:'All properties (1–2)', value:'£8/month' },
-                  { label:'All properties (3–5)', value:'£16/month' },
-                  { label:'All properties (6–10)', value:'£24/month' },
+                  { label:'All properties (1–2)', value:'£10/mo annual · £12.50/mo monthly' },
+                  { label:'All properties (3–5)', value:'£20/mo annual · £25/mo monthly' },
+                  { label:'All properties (6–10)', value:'£35/mo annual · £44/mo monthly' },
                   { label:'Tenant finding portals', value:'From £29 one-off (OpenRent)' },
-                  { label:'Annual total (1–2 props)', value:'£96/year', bold:true },
+                  { label:'Annual total (1–2 props)', value:'£120/year', bold:true },
                 ].map(r => (
                   <div key={r.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'0.5px solid rgba(27,94,59,0.15)' }}>
                     <span style={{ fontSize:13, color:'var(--brand)' }}>{r.label}</span>
@@ -735,7 +735,7 @@ export default function Landing() {
             <div style={{ background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.15)', borderRadius:20, padding:'32px 28px' }}>
               <div style={{ fontSize:28, color:'var(--brand)', marginBottom:14, fontFamily:'Georgia, serif', lineHeight:1, fontWeight:300 }}>&ldquo;</div>
               <div style={{ fontFamily:'var(--display)', fontSize:'clamp(16px,2vw,20px)', fontWeight:300, fontStyle:'italic', color:'var(--brand)', marginBottom:16, lineHeight:1.6 }}>
-                I was paying £156 a month in letting agent fees. Lettly gives me everything I need for £8. I wish I had found it sooner.
+                I was paying £156 a month in letting agent fees. Lettly gives me everything I need for £10 a month on the annual plan. I wish I had found it sooner.
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--brand)', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -873,7 +873,7 @@ export default function Landing() {
                 </div>
               </div>
               <div style={{ textAlign:'center', flexShrink:0 }}>
-                <div style={{ fontFamily:'var(--display)', fontSize:28, fontWeight:300, color:'var(--brand)', lineHeight:1 }}>£12.50</div>
+                <div style={{ fontFamily:'var(--display)', fontSize:28, fontWeight:300, color:'var(--brand)', lineHeight:1 }}>£15</div>
                 <div style={{ fontSize:12, color:'var(--text-3)', marginBottom:10 }}>per month</div>
                 <a href="https://accounts.lettly.co/sign-up" style={{ display:'inline-block', background:'var(--brand)', color:'#fff', borderRadius:8, padding:'8px 20px', fontSize:13, fontWeight:600, textDecoration:'none' }}>Start free trial →</a>
               </div>
