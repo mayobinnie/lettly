@@ -2,6 +2,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import '../styles/globals.css'
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
+import { Analytics } from '@vercel/analytics/next'
 
 export default function App({ Component, pageProps }) {
   const [installPrompt, setInstallPrompt] = useState(null)
@@ -45,6 +46,7 @@ export default function App({ Component, pageProps }) {
       </Head>
       <ClerkProvider {...pageProps}>
         <Component {...pageProps} />
+        <Analytics />
 
         {/* PWA install banner */}
         {showBanner && (
