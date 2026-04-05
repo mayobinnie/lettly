@@ -178,31 +178,30 @@ export default function Landing() {
         </nav>
 
         {/* ── HERO ── */}
-        <section style={{ maxWidth:860, margin:'0 auto', padding:'clamp(60px,9vw,116px) clamp(20px,4vw,48px) clamp(52px,7vw,88px)', textAlign:'center' }}>
+        <section style={{ maxWidth:960, margin:'0 auto', padding:'clamp(40px,6vw,72px) clamp(20px,4vw,48px) 0', textAlign:'center' }}>
 
-          <div className="fade-up" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:20 }}>
+          <div className="fade-up" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:16 }}>
             <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:600, color:'var(--brand)', background:'var(--brand-light)', border:'1px solid rgba(74,103,65,0.25)', borderRadius:24, padding:'5px 14px', letterSpacing:'0.2px' }}>
               🇬🇧 British built, owned and operated
             </span>
           </div>
 
-          <div className="saving-badge fade-up" style={{ marginBottom:34 }}>
-            <span>💰</span> Landlords save £1,000–£3,000/year switching to Lettly
-          </div>
-
-          <h1 className="hero-title fade-up-2" style={{ marginBottom:24 }}>
+          <h1 className="hero-title fade-up-2" style={{ marginBottom:20 }}>
             Do it yourself.<br/>
             <span className="hero-em">Not by yourself.</span>
           </h1>
 
-          <p className="section-sub fade-up-3" style={{ maxWidth:540, margin:'0 auto 44px', fontSize:'clamp(16px,2vw,19px)' }}>
-            Lettly gives private landlords everything a letting agent does, without the 10% fee. Compliance, finance, maintenance and AI document reading from £10/month (annual) or £12.50/month.
+          <p className="section-sub fade-up-3" style={{ maxWidth:520, margin:'0 auto 16px', fontSize:'clamp(16px,2vw,19px)' }}>
+            Everything a letting agent does — compliance, finance, AI document reading — from £10/month. No agent fees.
           </p>
 
-          <p style={{ fontSize:15, color:'var(--text-2)', marginBottom:20, fontWeight:500 }}>
-            Typical saving: <span style={{ color:'var(--brand)', fontWeight:600 }}>£1,008/year</span> on a single £850/mo property (annual plan)
-          </p>
-          <div className="cta-row fade-up-3" style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap', marginBottom:22 }}>
+          <div className="fade-up-3" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginBottom:28 }}>
+            <span style={{ fontSize:13, color:'var(--text-3)' }}>Typical saving:</span>
+            <span style={{ fontSize:14, fontWeight:700, color:'var(--brand)' }}>£1,008/year</span>
+            <span style={{ fontSize:13, color:'var(--text-3)' }}>per property vs a letting agent</span>
+          </div>
+
+          <div className="cta-row fade-up-3" style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap', marginBottom:14 }}>
             <a href="https://accounts.lettly.co/sign-up" className="btn-primary">
               Start self-managing your property →
             </a>
@@ -211,50 +210,21 @@ export default function Landing() {
             </a>
           </div>
 
-          <p style={{ fontSize:14, color:'var(--text-3)', marginBottom:52 }}>
+          <p style={{ fontSize:13, color:'var(--text-3)', marginBottom:36 }}>
             Free for 14 days · No credit card · Takes 2 minutes
           </p>
 
-          <div className="trust-pills" style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap', marginBottom:40 }}>
+          <div style={{ display:'flex', gap:16, justifyContent:'center', flexWrap:'wrap', marginBottom:0 }}>
             {[
-              { icon:'🇬🇧', text:'Built for UK landlords' },
-              { icon:'🏴', text:'England, Scotland and Wales covered' },
-              { icon:'🔒', text:'Your data stays private' },
+              { icon:'🔒', text:'ICO registered' },
+              { icon:'🇬🇧', text:'England, Scotland & Wales' },
+              { icon:'⭐', text:'14-day free trial' },
+              { icon:'📄', text:'AI reads your documents' },
             ].map(t => (
-              <span key={t.text} className="trust-pill"><span>{t.icon}</span>{t.text}</span>
+              <span key={t.text} style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:12, color:'var(--text-3)', fontWeight:500 }}>
+                <span style={{ fontSize:14 }}>{t.icon}</span>{t.text}
+              </span>
             ))}
-          </div>
-
-          {/* Feature strip */}
-          <div style={{ borderTop:'1px solid var(--border)', paddingTop:40 }}>
-            <div style={{ fontSize:13, color:'var(--text-2)', marginBottom:28, textTransform:'uppercase', letterSpacing:'1px', fontWeight:700 }}>Everything included on every plan</div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))', gap:'16px 24px', textAlign:'left', maxWidth:860, margin:'0 auto' }}>
-              {[
-                { icon:'📄', label:'AI document extraction' },
-                { icon:'⚖️', label:'Nation-specific compliance' },
-                { icon:'📊', label:'Deal analyser' },
-                { icon:'🧮', label:'CGT planner' },
-                { icon:'🏢', label:'Ltd vs personal modeller' },
-                { icon:'💷', label:'Expense tracker (HMRC)' },
-                { icon:'📅', label:'Rent reminders to tenants' },
-                { icon:'🔍', label:'Legislation monitor' },
-                { icon:'🤖', label:'AI landlord assistant' },
-                { icon:'📋', label:'Document generator' },
-                { icon:'🏚️', label:'Void period tracker' },
-                { icon:'🔧', label:'Contractor directory' },
-                { icon:'🏠', label:'HMO management suite' },
-                { icon:'🔥', label:'Fire safety tracking' },
-                { icon:'📜', label:'HMO licence tracker' },
-              ].map(f => (
-                <div key={f.label} style={{ display:'flex', alignItems:'center', gap:10, background:'var(--surface)', borderRadius:10, padding:'10px 14px', border:'0.5px solid var(--border)' }}>
-                  <span style={{ fontSize:18, flexShrink:0 }}>{f.icon}</span>
-                  <span style={{ fontSize:14, fontWeight:500, color:'var(--text)', lineHeight:1.4 }}>{f.label}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop:24, fontSize:14, color:'var(--text-3)' }}>
-              and more, <a href="#features" style={{ color:'var(--brand)', textDecoration:'none', fontWeight:600 }}>see all features →</a>
-            </div>
           </div>
 
           {/* Dashboard screenshot */}
