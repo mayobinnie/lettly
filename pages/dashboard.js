@@ -96,7 +96,29 @@ const PILL={red:{bg:'#fce8e6',fg:'#791F1F'},amber:{bg:'#fff8e1',fg:'#633806'},gr
 function Pill({type='grey',dot,children}){const c=PILL[type]||PILL.grey;return<span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,background:c.bg,color:c.fg,whiteSpace:'nowrap'}}>{dot&&<span style={{width:5,height:5,borderRadius:'50%',background:c.fg,flexShrink:0}}/>}{children}</span>}
 function Row({label,value,valueColor,pill,pillType}){return<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'0.5px solid var(--border)',gap:8}}><span style={{fontSize:12,color:'var(--text-2)',flexShrink:0}}>{label}</span>{pill?<Pill type={pillType||'grey'} dot>{pill}</Pill>:<span style={{fontSize:12,fontWeight:500,fontFamily:'var(--mono)',color:valueColor||'var(--text)',textAlign:'right'}}>{value||'-'}</span>}</div>}
 function Metric({label,value,sub,subGreen,subRed,onClick}){return<div onClick={onClick} style={{background:'var(--surface2)',borderRadius:'var(--radius)',padding:'14px 16px',cursor:onClick?'pointer':'default',transition:'background 0.15s'}} onMouseEnter={e=>{if(onClick)e.currentTarget.style.background='var(--surface3)'}} onMouseLeave={e=>{if(onClick)e.currentTarget.style.background='var(--surface2)'}}><div style={{fontSize:11,color:'var(--text-2)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>{label}{onClick&&<span style={{float:'right',fontSize:10,color:'var(--brand)',fontWeight:400}}>View →</span>}</div><div style={{fontSize:20,fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px'}}>{value}</div>{sub&&<div style={{fontSize:11,marginTop:3,color:subGreen?'var(--green)':subRed?'var(--red)':'var(--text-3)'}}>{sub}</div>}</div>}
-function Input({label,value,onChange,type='text',placeholder='',hint}){return<div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label><input type={type} value={value||''} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/>{hint&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>{hint}</div>}</div>}
+function formatDateInput(raw,prev){
+  const digits=raw.replace(/\D/g,'')
+  const prevDigits=(prev||'').replace(/\D/g,'')
+  const deleting=digits.length<prevDigits.length
+  let out=digits.slice(0,8)
+  if(out.length>4) out=out.slice(0,2)+'/'+out.slice(2,4)+'/'+out.slice(4)
+  else if(out.length>2) out=out.slice(0,2)+'/'+out.slice(2)
+  if(deleting&&raw.endsWith('/')) out=out.slice(0,out.length-1)
+  return out
+}
+function Input({label,value,onChange,type='text',placeholder='',hint}){
+  const isDate=placeholder&&placeholder.includes('DD/MM/YYYY')
+  function handleChange(raw){
+    if(isDate) onChange(formatDateInput(raw,value))
+    else onChange(raw)
+  }
+  return<div style={{marginBottom:14}}>
+    <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+    <input type={type} value={value||''} onChange={e=>handleChange(e.target.value)} placeholder={placeholder}
+      style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/>
+    {hint&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>{hint}</div>}
+  </div>
+}
 function Select({label,value,onChange,options}){return<div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label><select value={value||''} onChange={e=>onChange(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>{options.map(o=><option key={o.value||o} value={o.value||o}>{o.label||o}</option>)}</select></div>}
 
 const DOC_META={gas_certificate:{label:'Gas cert',icon:'🔥',bg:'#fff8e1',fg:'#633806'},eicr:{label:'EICR',icon:'⚡',bg:'#e3f2fd',fg:'#0C447C'},insurance:{label:'Insurance',icon:'🛡️',bg:'#f3e8ff',fg:'#6b21a8'},epc_certificate:{label:'EPC',icon:'🌿',bg:'#e8f5e9',fg:'#1e6e35'},tenancy_agreement:{label:'Tenancy',icon:'📄',bg:'#eaf4ee',fg:'#1b5e3b'},mortgage_offer:{label:'Mortgage',icon:'🏦',bg:'#fce8e6',fg:'#791F1F'},completion_statement:{label:'Completion',icon:'🏠',bg:'#e8f5e9',fg:'#1e6e35'},other:{label:'Document',icon:'📋',bg:'#f2f0eb',fg:'#6b6860'}}
@@ -1233,22 +1255,23 @@ function YearByYearTable({props, years}){
 }
 
 function GrowthCards({props}){
-  return <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:10,marginBottom:14}}>
-    {props.filter(p=>p.currentValue).map(p=>{
+  const filtered = props.filter(p=>p.currentValue)
+  return <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:14}}>
+    {filtered.map(p=>{
       const rate = getGrowthRate(p.address)
       const val = Number(p.currentValue)
       const in1 = projectValue(val,rate,1)[1]
       const in5 = projectValue(val,rate,5)[5]
       const in10 = projectValue(val,rate,10)[10]
-      return <div key={p.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:14}}>
+      return <div key={p.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:16}}>
         <div style={{fontSize:14,fontWeight:600,color:'var(--brand)',marginBottom:1}}>{p.shortName}</div>
-        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10}}>{rate}% avg annual · {p.nation||'England'}</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:5}}>
+        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:12}}>{rate}% avg annual · {p.nation||'England'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:6}}>
           {[['Now',val,null],['1yr',in1,in1-val],['5yr',in5,in5-val],['10yr',in10,in10-val]].map(([label,v,gain])=>(
-            <div key={label} style={{background:label==='Now'?'var(--surface2)':'var(--brand-subtle)',borderRadius:7,padding:'8px 7px',border:label==='Now'?'none':'0.5px solid rgba(27,94,59,0.1)'}}>
-              <div style={{fontSize:10,color:'var(--text-3)',marginBottom:2}}>{label}</div>
-              <div style={{fontSize:11,fontWeight:600,fontFamily:'var(--mono)',color:label==='Now'?'var(--text)':'var(--brand)'}}>{fmt(v)}</div>
-              {gain&&<div style={{fontSize:9,color:'var(--green)',marginTop:1}}>+{fmt(gain)}</div>}
+            <div key={label} style={{background:label==='Now'?'var(--surface2)':'var(--brand-subtle)',borderRadius:8,padding:'9px 8px',border:label==='Now'?'0.5px solid var(--border)':'0.5px solid rgba(74,103,65,0.12)',minWidth:0}}>
+              <div style={{fontSize:10,color:'var(--text-3)',marginBottom:3,fontWeight:500}}>{label}</div>
+              <div style={{fontSize:12,fontWeight:600,fontFamily:'var(--mono)',color:label==='Now'?'var(--text)':'var(--brand)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{fmt(v)}</div>
+              {gain&&<div style={{fontSize:10,color:'var(--green)',marginTop:2,whiteSpace:'nowrap'}}>+{fmt(gain)}</div>}
             </div>
           ))}
         </div>
