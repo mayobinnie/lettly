@@ -434,6 +434,19 @@ export default function Landing() {
                 </div>
               ))}
             </div>
+
+            {/* Manual entry footer strip */}
+            <div style={{ marginTop:24, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:16, padding:'20px 28px', display:'flex', alignItems:'center', gap:20, flexWrap:'wrap' }}>
+              <div style={{ width:42, height:42, background:'var(--brand-light)', borderRadius:11, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <span style={{ fontSize:20 }}>✏️</span>
+              </div>
+              <div style={{ flex:1, minWidth:220 }}>
+                <div style={{ fontFamily:'var(--display)', fontSize:17, fontWeight:400, color:'var(--text)', marginBottom:4 }}>Prefer to type it in yourself?</div>
+                <div style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.7 }}>Manual entry is always available. Add properties, certificates, tenancy details and meter readings by hand at any time. No documents needed to get started.</div>
+              </div>
+              <a href="https://accounts.lettly.co/sign-up" style={{ flexShrink:0, background:'var(--brand)', color:'#fff', borderRadius:10, padding:'10px 22px', fontSize:14, fontWeight:600, textDecoration:'none', whiteSpace:'nowrap' }}>Start manually →</a>
+            </div>
+
           </div>
         </section>
 
@@ -747,12 +760,13 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="grid-4" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
+            {/* Private landlord plans */}
+            <div style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:12 }}>Private landlords</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:28 }}>
               {[
-                { name:'Starter',   price:'£8',  props:'1–2 properties',          popular:false },
-                { name:'Standard',  price:'£16', props:'3–5 properties',           popular:false },
-                { name:'Portfolio', price:'£28', props:'6–10 properties',          popular:true  },
-                { name:'Pro',       price:'£40', props:'Unlimited properties',     popular:false },
+                { name:'Starter', price:'£8', props:'1–2 properties', popular:false, features:['Document AI extraction','Compliance tracking','Rent & tenant tracker','Finance & P&L','Maintenance log','Lettly AI assistant'] },
+                { name:'Standard', price:'£16', props:'3–5 properties', popular:false, features:['Everything in Starter','Rent reminders to tenants','Void period tracker','Deal analyser','CGT planner'] },
+                { name:'Portfolio', price:'£28', props:'6–10 properties', popular:true, features:['Everything in Standard','HMO management suite','Invoicing','Condition reports + PDF','Tax year export'] },
               ].map(plan => (
                 <div key={plan.name} style={{
                   background: plan.popular ? 'var(--brand)' : 'var(--surface)',
@@ -764,7 +778,7 @@ export default function Landing() {
                   <div style={{ fontFamily:'var(--display)', fontSize:42, fontWeight:300, color: plan.popular ? '#fff':'var(--text)', lineHeight:1, marginBottom:4 }}>{plan.price}</div>
                   <div style={{ fontSize:12, color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--text-3)', marginBottom:16 }}>per month</div>
                   <div style={{ fontSize:13, fontWeight:500, color: plan.popular ? 'rgba(255,255,255,0.9)':'var(--brand)', marginBottom:20, padding:'7px 12px', background: plan.popular ? 'rgba(255,255,255,0.12)':'var(--brand-light)', borderRadius:10, textAlign:'center' }}>{plan.props}</div>
-                  {['Document AI extraction','Compliance tracking','Rent & tenant tracker','Finance & P&L','Maintenance log','Legislation centre','Lettly AI assistant'].map(f => (
+                  {plan.features.map(f => (
                     <div key={f} style={{ display:'flex', gap:8, alignItems:'flex-start', fontSize:13, color: plan.popular ? 'rgba(255,255,255,0.75)':'var(--text-2)', marginBottom:8, lineHeight:1.4 }}>
                       <span style={{ color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--green)', flexShrink:0 }}>✓</span>{f}
                     </div>
@@ -778,8 +792,42 @@ export default function Landing() {
                 </div>
               ))}
             </div>
+
+            {/* Professional operator plans */}
+            <div style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:12 }}>Professional operators</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:20 }}>
+              {[
+                { name:'Pro landlord', price:'£45', props:'11–25 properties', popular:false, badge:null, features:['Everything in Portfolio','Multi-property bulk actions','Referral programme access','Priority WhatsApp support'], cta:'Start free trial', href:'https://accounts.lettly.co/sign-up' },
+                { name:'Agency', price:'£120', props:'26–100 properties', popular:true, badge:'New', features:['Everything in Pro','Multi-user logins (up to 5)','Branded client portal','Bulk document processing','Custom compliance reports','Onboarding call included'], cta:'Start free trial', href:'https://accounts.lettly.co/sign-up' },
+                { name:'Enterprise', price:'Custom', props:'100+ properties', popular:false, badge:null, features:['Everything in Agency','Unlimited users','API access','Dedicated account manager','SLA guarantee','White-label option'], cta:'Contact us', href:'mailto:hello@lettly.co' },
+              ].map(plan => (
+                <div key={plan.name} style={{
+                  background: plan.popular ? 'var(--brand)' : 'var(--surface)',
+                  border: plan.popular ? 'none' : '1px solid var(--border)',
+                  borderRadius:18, padding:'26px 20px', position:'relative', display:'flex', flexDirection:'column'
+                }}>
+                  {plan.badge && <div style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'2px 10px', fontSize:11, color:'#fff', fontWeight:600 }}>{plan.badge}</div>}
+                  <div style={{ fontSize:13, fontWeight:500, color: plan.popular ? 'rgba(255,255,255,0.65)':'var(--text-2)', marginBottom:10 }}>{plan.name}</div>
+                  <div style={{ fontFamily:'var(--display)', fontSize: plan.price==='Custom'?28:42, fontWeight:300, color: plan.popular ? '#fff':'var(--text)', lineHeight:1, marginBottom:4, paddingTop: plan.price==='Custom'?8:0 }}>{plan.price}</div>
+                  <div style={{ fontSize:12, color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--text-3)', marginBottom:16 }}>{plan.price==='Custom'?'bespoke pricing':'per month'}</div>
+                  <div style={{ fontSize:13, fontWeight:500, color: plan.popular ? 'rgba(255,255,255,0.9)':'var(--brand)', marginBottom:20, padding:'7px 12px', background: plan.popular ? 'rgba(255,255,255,0.12)':'var(--brand-light)', borderRadius:10, textAlign:'center' }}>{plan.props}</div>
+                  {plan.features.map(f => (
+                    <div key={f} style={{ display:'flex', gap:8, alignItems:'flex-start', fontSize:13, color: plan.popular ? 'rgba(255,255,255,0.75)':'var(--text-2)', marginBottom:8, lineHeight:1.4 }}>
+                      <span style={{ color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--green)', flexShrink:0 }}>✓</span>{f}
+                    </div>
+                  ))}
+                  <a href={plan.href} style={{
+                    display:'block', textAlign:'center', marginTop:'auto', paddingTop:20,
+                    background: plan.popular ? '#fff':'var(--brand)',
+                    color: plan.popular ? 'var(--brand)':'#fff',
+                    fontSize:14, fontWeight:600, padding:'12px 16px', borderRadius:10, textDecoration:'none'
+                  }}>{plan.cta}</a>
+                </div>
+              ))}
+            </div>
+
             <p style={{ textAlign:'center', fontSize:13, color:'var(--text-3)' }}>
-              14-day free trial on all plans · No credit card required · Cancel anytime
+              14-day free trial on landlord plans · No credit card required · Cancel anytime
             </p>
 
             {/* HMO Add-on */}
