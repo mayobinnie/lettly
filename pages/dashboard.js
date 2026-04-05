@@ -4670,123 +4670,595 @@ function RentTracker({portfolio, setPortfolio}){
 
 
 /* ---- Condition Report ---- */
+const ROOM_TYPES = ['Living room','Kitchen','Bathroom','Bedroom 1','Bedroom 2','Bedroom 3','Hallway','Landing','Garden','Garage','Utility room','Dining room','Other']
+const CONDITIONS = ['Excellent','Good','Fair','Poor','Not inspected']
+const CONDITION_COLOR = {Excellent:'var(--green)',Good:'var(--brand)',Fair:'var(--amber)',Poor:'var(--red)','Not inspected':'var(--text-3)'}
+const CONDITION_BG = {Excellent:'var(--green-bg)',Good:'var(--brand-light)',Fair:'var(--amber-bg)',Poor:'var(--red-bg)','Not inspected':'var(--surface2)'}
+
+function generateInspectionPDF(report, portfolio) {
+  const prop = (portfolio.properties||[]).find(p=>p.id===report.propertyId)||{}
+  const typeLabel = {move_in:'Move-in inspection',move_out:'Move-out inspection',periodic:'Periodic inspection',inventory:'Inventory check'}[report.type]||report.type
+  const totalDamage = (report.damages||[]).reduce((s,d)=>s+(Number(d.estimatedCost)||0),0)
+
+  const roomsHtml = (report.rooms||[]).map(room=>`
+    <div style="margin-bottom:16px;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
+      <div style="background:#f5f5f5;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+        <strong style="font-size:14px;">${room.name}</strong>
+        <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:${room.condition==='Excellent'?'#e8f5e9':room.condition==='Good'?'#eaf4ee':room.condition==='Fair'?'#fff8e1':'#fce8e6'};color:${room.condition==='Excellent'?'#1e6e35':room.condition==='Good'?'#1b5e3b':room.condition==='Fair'?'#633806':'#791F1F'};">${room.condition||'Not rated'}</span>
+      </div>
+      ${room.notes?`<div style="padding:10px 14px;font-size:13px;color:#555;border-bottom:1px solid #eee;">${room.notes}</div>`:''}
+      ${(room.items||[]).length>0?`
+      <div style="padding:10px 14px;">
+        <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Inventory items</div>
+        ${room.items.map(item=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>${item.name}${item.qty>1?` (×${item.qty})`:''}</span><span style="color:#666;">${item.condition||''}</span></div>`).join('')}
+      </div>`:''}
+    </div>`).join('')
+
+  const damagesHtml = (report.damages||[]).length>0?`
+    <div style="background:#fce8e6;border:1px solid #e24b4a;border-radius:8px;padding:16px;margin-bottom:20px;">
+      <h3 style="font-size:14px;color:#791F1F;margin:0 0 12px;">Damage noted</h3>
+      ${report.damages.map(d=>`
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(226,75,74,0.2);font-size:13px;">
+          <div><strong>${d.room}</strong>: ${d.description}</div>
+          ${d.estimatedCost?`<div style="color:#791F1F;font-weight:600;">£${Number(d.estimatedCost).toLocaleString('en-GB')}</div>`:''}
+        </div>`).join('')}
+      ${totalDamage>0?`<div style="text-align:right;font-weight:700;color:#791F1F;margin-top:10px;font-size:14px;">Total estimated: £${totalDamage.toLocaleString('en-GB')}</div>`:''}
+    </div>`:''}
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>${typeLabel} - ${report.propertyName}</title>
+  <style>
+    body{font-family:system-ui,sans-serif;color:#1a1a18;margin:0;padding:32px;max-width:800px;}
+    h1{font-size:26px;font-weight:400;margin:0 0 4px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+    td{padding:8px 0;border-bottom:1px solid #eee;font-size:13px;}
+    td:first-child{color:#888;width:160px;}
+    @media print{body{padding:16px;}}
+  </style>
+  </head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1b5e3b;">
+    <div>
+      <div style="font-size:11px;color:#1b5e3b;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Lettly Property Report</div>
+      <h1>${typeLabel}</h1>
+      <div style="font-size:15px;color:#555;margin-top:2px;">${report.propertyName}</div>
+    </div>
+    <div style="text-align:right;font-size:13px;color:#888;">
+      <div>${report.date}</div>
+      <div style="margin-top:4px;">Ref: ${report.id.slice(0,8).toUpperCase()}</div>
+    </div>
+  </div>
+
+  <table>
+    <tr><td>Property address</td><td><strong>${prop.address||report.propertyName}</strong></td></tr>
+    <tr><td>Inspection type</td><td>${typeLabel}</td></tr>
+    <tr><td>Inspection date</td><td>${report.date}</td></tr>
+    <tr><td>Overall condition</td><td><strong>${report.overallCondition||'Not rated'}</strong></td></tr>
+    ${report.tenantName?`<tr><td>Tenant</td><td>${report.tenantName}</td></tr>`:''}
+    ${report.keysHanded?`<tr><td>Keys</td><td>${report.keysHanded}</td></tr>`:''}
+    ${report.depositAmount?`<tr><td>Deposit</td><td>£${Number(report.depositAmount).toLocaleString('en-GB')} – ${report.depositScheme||''} ${report.depositRef?'Ref: '+report.depositRef:''}</td></tr>`:''}
+    ${report.elecMeterReading?`<tr><td>Electric meter</td><td>${report.elecMeterReading}</td></tr>`:''}
+    ${report.gasMeterReading?`<tr><td>Gas meter</td><td>${report.gasMeterReading}</td></tr>`:''}
+    ${report.waterMeterReading?`<tr><td>Water meter</td><td>${report.waterMeterReading}</td></tr>`:''}
+  </table>
+
+  ${damagesHtml}
+
+  ${(report.rooms||[]).length>0?`<h2 style="font-size:16px;margin:20px 0 12px;">Room-by-room condition</h2>${roomsHtml}`:''}
+
+  ${report.notes?`<div style="background:#f7f5f0;border-radius:8px;padding:14px 16px;margin-top:16px;"><strong style="font-size:12px;color:#888;display:block;margin-bottom:6px;">NOTES</strong><p style="font-size:13px;margin:0;line-height:1.7;">${report.notes}</p></div>`:''}
+
+  ${report.tenantSignature?`
+  <div style="margin-top:32px;padding-top:16px;border-top:1px solid #eee;">
+    <div style="font-size:12px;color:#888;margin-bottom:8px;">Tenant acknowledgement</div>
+    <div style="font-size:14px;font-style:italic;">${report.tenantSignature}</div>
+    <div style="font-size:11px;color:#aaa;margin-top:4px;">Signed ${report.tenantSignedAt}</div>
+  </div>`:'<div style="margin-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:40px;"><div style="border-top:1px solid #999;padding-top:8px;font-size:11px;color:#888;">Landlord signature / date</div><div style="border-top:1px solid #999;padding-top:8px;font-size:11px;color:#888;">Tenant signature / date</div></div>'}
+
+  <div style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:12px;">
+    Generated by Lettly · lettly.co · ${new Date().toLocaleDateString('en-GB')} · This report is for record-keeping purposes. Not legal advice.
+  </div>
+  </body></html>`
+
+  const w = window.open('','_blank')
+  w.document.write(html)
+  w.document.close()
+  setTimeout(()=>w.print(), 600)
+}
+
+function ComparisonView({reports, props, onClose}) {
+  const propNames = [...new Set(reports.map(r=>r.propertyName))]
+  const[selProp, setSelProp] = useState(propNames[0]||'')
+
+  const propReports = reports.filter(r=>r.propertyName===selProp)
+  const moveIn = [...propReports].filter(r=>r.type==='move_in').sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp))[0]
+  const moveOut = [...propReports].filter(r=>r.type==='move_out').sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp))[0]
+
+  if(!moveIn && !moveOut) return(
+    <div style={{textAlign:'center',padding:'40px 0',color:'var(--text-3)',fontSize:13}}>
+      No move-in or move-out reports for this property yet.
+    </div>
+  )
+
+  // Find rooms that deteriorated
+  const deteriorated = []
+  if(moveIn && moveOut) {
+    const condOrder = {Excellent:4,Good:3,Fair:2,Poor:1,'Not inspected':0}
+    ;(moveOut.rooms||[]).forEach(outRoom=>{
+      const inRoom = (moveIn.rooms||[]).find(r=>r.name===outRoom.name)
+      if(inRoom && condOrder[outRoom.condition] < condOrder[inRoom.condition]) {
+        deteriorated.push({room:outRoom.name, from:inRoom.condition, to:outRoom.condition})
+      }
+    })
+  }
+
+  const totalDamage = (moveOut?.damages||[]).reduce((s,d)=>s+(Number(d.estimatedCost)||0),0)
+
+  const ColHeader = ({report, label}) => report ? (
+    <div style={{background:'var(--surface2)',borderRadius:10,padding:'12px 14px',marginBottom:12}}>
+      <div style={{fontSize:11,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>{label}</div>
+      <div style={{fontSize:13,fontWeight:500}}>{report.date}</div>
+      {report.overallCondition&&<div style={{fontSize:11,color:CONDITION_COLOR[report.overallCondition],marginTop:3}}>{report.overallCondition}</div>}
+    </div>
+  ) : (
+    <div style={{background:'var(--surface2)',borderRadius:10,padding:'12px 14px',marginBottom:12,opacity:0.5}}>
+      <div style={{fontSize:11,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</div>
+      <div style={{fontSize:12,color:'var(--text-3)',marginTop:4}}>No report yet</div>
+    </div>
+  )
+
+  return(
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:500}}>Move-in vs move-out comparison</div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <select value={selProp} onChange={e=>setSelProp(e.target.value)}
+            style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'5px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}>
+            {propNames.map(n=><option key={n}>{n}</option>)}
+          </select>
+          <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:18}}>x</button>
+        </div>
+      </div>
+
+      {deteriorated.length>0&&<div style={{background:'var(--red-bg)',border:'0.5px solid var(--red)',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--red)',marginBottom:6}}>{deteriorated.length} room{deteriorated.length>1?'s':''} deteriorated since move-in</div>
+        {deteriorated.map(d=><div key={d.room} style={{fontSize:12,color:'var(--red)',lineHeight:1.8}}>
+          {d.room}: {d.from} → {d.to}
+        </div>)}
+      </div>}
+
+      {totalDamage>0&&<div style={{background:'var(--red-bg)',border:'0.5px solid var(--red)',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--red)'}}>Estimated damage deductions: £{totalDamage.toLocaleString('en-GB')}</div>
+        {(moveOut?.damages||[]).map(d=><div key={d.id} style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--red)',lineHeight:1.8}}>
+          <span>{d.room}: {d.description}</span>
+          {d.estimatedCost&&<span>£{Number(d.estimatedCost).toLocaleString('en-GB')}</span>}
+        </div>)}
+      </div>}
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div>
+          <ColHeader report={moveIn} label="Move-in"/>
+          {(moveIn?.rooms||[]).map(room=>(
+            <div key={room.id} style={{padding:'8px 0',borderBottom:'0.5px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:12}}>{room.name}</span>
+              <span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:CONDITION_BG[room.condition]||'var(--surface2)',color:CONDITION_COLOR[room.condition]||'var(--text-3)'}}>{room.condition||'-'}</span>
+            </div>
+          ))}
+          {moveIn?.elecMeterReading&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>Electric: {moveIn.elecMeterReading}</div>}
+          {moveIn?.gasMeterReading&&<div style={{fontSize:11,color:'var(--text-3)'}}>Gas: {moveIn.gasMeterReading}</div>}
+        </div>
+        <div>
+          <ColHeader report={moveOut} label="Move-out"/>
+          {(moveOut?.rooms||[]).map(room=>{
+            const inRoom = (moveIn?.rooms||[]).find(r=>r.name===room.name)
+            const condOrder = {Excellent:4,Good:3,Fair:2,Poor:1,'Not inspected':0}
+            const worse = inRoom && condOrder[room.condition]<condOrder[inRoom.condition]
+            return(
+              <div key={room.id} style={{padding:'8px 0',borderBottom:'0.5px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',background:worse?'rgba(226,75,74,0.04)':'transparent'}}>
+                <span style={{fontSize:12}}>{room.name}{worse&&<span style={{fontSize:10,color:'var(--red)',marginLeft:6}}>↓</span>}</span>
+                <span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:CONDITION_BG[room.condition]||'var(--surface2)',color:CONDITION_COLOR[room.condition]||'var(--text-3)'}}>{room.condition||'-'}</span>
+              </div>
+            )
+          })}
+          {moveOut?.elecMeterReading&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>Electric: {moveOut.elecMeterReading}</div>}
+          {moveOut?.gasMeterReading&&<div style={{fontSize:11,color:'var(--text-3)'}}>Gas: {moveOut.gasMeterReading}</div>}
+        </div>
+      </div>
+
+      {moveIn&&moveOut&&<div style={{marginTop:14,display:'flex',gap:8'}}>
+        <button onClick={()=>generateInspectionPDF(moveIn,{properties:[]})} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Export move-in PDF</button>
+        <button onClick={()=>generateInspectionPDF(moveOut,{properties:[]})} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Export move-out PDF</button>
+      </div>}
+    </div>
+  )
+}
+
 function ConditionReport({portfolio,setPortfolio,userId}){
   const reports=portfolio.conditionReports||[]
-  const[showForm,setShowForm]=useState(false)
-  const[selProp,setSelProp]=useState('')
+  const props=portfolio.properties||[]
+  const[view,setView]=useState('list') // list | form | compare
+  const[selProp,setSelProp]=useState(props[0]?.shortName||'')
   const[reportType,setReportType]=useState('move_in')
+  const[overallCond,setOverallCond]=useState('Good')
+  const[rooms,setRooms]=useState([])
+  const[damages,setDamages]=useState([])
+  const[showAddRoom,setShowAddRoom]=useState(false)
+  const[newRoomName,setNewRoomName]=useState(ROOM_TYPES[0])
   const[photos,setPhotos]=useState({})
-  const[form,setForm]=useState({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
+  const[form,setForm]=useState({tenantName:'',elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
   const photoRef=useRef(null)
   const[photoCategory,setPhotoCategory]=useState('general')
+  const[expandedRoom,setExpandedRoom]=useState(null)
+  const[showTenantAck,setShowTenantAck]=useState(null) // report id
+  const[tenantSig,setTenantSig]=useState('')
 
   const photoCategories=[
     {id:'general',label:'General'},{id:'kitchen',label:'Kitchen'},{id:'bathroom',label:'Bathroom'},
-    {id:'lounge',label:'Lounge'},{id:'bedroom',label:'Bedrooms'},{id:'exterior',label:'Exterior'},
-    {id:'meter_elec',label:'Elec meter'},{id:'meter_gas',label:'Gas meter'},
+    {id:'lounge',label:'Living room'},{id:'bedroom',label:'Bedrooms'},{id:'exterior',label:'Exterior'},
+    {id:'meter_elec',label:'Electric meter'},{id:'meter_gas',label:'Gas meter'},
     {id:'keys',label:'Keys'},{id:'damage',label:'Damage'},
   ]
 
   async function handlePhotos(files){
-    const compressed=await Promise.all(Array.from(files).slice(0,4).map(async f=>{
+    const compressed=await Promise.all(Array.from(files).slice(0,6).map(async f=>{
       const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})
       return new Promise(res=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,1200/img.width);const cv=document.createElement('canvas');cv.width=img.width*scale;cv.height=img.height*scale;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',0.75))};img.src=b64})
     }))
     setPhotos(prev=>({...prev,[photoCategory]:[...(prev[photoCategory]||[]),...compressed].slice(0,8)}))
   }
 
+  function addRoom(){
+    const id=Math.random().toString(36).slice(2)
+    setRooms(prev=>[...prev,{id,name:newRoomName,condition:'Good',notes:'',items:[],photos:[]}])
+    setShowAddRoom(false)
+    setExpandedRoom(id)
+  }
+
+  function updateRoom(id,patch){setRooms(prev=>prev.map(r=>r.id===id?{...r,...patch}:r))}
+  function removeRoom(id){setRooms(prev=>prev.filter(r=>r.id!==id));if(expandedRoom===id)setExpandedRoom(null)}
+
+  function addItem(roomId){
+    setRooms(prev=>prev.map(r=>r.id===roomId?{...r,items:[...r.items,{id:Math.random().toString(36).slice(2),name:'',qty:1,condition:'Good',notes:''}]}:r))
+  }
+
+  function updateItem(roomId,itemId,patch){
+    setRooms(prev=>prev.map(r=>r.id===roomId?{...r,items:r.items.map(i=>i.id===itemId?{...i,...patch}:i)}:r))
+  }
+
+  function removeItem(roomId,itemId){
+    setRooms(prev=>prev.map(r=>r.id===roomId?{...r,items:r.items.filter(i=>i.id!==itemId)}:r))
+  }
+
+  function addDamage(){
+    setDamages(prev=>[...prev,{id:Math.random().toString(36).slice(2),room:'',description:'',estimatedCost:'',photos:[]}])
+  }
+
+  function updateDamage(id,patch){setDamages(prev=>prev.map(d=>d.id===id?{...d,...patch}:d))}
+  function removeDamage(id){setDamages(prev=>prev.filter(d=>d.id!==id))}
+
   function saveReport(){
     if(!selProp) return
     const prop=props.find(p=>p.shortName===selProp||p.id===selProp)
-    const report={id:Math.random().toString(36).slice(2),propertyId:prop?.id,propertyName:selProp,type:reportType,date:new Date().toLocaleDateString('en-GB'),timestamp:new Date().toISOString(),...form,photos,completedBy:userId}
+    const report={
+      id:Math.random().toString(36).slice(2),
+      propertyId:prop?.id,
+      propertyName:selProp,
+      type:reportType,
+      overallCondition:overallCond,
+      date:new Date().toLocaleDateString('en-GB'),
+      timestamp:new Date().toISOString(),
+      ...form,
+      rooms,
+      damages,
+      photos,
+      completedBy:userId,
+      tenantAcknowledged:false,
+      tenantSignature:'',
+      tenantSignedAt:''
+    }
     setPortfolio(prev=>({...prev,conditionReports:[...(prev.conditionReports||[]),report]}))
-    setShowForm(false);setPhotos({});setForm({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
+    // Reset
+    setView('list')
+    setRooms([])
+    setDamages([])
+    setPhotos({})
+    setOverallCond('Good')
+    setForm({tenantName:'',elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
   }
 
-  return<div>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-      <div><div style={{fontSize:13,fontWeight:500}}>Condition reports</div><div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Move-in and move-out inspections with photos, meter readings and key handover</div></div>
-      <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>+ New report</button>
-    </div>
+  function applyTenantSig(reportId){
+    if(!tenantSig.trim())return
+    setPortfolio(prev=>({...prev,conditionReports:(prev.conditionReports||[]).map(r=>
+      r.id===reportId?{...r,tenantAcknowledged:true,tenantSignature:tenantSig,tenantSignedAt:new Date().toLocaleDateString('en-GB')}:r
+    )}))
+    setShowTenantAck(null)
+    setTenantSig('')
+  }
 
-    {showForm&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:16}}>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:12}}>
-        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label>
-          <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
+  const inp={background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',width:'100%',boxSizing:'border-box'}
+
+  if(view==='compare') return <ComparisonView reports={reports} props={props} onClose={()=>setView('list')}/>
+
+  if(view==='form') return(
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:16}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:14,fontWeight:500}}>New inspection report</div>
+        <button onClick={()=>setView('list')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:18}}>x</button>
+      </div>
+
+      {/* Property + type */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:16}}>
+        <div style={{marginBottom:14}}>
+          <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label>
+          <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={inp}>
             <option value="">Select property</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}
-          </select></div>
-        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Type</label>
-          <select value={reportType} onChange={e=>setReportType(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
-            <option value="move_in">Move-in</option><option value="move_out">Move-out</option><option value="periodic">Periodic</option><option value="inventory">Inventory</option>
-          </select></div>
-      </div>
-      <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Meter readings</div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0 12px',marginBottom:14}}>
-        {[['elecMeterReading','Electric'],['gasMeterReading','Gas'],['waterMeterReading','Water']].map(([key,label])=>(
-          <div key={key} style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
-            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder="Reading" style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/></div>
-        ))}
-      </div>
-      <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Keys and deposit</div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:14}}>
-        {[['keysHanded','Keys handed to/from'],['depositAmount','Deposit amount (£)'],['depositScheme','Deposit scheme'],['depositRef','Deposit reference']].map(([key,label])=>(
-          <div key={key} style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
-            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder={label} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/></div>
-        ))}
-      </div>
-      <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Photos</div>
-      <input ref={photoRef} type="file" accept="image/*" multiple capture="environment" style={{display:'none'}} onChange={e=>handlePhotos(e.target.files)}/>
-      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
-        {photoCategories.map(cat=><button key={cat.id} onClick={()=>{setPhotoCategory(cat.id);setTimeout(()=>photoRef.current?.click(),100)}}
-          style={{padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--border)',background:(photos[cat.id]||[]).length>0?'var(--brand-light)':'var(--surface)',color:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--text-2)',position:'relative'}}>
-          {cat.label}{(photos[cat.id]||[]).length>0&&<span style={{position:'absolute',top:-4,right:-4,width:14,height:14,borderRadius:'50%',background:'var(--brand)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{(photos[cat.id]||[]).length}</span>}
-        </button>)}
-      </div>
-      <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:14}}>
-        {Object.entries(photos).flatMap(([cat,imgs])=>imgs.map((img,i)=>(
-          <div key={cat+i} style={{position:'relative',width:56,height:56,borderRadius:7,overflow:'hidden',border:'0.5px solid var(--border)'}}>
-            <img src={img} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-            <button onClick={()=>setPhotos(prev=>({...prev,[cat]:prev[cat].filter((_,j)=>j!==i)}))} style={{position:'absolute',top:2,right:2,width:14,height:14,borderRadius:'50%',background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
-          </div>
-        )))}
-      </div>
-      <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Notes</label>
-        <textarea value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Any additional observations..." rows={3} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',resize:'vertical',boxSizing:'border-box'}}/>
-      </div>
-      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-        <button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
-        <button onClick={saveReport} disabled={!selProp} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:selProp?'pointer':'not-allowed',opacity:selProp?1:0.5}}>Save report</button>
-      </div>
-    </div>}
-
-    {reports.length===0&&!showForm&&<div style={{textAlign:'center',padding:'32px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}><div style={{fontSize:13,color:'var(--text-3)'}}>No condition reports yet. Create a move-in report when a tenant arrives.</div></div>}
-    {reports.length>0&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
-      {[...reports].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(r=>{
-        const typeLabel={move_in:'Move-in',move_out:'Move-out',periodic:'Periodic',inventory:'Inventory'}[r.type]||r.type
-        const typeColor={move_in:'brand',move_out:'amber',periodic:'grey',inventory:'blue'}[r.type]||'grey'
-        const totalPhotos=Object.values(r.photos||{}).reduce((s,p)=>s+p.length,0)
-        return<div key={r.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,marginBottom:6,flexWrap:'wrap'}}>
-            <div><div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:2}}><span style={{fontSize:13,fontWeight:500}}>{r.propertyName}</span><Pill type={typeColor}>{typeLabel}</Pill><span style={{fontSize:11,color:'var(--text-3)'}}>{r.date}</span></div>
-              <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.7}}>
-                {r.elecMeterReading&&<span style={{marginRight:10}}>Elec: {r.elecMeterReading}</span>}
-                {r.gasMeterReading&&<span style={{marginRight:10}}>Gas: {r.gasMeterReading}</span>}
-                {r.keysHanded&&<span style={{marginRight:10}}>Keys: {r.keysHanded}</span>}
-                {totalPhotos>0&&<span>{totalPhotos} photo{totalPhotos!==1?'s':''}</span>}
-              </div>
-            </div>
-          </div>
-          {totalPhotos>0&&<div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-            {Object.entries(r.photos||{}).flatMap(([cat,imgs])=>imgs.slice(0,2).map((img,i)=>(
-              <img key={cat+i} src={img} alt="" style={{width:44,height:44,borderRadius:5,objectFit:'cover',cursor:'pointer'}} onClick={()=>window.open(img)}/>
-            ))).slice(0,8)}
-          </div>}
-          {r.notes&&<div style={{fontSize:11,color:'var(--text-2)',marginTop:6,paddingTop:6,borderTop:'0.5px solid var(--border)'}}>{r.notes}</div>}
+          </select>
         </div>
-      })}
-    </div>}
-  </div>
+        <div style={{marginBottom:14}}>
+          <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Type</label>
+          <select value={reportType} onChange={e=>setReportType(e.target.value)} style={inp}>
+            <option value="move_in">Move-in</option>
+            <option value="move_out">Move-out</option>
+            <option value="periodic">Periodic inspection</option>
+            <option value="inventory">Inventory check</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Overall condition */}
+      <div style={{marginBottom:16}}>
+        <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.4px'}}>Overall property condition</label>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {CONDITIONS.filter(c=>c!=='Not inspected').map(c=>(
+            <button key={c} onClick={()=>setOverallCond(c)}
+              style={{padding:'6px 14px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+                borderColor:overallCond===c?CONDITION_COLOR[c]:'var(--border)',
+                background:overallCond===c?CONDITION_BG[c]:'var(--surface)',
+                color:overallCond===c?CONDITION_COLOR[c]:'var(--text-2)'}}>
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tenant + meter readings */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+        <div style={{marginBottom:14,gridColumn:'1/-1'}}>
+          <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Tenant name</label>
+          <input value={form.tenantName} onChange={e=>setForm(p=>({...p,tenantName:e.target.value}))} placeholder="Full name" style={inp}/>
+        </div>
+        {[['elecMeterReading','Electric meter'],['gasMeterReading','Gas meter'],['waterMeterReading','Water meter']].map(([key,label])=>(
+          <div key={key} style={{marginBottom:14}}>
+            <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder="Reading" style={inp}/>
+          </div>
+        ))}
+        {[['keysHanded','Keys handed'],['depositAmount','Deposit (£)'],['depositScheme','Deposit scheme'],['depositRef','Deposit ref']].map(([key,label])=>(
+          <div key={key} style={{marginBottom:14}}>
+            <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder={label} style={inp}/>
+          </div>
+        ))}
+      </div>
+
+      {/* Room-by-room */}
+      <div style={{marginBottom:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{fontSize:12,fontWeight:500}}>Room-by-room condition</div>
+          <button onClick={()=>setShowAddRoom(v=>!v)} style={{fontSize:11,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:7,padding:'4px 12px',cursor:'pointer',fontWeight:500}}>+ Add room</button>
+        </div>
+
+        {showAddRoom&&<div style={{background:'var(--surface2)',borderRadius:10,padding:12,marginBottom:10,display:'flex',gap:8,alignItems:'center'}}>
+          <select value={newRoomName} onChange={e=>setNewRoomName(e.target.value)} style={{...inp,width:'auto',flex:1}}>
+            {ROOM_TYPES.map(r=><option key={r}>{r}</option>)}
+          </select>
+          <input value={newRoomName} onChange={e=>setNewRoomName(e.target.value)} placeholder="Or type custom name" style={{...inp,flex:1}}/>
+          <button onClick={addRoom} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 14px',fontSize:12,cursor:'pointer',whiteSpace:'nowrap'}}>Add</button>
+          <button onClick={()=>setShowAddRoom(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)'}}>x</button>
+        </div>}
+
+        {rooms.map(room=>(
+          <div key={room.id} style={{border:'0.5px solid var(--border)',borderRadius:10,marginBottom:8,overflow:'hidden'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'var(--surface2)',cursor:'pointer'}}
+              onClick={()=>setExpandedRoom(expandedRoom===room.id?null:room.id)}>
+              <span style={{fontSize:13,fontWeight:500,flex:1}}>{room.name}</span>
+              <div style={{display:'flex',gap:4}}>
+                {CONDITIONS.filter(c=>c!=='Not inspected').map(c=>(
+                  <button key={c} onClick={e=>{e.stopPropagation();updateRoom(room.id,{condition:c})}}
+                    style={{padding:'3px 8px',borderRadius:20,fontSize:10,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+                      borderColor:room.condition===c?CONDITION_COLOR[c]:'var(--border)',
+                      background:room.condition===c?CONDITION_BG[c]:'var(--surface)',
+                      color:room.condition===c?CONDITION_COLOR[c]:'var(--text-3)'}}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+              <button onClick={e=>{e.stopPropagation();removeRoom(room.id)}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:14,padding:'0 4px'}}>x</button>
+            </div>
+
+            {expandedRoom===room.id&&<div style={{padding:12}}>
+              <textarea value={room.notes} onChange={e=>updateRoom(room.id,{notes:e.target.value})}
+                placeholder="Condition notes for this room..." rows={2}
+                style={{...inp,marginBottom:12,resize:'vertical'}}/>
+
+              {/* Inventory items */}
+              <div style={{marginBottom:8}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                  <span style={{fontSize:11,fontWeight:500,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px'}}>Inventory items</span>
+                  <button onClick={()=>addItem(room.id)} style={{fontSize:10,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:6,padding:'3px 8px',cursor:'pointer'}}>+ Add item</button>
+                </div>
+                {room.items.map(item=>(
+                  <div key={item.id} style={{display:'grid',gridTemplateColumns:'1fr 60px 100px auto',gap:6,marginBottom:6,alignItems:'center'}}>
+                    <input value={item.name} onChange={e=>updateItem(room.id,item.id,{name:e.target.value})} placeholder="Item name" style={{...inp,padding:'5px 8px',fontSize:12}}/>
+                    <input type="number" value={item.qty} onChange={e=>updateItem(room.id,item.id,{qty:e.target.value})} placeholder="Qty" style={{...inp,padding:'5px 8px',fontSize:12}}/>
+                    <select value={item.condition} onChange={e=>updateItem(room.id,item.id,{condition:e.target.value})} style={{...inp,padding:'5px 8px',fontSize:12}}>
+                      {CONDITIONS.map(c=><option key={c}>{c}</option>)}
+                    </select>
+                    <button onClick={()=>removeItem(room.id,item.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:14}}>x</button>
+                  </div>
+                ))}
+              </div>
+            </div>}
+          </div>
+        ))}
+
+        {rooms.length===0&&<div style={{fontSize:12,color:'var(--text-3)',padding:'10px 0',textAlign:'center'}}>No rooms added yet. Add rooms to record condition per room.</div>}
+      </div>
+
+      {/* Damage section */}
+      <div style={{marginBottom:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{fontSize:12,fontWeight:500}}>Damage and defects</div>
+          <button onClick={addDamage} style={{fontSize:11,color:'var(--red)',background:'var(--red-bg)',border:'none',borderRadius:7,padding:'4px 12px',cursor:'pointer',fontWeight:500}}>+ Add damage</button>
+        </div>
+        {damages.map(d=>(
+          <div key={d.id} style={{display:'grid',gridTemplateColumns:'120px 1fr 100px auto',gap:8,marginBottom:8,alignItems:'center'}}>
+            <input value={d.room} onChange={e=>updateDamage(d.id,{room:e.target.value})} placeholder="Room" style={{...inp,padding:'6px 8px',fontSize:12}}/>
+            <input value={d.description} onChange={e=>updateDamage(d.id,{description:e.target.value})} placeholder="Description of damage" style={{...inp,padding:'6px 8px',fontSize:12}}/>
+            <input type="number" value={d.estimatedCost} onChange={e=>updateDamage(d.id,{estimatedCost:e.target.value})} placeholder="Est. cost £" style={{...inp,padding:'6px 8px',fontSize:12}}/>
+            <button onClick={()=>removeDamage(d.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:14}}>x</button>
+          </div>
+        ))}
+        {damages.length===0&&<div style={{fontSize:12,color:'var(--text-3)',padding:'6px 0'}}>No damage recorded. Add items if there are defects to note.</div>}
+      </div>
+
+      {/* Photos */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Photos by area</div>
+        <input ref={photoRef} type="file" accept="image/*" multiple capture="environment" style={{display:'none'}} onChange={e=>handlePhotos(e.target.files)}/>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
+          {photoCategories.map(cat=>(
+            <button key={cat.id} onClick={()=>{setPhotoCategory(cat.id);setTimeout(()=>photoRef.current?.click(),100)}}
+              style={{padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+                borderColor:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--border)',
+                background:(photos[cat.id]||[]).length>0?'var(--brand-light)':'var(--surface)',
+                color:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--text-2)',position:'relative'}}>
+              {cat.label}
+              {(photos[cat.id]||[]).length>0&&<span style={{position:'absolute',top:-4,right:-4,width:14,height:14,borderRadius:'50%',background:'var(--brand)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{(photos[cat.id]||[]).length}</span>}
+            </button>
+          ))}
+        </div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+          {Object.entries(photos).flatMap(([cat,imgs])=>imgs.map((img,i)=>(
+            <div key={cat+i} style={{position:'relative',width:60,height:60,borderRadius:7,overflow:'hidden',border:'0.5px solid var(--border)'}}>
+              <img src={img} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+              <button onClick={()=>setPhotos(prev=>({...prev,[cat]:prev[cat].filter((_,j)=>j!==i)}))}
+                style={{position:'absolute',top:2,right:2,width:16,height:16,borderRadius:'50%',background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
+            </div>
+          )))}
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div style={{marginBottom:16}}>
+        <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>General notes</label>
+        <textarea value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Any additional observations about the property..." rows={3} style={{...inp,resize:'vertical'}}/>
+      </div>
+
+      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+        <button onClick={()=>setView('list')} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'8px 16px',fontSize:13,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
+        <button onClick={saveReport} disabled={!selProp} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:500,cursor:selProp?'pointer':'not-allowed',opacity:selProp?1:0.5}}>Save report</button>
+      </div>
+    </div>
+  )
+
+  // LIST VIEW
+  return(
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:500}}>Condition reports</div>
+          <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Room-by-room inspections with photos, inventory and damage logging</div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          {reports.length>=2&&<button onClick={()=>setView('compare')} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer',fontWeight:500}}>Compare reports</button>}
+          <button onClick={()=>setView('form')} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>+ New report</button>
+        </div>
+      </div>
+
+      {showTenantAck&&<div style={{background:'var(--surface)',border:'0.5px solid var(--brand)',borderRadius:12,padding:16,marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:500,marginBottom:8}}>Tenant acknowledgement</div>
+        <div style={{fontSize:12,color:'var(--text-2)',marginBottom:12}}>Ask the tenant to type their full name below to acknowledge they have read and agreed with this report.</div>
+        <input value={tenantSig} onChange={e=>setTenantSig(e.target.value)} placeholder="Tenant full name" style={{...inp,marginBottom:10}}/>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={()=>applyTenantSig(showTenantAck)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Confirm acknowledgement</button>
+          <button onClick={()=>{setShowTenantAck(null);setTenantSig('')}} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
+        </div>
+      </div>}
+
+      {reports.length===0&&<div style={{textAlign:'center',padding:'40px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}>
+        <div style={{fontSize:32,marginBottom:12}}>📋</div>
+        <div style={{fontSize:14,fontWeight:500,marginBottom:6}}>No reports yet</div>
+        <div style={{fontSize:12,color:'var(--text-3)',marginBottom:16,maxWidth:360,margin:'0 auto 16px'}}>Create a move-in report when a tenant arrives. Include room condition, meter readings, photos and inventory to protect yourself in any deposit dispute.</div>
+        <button onClick={()=>setView('form')} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'9px 20px',fontSize:13,fontWeight:500,cursor:'pointer'}}>Create first report</button>
+      </div>}
+
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {[...reports].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(r=>{
+          const typeLabel={move_in:'Move-in',move_out:'Move-out',periodic:'Periodic',inventory:'Inventory'}[r.type]||r.type
+          const typeColor={move_in:'brand',move_out:'amber',periodic:'grey',inventory:'blue'}[r.type]||'grey'
+          const totalPhotos=Object.values(r.photos||{}).reduce((s,p)=>s+(Array.isArray(p)?p.length:0),0)
+          const totalDamage=(r.damages||[]).reduce((s,d)=>s+(Number(d.estimatedCost)||0),0)
+          return(
+            <div key={r.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12,marginBottom:8,flexWrap:'wrap'}}>
+                <div>
+                  <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:4}}>
+                    <span style={{fontSize:14,fontWeight:500}}>{r.propertyName}</span>
+                    <Pill type={typeColor}>{typeLabel}</Pill>
+                    {r.overallCondition&&<span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:CONDITION_BG[r.overallCondition]||'var(--surface2)',color:CONDITION_COLOR[r.overallCondition]||'var(--text-3)'}}>{r.overallCondition}</span>}
+                    {r.tenantAcknowledged&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:'var(--green-bg)',color:'var(--green)',fontWeight:500}}>Tenant signed</span>}
+                    <span style={{fontSize:11,color:'var(--text-3)'}}>{r.date}</span>
+                  </div>
+                  <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.8}}>
+                    {r.tenantName&&<span style={{marginRight:10}}>{r.tenantName}</span>}
+                    {(r.rooms||[]).length>0&&<span style={{marginRight:10}}>{r.rooms.length} room{r.rooms.length>1?'s':''}</span>}
+                    {totalPhotos>0&&<span style={{marginRight:10}}>{totalPhotos} photo{totalPhotos>1?'s':''}</span>}
+                    {totalDamage>0&&<span style={{color:'var(--red)',fontWeight:500}}>£{totalDamage.toLocaleString('en-GB')} damage noted</span>}
+                  </div>
+                </div>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                  <button onClick={()=>generateInspectionPDF(r,portfolio)} style={{fontSize:11,padding:'4px 10px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)'}}>Export PDF</button>
+                  {!r.tenantAcknowledged&&<button onClick={()=>setShowTenantAck(r.id)} style={{fontSize:11,padding:'4px 10px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)'}}>Get tenant sign-off</button>}
+                  <button onClick={()=>setPortfolio(prev=>({...prev,conditionReports:(prev.conditionReports||[]).filter(x=>x.id!==r.id)}))} style={{fontSize:11,padding:'4px 10px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--red)'}}>Delete</button>
+                </div>
+              </div>
+
+              {/* Room summary pills */}
+              {(r.rooms||[]).length>0&&<div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:8}}>
+                {r.rooms.map(room=>(
+                  <span key={room.id} style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:CONDITION_BG[room.condition]||'var(--surface2)',color:CONDITION_COLOR[room.condition]||'var(--text-3)'}}>
+                    {room.name}: {room.condition||'?'}
+                  </span>
+                ))}
+              </div>}
+
+              {/* Damage alert */}
+              {(r.damages||[]).length>0&&<div style={{background:'var(--red-bg)',borderRadius:8,padding:'8px 10px',marginBottom:8,fontSize:11,color:'var(--red)'}}>
+                <strong>{r.damages.length} damage item{r.damages.length>1?'s':''} recorded</strong>
+                {r.damages.map(d=><div key={d.id}>{d.room}: {d.description}{d.estimatedCost?` – £${Number(d.estimatedCost).toLocaleString('en-GB')}`:''}</div>)}
+              </div>}
+
+              {/* Photo thumbnails */}
+              {totalPhotos>0&&<div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                {Object.entries(r.photos||{}).flatMap(([cat,imgs])=>(Array.isArray(imgs)?imgs:[]).slice(0,2).map((img,i)=>(
+                  <img key={cat+i} src={img} alt="" style={{width:44,height:44,borderRadius:5,objectFit:'cover',cursor:'pointer',border:'0.5px solid var(--border)'}} onClick={()=>window.open(img)}/>
+                ))).slice(0,8)}
+              </div>}
+
+              {r.notes&&<div style={{fontSize:11,color:'var(--text-2)',marginTop:8,paddingTop:8,borderTop:'0.5px solid var(--border)',lineHeight:1.6}}>{r.notes}</div>}
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{marginTop:14,background:'var(--surface2)',borderRadius:10,padding:'10px 14px',fontSize:11,color:'var(--text-3)',lineHeight:1.7}}>
+        Condition reports are stored in your portfolio. Export as PDF to share with tenants or to use as evidence in deposit disputes. Always complete a move-in report before handing over keys and a move-out report the day the tenant vacates.
+      </div>
+    </div>
+  )
 }
+
+
 
 /* ---- Bottom Navigation (mobile) ---- */
 function BottomNav({tab, setTab, portfolio, user}){
