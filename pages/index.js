@@ -56,7 +56,7 @@ export default function Landing() {
         }
         .btn-primary {
           display: inline-block;
-          background: var(--accent);
+          background: var(--brand);
           color: #fff;
           font-size: 17px;
           font-weight: 600;
@@ -69,7 +69,7 @@ export default function Landing() {
           cursor: pointer;
           font-family: var(--font);
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(44,74,110,0.34); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(74,103,65,0.34); }
         .btn-ghost {
           display: inline-block;
           color: var(--text-2);
@@ -171,7 +171,7 @@ export default function Landing() {
           </div>
           <div style={{ display:'flex', gap:10, alignItems:'center' }}>
             <a href="https://accounts.lettly.co/sign-in" className="btn-ghost" style={{ fontSize:14, padding:'9px 20px' }}>Sign in</a>
-            <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:14, padding:'10px 22px', background:'var(--accent)', boxShadow:'0 2px 12px rgba(44,74,110,0.28)' }}>Try free for 14 days</a>
+            <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:14, padding:'10px 22px', boxShadow:'0 2px 12px rgba(74,103,65,0.22)' }}>Try free for 14 days</a>
           </div>
         </nav>
 
@@ -179,7 +179,7 @@ export default function Landing() {
         <section style={{ maxWidth:860, margin:'0 auto', padding:'clamp(60px,9vw,116px) clamp(20px,4vw,48px) clamp(52px,7vw,88px)', textAlign:'center' }}>
 
           <div className="fade-up" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:20 }}>
-            <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:600, color:'var(--accent)', background:'var(--accent-light)', border:'1px solid rgba(44,74,110,0.25)', borderRadius:24, padding:'5px 14px', letterSpacing:'0.2px' }}>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:600, color:'var(--brand)', background:'var(--brand-light)', border:'1px solid rgba(74,103,65,0.25)', borderRadius:24, padding:'5px 14px', letterSpacing:'0.2px' }}>
               🇬🇧 British built, owned and operated
             </span>
           </div>
