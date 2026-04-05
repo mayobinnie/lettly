@@ -5,11 +5,12 @@ import Stripe from 'stripe'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
 
 const PRICES = {
-  starter:   process.env.STRIPE_PRICE_STARTER,
-  standard:  process.env.STRIPE_PRICE_STANDARD,
-  portfolio: process.env.STRIPE_PRICE_PORTFOLIO,
-  pro:       process.env.STRIPE_PRICE_PRO,
-  hmo_addon: process.env.STRIPE_PRICE_HMO_ADDON,
+  starter:     process.env.STRIPE_PRICE_STARTER,
+  standard:    process.env.STRIPE_PRICE_STANDARD,
+  portfolio:   process.env.STRIPE_PRICE_PORTFOLIO,
+  pro:         process.env.STRIPE_PRICE_PRO,
+  agency:      process.env.STRIPE_PRICE_AGENCY,
+  hmo_addon:   process.env.STRIPE_PRICE_HMO_ADDON,
 }
 
 export default async function handler(req, res) {
