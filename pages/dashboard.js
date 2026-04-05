@@ -5637,6 +5637,7 @@ export default function Dashboard(){
 
         /* Hide top tab strip on mobile */
         .nav-tabs-desktop{display:none !important}
+        .nav-dropdown{display:none}
 
         /* Hide secondary nav clutter on mobile */
         .nav-save-status{display:none !important}
@@ -5697,17 +5698,89 @@ export default function Dashboard(){
     {showWizard&&<OnboardingWizard onComplete={completeWizard} firstName={user?.firstName}/>}
 
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
-      <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:62,position:'sticky',top:0,zIndex:100,gap:8}}>
-        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:34,height:34,background:'var(--brand)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:16,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:20,fontWeight:400}}>Lettly</span></div>
-        <div className="nav-tabs-desktop" style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.filter(t=>{if(t.adminOnly&&!user?.publicMetadata?.admin&&!user?.emailAddresses?.[0]?.emailAddress?.includes('lettly.co'))return false;if(t.hmoOnly&&!(portfolio.properties||[]).some(p=>p.isHMO))return false;return true;}).map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'7px 13px',borderRadius:7,fontFamily:'var(--font)',fontSize:13,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?600:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
+      <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 20px',display:'flex',alignItems:'center',height:56,position:'sticky',top:0,zIndex:100,gap:16}}>
+        {/* Logo */}
+        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+          <div style={{width:32,height:32,background:'var(--brand)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <span style={{color:'#fff',fontSize:15,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span>
+          </div>
+          <span style={{fontFamily:'var(--display)',fontSize:19,fontWeight:400}}>Lettly</span>
+        </div>
+
+        {/* Grouped dropdown nav */}
+        <div className="nav-tabs-desktop" style={{display:'flex',alignItems:'center',gap:2,flex:1}}>
+          {/* Overview - standalone */}
+          <button onClick={()=>setTab('overview')} style={{padding:'6px 12px',borderRadius:7,border:'none',background:tab==='overview'?'var(--brand-light)':'transparent',color:tab==='overview'?'var(--brand)':'var(--text-2)',fontWeight:tab==='overview'?600:400,fontSize:13,cursor:'pointer',fontFamily:'var(--font)',whiteSpace:'nowrap'}}>
+            Overview
+          </button>
+
+          {/* Portfolio dropdown */}
+          {[
+            {label:'Portfolio', tabs:[
+              {id:'properties',label:'Properties'},
+              {id:'rent',label:'Rent tracker'},
+              {id:'tenants',label:'Find & check tenants'},
+              {id:'maintenance',label:'Maintenance'},
+              {id:'conditions',label:'Condition reports'},
+              ...(portfolio.properties||[]).some(p=>p.isHMO)?[{id:'hmo',label:'HMO management'}]:[],
+            ]},
+            {label:'Finance', tabs:[
+              {id:'finance',label:'Finance & P&L'},
+              {id:'invoicing',label:'Invoicing'},
+              {id:'tools',label:'Tools & calculators'},
+            ]},
+            {label:'Compliance', tabs:[
+              {id:'legislation',label:'Legislation centre', dot:'red'},
+              {id:'resources',label:'Resources'},
+            ]},
+            {label:'More', tabs:[
+              {id:'ai',label:'Lettly AI', dot:'brand'},
+              ...(user?.publicMetadata?.admin||(user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co'))?[{id:'content',label:'Content queue'}]:[],
+            ]},
+          ].map(group=>{
+            const activeInGroup = group.tabs.some(t=>t.id===tab)
+            return(
+              <div key={group.label} style={{position:'relative'}} className="nav-group"
+                onMouseEnter={e=>e.currentTarget.querySelector('.nav-dropdown').style.display='block'}
+                onMouseLeave={e=>e.currentTarget.querySelector('.nav-dropdown').style.display='none'}>
+                <button style={{padding:'6px 12px',borderRadius:7,border:'none',
+                  background:activeInGroup?'var(--brand-light)':'transparent',
+                  color:activeInGroup?'var(--brand)':'var(--text-2)',
+                  fontWeight:activeInGroup?600:400,
+                  fontSize:13,cursor:'pointer',fontFamily:'var(--font)',whiteSpace:'nowrap',
+                  display:'flex',alignItems:'center',gap:5}}>
+                  {group.label}
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+                </button>
+                <div className="nav-dropdown" style={{display:'none',position:'absolute',top:'calc(100% + 4px)',left:0,background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:10,padding:6,minWidth:200,zIndex:200,boxShadow:'0 4px 16px rgba(0,0,0,0.08)'}}>
+                  {group.tabs.map(t=>(
+                    <button key={t.id} onClick={()=>setTab(t.id)}
+                      style={{display:'flex',alignItems:'center',gap:8,width:'100%',padding:'8px 12px',borderRadius:7,border:'none',
+                        background:tab===t.id?'var(--brand-light)':'transparent',
+                        color:tab===t.id?'var(--brand)':'var(--text)',
+                        fontSize:13,cursor:'pointer',fontFamily:'var(--font)',textAlign:'left',fontWeight:tab===t.id?500:400}}>
+                      {t.label}
+                      {t.dot==='red'&&<span style={{marginLeft:'auto',width:6,height:6,borderRadius:'50%',background:'var(--red)',flexShrink:0}}/>}
+                      {t.dot==='brand'&&<span style={{marginLeft:'auto',width:6,height:6,borderRadius:'50%',background:'var(--brand)',flexShrink:0}}/>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Right actions */}
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
           {saveStatus==='saving'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
           {saveStatus==='saved'&&loaded&&<span className="nav-save-status" style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
           {saveStatus==='error'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--red)'}}>Save failed</span>}
-          <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button>
+          <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add
+          </button>
           {(!subscription||subscription.status==='none')&&<button className="nav-upgrade-btn" onClick={()=>setShowUpgrade(true)} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--brand)',background:'var(--brand-light)',cursor:'pointer',color:'var(--brand)',fontWeight:600,whiteSpace:'nowrap'}}>Upgrade</button>}
           {subscription&&['active','trialing'].includes(subscription.status)&&<button className="nav-billing-btn" onClick={async()=>{const r=await fetch('/api/stripe/portal',{method:'POST'});const d=await r.json();if(d.url)window.location.href=d.url}} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)',whiteSpace:'nowrap'}}>Billing</button>}
-          <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/>
+          <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#4a6741'}}}/>
         </div>
       </nav>
       {/* Desktop upload bar */}
