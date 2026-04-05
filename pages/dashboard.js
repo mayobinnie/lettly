@@ -3914,10 +3914,11 @@ function UpgradeModal({onClose,user,currentPlan}){
   const[loading,setLoading]=useState(false)
 
   const PLANS=[
-    {id:'starter',name:'Starter',price:8,props:'1-2 properties'},
-    {id:'standard',name:'Standard',price:16,props:'3-5 properties'},
-    {id:'portfolio',name:'Portfolio',price:28,props:'6-10 properties',popular:true},
-    {id:'pro',name:'Pro',price:40,props:'Unlimited'},
+    {id:'starter',   name:'Starter',      price:8,   props:'1-2 properties',    group:'landlord'},
+    {id:'standard',  name:'Standard',     price:16,  props:'3-5 properties',    group:'landlord'},
+    {id:'portfolio', name:'Portfolio',    price:28,  props:'6-10 properties',   group:'landlord', popular:true},
+    {id:'pro',       name:'Pro landlord', price:45,  props:'11-25 properties',  group:'operator'},
+    {id:'agency',    name:'Agency',       price:120, props:'26-100 properties', group:'operator', popular:true},
   ]
 
   async function startCheckout(){
@@ -3945,18 +3946,39 @@ function UpgradeModal({onClose,user,currentPlan}){
         <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--text-3)',padding:'0 4px'}}>x</button>
       </div>
 
-      {/* Plan selector */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
-        {PLANS.map(p=><button key={p.id} onClick={()=>setSelPlan(p.id)}
+      {/* Private landlord plans */}
+      <div style={{fontSize:10,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:8}}>Private landlords</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:14}}>
+        {PLANS.filter(p=>p.group==='landlord').map(p=><button key={p.id} onClick={()=>setSelPlan(p.id)}
           style={{padding:'12px 14px',borderRadius:12,border:'1.5px solid',textAlign:'left',cursor:'pointer',
             borderColor:selPlan===p.id?'var(--brand)':'var(--border)',
             background:selPlan===p.id?'var(--brand-subtle)':'var(--surface)',
             position:'relative'}}>
           {p.popular&&<span style={{position:'absolute',top:8,right:8,fontSize:10,background:'var(--brand)',color:'#fff',padding:'1px 6px',borderRadius:20,fontWeight:600}}>Popular</span>}
-          <div style={{fontSize:13,fontWeight:600,color:selPlan===p.id?'var(--brand)':'var(--text)',marginBottom:2}}>{p.name}</div>
-          <div style={{fontSize:18,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{p.price}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
-          <div style={{fontSize:11,color:'var(--text-3)'}}>{p.props}</div>
+          <div style={{fontSize:12,fontWeight:600,color:selPlan===p.id?'var(--brand)':'var(--text)',marginBottom:2}}>{p.name}</div>
+          <div style={{fontSize:17,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{p.price}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
+          <div style={{fontSize:10,color:'var(--text-3)'}}>{p.props}</div>
         </button>)}
+      </div>
+      {/* Professional operator plans */}
+      <div style={{fontSize:10,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:8}}>Professional operators</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:16}}>
+        {PLANS.filter(p=>p.group==='operator').map(p=><button key={p.id} onClick={()=>setSelPlan(p.id)}
+          style={{padding:'12px 14px',borderRadius:12,border:'1.5px solid',textAlign:'left',cursor:'pointer',
+            borderColor:selPlan===p.id?'var(--brand)':'var(--border)',
+            background:selPlan===p.id?'var(--brand-subtle)':'var(--surface)',
+            position:'relative'}}>
+          {p.popular&&<span style={{position:'absolute',top:8,right:8,fontSize:10,background:'var(--brand)',color:'#fff',padding:'1px 6px',borderRadius:20,fontWeight:600}}>Popular</span>}
+          <div style={{fontSize:12,fontWeight:600,color:selPlan===p.id?'var(--brand)':'var(--text)',marginBottom:2}}>{p.name}</div>
+          <div style={{fontSize:17,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{p.price}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
+          <div style={{fontSize:10,color:'var(--text-3)'}}>{p.props}</div>
+        </button>)}
+        <a href="mailto:hello@lettly.co"
+          style={{padding:'12px 14px',borderRadius:12,border:'1.5px solid var(--border)',textAlign:'left',cursor:'pointer',background:'var(--surface)',textDecoration:'none',display:'block'}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:2}}>Enterprise</div>
+          <div style={{fontSize:17,fontWeight:700,color:'var(--text)',fontFamily:'var(--mono)'}}>Custom</div>
+          <div style={{fontSize:10,color:'var(--text-3)'}}>100+ properties</div>
+        </a>
       </div>
 
       {/* HMO add-on */}
