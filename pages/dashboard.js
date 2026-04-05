@@ -890,3 +890,6 @@ export default function Landing() {
     </>
   )
 }
+export async function getServerSideProps() {
+  return { props: {} }
+}
