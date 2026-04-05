@@ -8,6 +8,7 @@ export default function Landing() {
   const { isSignedIn, isLoaded } = useUser()
   const router = useRouter()
   const [scrolled, setScrolled] = useState(false)
+  const [billing, setBilling] = useState('annual')
 
   useEffect(() => {
     if (isLoaded && isSignedIn) router.replace('/dashboard')
@@ -774,21 +775,14 @@ export default function Landing() {
               </p>
 
               {/* Billing toggle */}
-              {(()=>{
-                const[billing,setBilling]=React.useState('annual')
-                window.__lettlyBilling = billing
-                window.__lettlySetBilling = setBilling
-                return(
-                  <div style={{ display:'inline-flex', alignItems:'center', background:'var(--surface)', border:'0.5px solid var(--border)', borderRadius:12, padding:4, gap:2, marginBottom:24 }}>
-                    <button onClick={()=>{setBilling('annual');window.__lettlyBilling='annual'}} style={{ padding:'8px 20px', borderRadius:9, border:'none', fontFamily:'var(--font)', fontSize:13, fontWeight:billing==='annual'?600:400, background:billing==='annual'?'var(--brand)':'transparent', color:billing==='annual'?'#fff':'var(--text-2)', cursor:'pointer', transition:'all 0.15s' }}>
-                      Annual <span style={{ fontSize:11, opacity:0.85, marginLeft:4 }}>save 20%</span>
-                    </button>
-                    <button onClick={()=>{setBilling('monthly');window.__lettlyBilling='monthly'}} style={{ padding:'8px 20px', borderRadius:9, border:'none', fontFamily:'var(--font)', fontSize:13, fontWeight:billing==='monthly'?600:400, background:billing==='monthly'?'var(--brand)':'transparent', color:billing==='monthly'?'#fff':'var(--text-2)', cursor:'pointer', transition:'all 0.15s' }}>
-                      Monthly
-                    </button>
-                  </div>
-                )
-              })()}
+              <div style={{ display:'inline-flex', alignItems:'center', background:'var(--surface)', border:'0.5px solid var(--border)', borderRadius:12, padding:4, gap:2, marginBottom:24 }}>
+                <button onClick={()=>setBilling('annual')} style={{ padding:'8px 20px', borderRadius:9, border:'none', fontFamily:'var(--font)', fontSize:13, fontWeight:billing==='annual'?600:400, background:billing==='annual'?'var(--brand)':'transparent', color:billing==='annual'?'#fff':'var(--text-2)', cursor:'pointer', transition:'all 0.15s' }}>
+                  Annual <span style={{ fontSize:11, opacity:0.85, marginLeft:4 }}>save 20%</span>
+                </button>
+                <button onClick={()=>setBilling('monthly')} style={{ padding:'8px 20px', borderRadius:9, border:'none', fontFamily:'var(--font)', fontSize:13, fontWeight:billing==='monthly'?600:400, background:billing==='monthly'?'var(--brand)':'transparent', color:billing==='monthly'?'#fff':'var(--text-2)', cursor:'pointer', transition:'all 0.15s' }}>
+                  Monthly
+                </button>
+              </div>
 
               <div style={{ display:'inline-block', background:'var(--brand-light)', border:'1px solid rgba(74,103,65,0.2)', borderRadius:12, padding:'12px 28px', fontSize:15, fontWeight:600, color:'var(--brand)' }}>
                 Compare to letting agent fees of 12%+ per month per property
@@ -803,7 +797,6 @@ export default function Landing() {
                 { name:'Standard', id:'standard', monthly:'£25', annual:'£20', props:'3–5 properties', popular:false, features:['Everything in Starter','Rent reminders to tenants','Void period tracker','Deal analyser','CGT planner'] },
                 { name:'Portfolio', id:'portfolio', monthly:'£44', annual:'£35', props:'6–10 properties', popular:true, features:['Everything in Standard','HMO management suite','Invoicing','Condition reports + PDF','Tax year export'] },
               ].map(plan => {
-                const billing = (typeof window!=='undefined'&&window.__lettlyBilling)||'annual'
                 const price = billing==='annual' ? plan.annual : plan.monthly
                 return(
                 <div key={plan.name} style={{
@@ -839,7 +832,6 @@ export default function Landing() {
                 { name:'Agency', id:'agency', monthly:'£188', annual:'£150', props:'26–100 properties', popular:true, badge:'New', features:['Everything in Pro','Multi-user logins (up to 5)','Branded client portal','Bulk document processing','Custom compliance reports','Onboarding call included'], cta:'Start free trial', href:'https://accounts.lettly.co/sign-up' },
                 { name:'Enterprise', price:'Custom', props:'100+ properties', popular:false, badge:null, features:['Everything in Agency','Unlimited users','API access','Dedicated account manager','SLA guarantee','White-label option'], cta:'Contact us', href:'mailto:hello@lettly.co' },
               ].map(plan => {
-                const billing = (typeof window!=='undefined'&&window.__lettlyBilling)||'annual'
                 const price = plan.monthly ? (billing==='annual' ? plan.annual : plan.monthly) : 'Custom'
                 return(
                 <div key={plan.name} style={{
