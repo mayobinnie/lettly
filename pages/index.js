@@ -56,7 +56,7 @@ export default function Landing() {
         }
         .btn-primary {
           display: inline-block;
-          background: var(--brand);
+          background: var(--accent);
           color: #fff;
           font-size: 17px;
           font-weight: 600;
@@ -69,7 +69,7 @@ export default function Landing() {
           cursor: pointer;
           font-family: var(--font);
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(27,94,59,0.34); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(44,74,110,0.34); }
         .btn-ghost {
           display: inline-block;
           color: var(--text-2);
@@ -171,7 +171,7 @@ export default function Landing() {
           </div>
           <div style={{ display:'flex', gap:10, alignItems:'center' }}>
             <a href="https://accounts.lettly.co/sign-in" className="btn-ghost" style={{ fontSize:14, padding:'9px 20px' }}>Sign in</a>
-            <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:14, padding:'10px 22px', boxShadow:'0 2px 12px rgba(27,94,59,0.22)' }}>Try free for 14 days</a>
+            <a href="https://accounts.lettly.co/sign-up" className="btn-primary" style={{ fontSize:14, padding:'10px 22px', background:'var(--accent)', boxShadow:'0 2px 12px rgba(44,74,110,0.28)' }}>Try free for 14 days</a>
           </div>
         </nav>
 
@@ -179,8 +179,8 @@ export default function Landing() {
         <section style={{ maxWidth:860, margin:'0 auto', padding:'clamp(60px,9vw,116px) clamp(20px,4vw,48px) clamp(52px,7vw,88px)', textAlign:'center' }}>
 
           <div className="fade-up" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:20 }}>
-            <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:600, color:'#003366', background:'#EEF3FA', border:'1px solid #c8d8ee', borderRadius:24, padding:'5px 14px', letterSpacing:'0.2px' }}>
-              🇬🇧 Built in the UK · For UK landlords only
+            <span style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:600, color:'var(--accent)', background:'var(--accent-light)', border:'1px solid rgba(44,74,110,0.25)', borderRadius:24, padding:'5px 14px', letterSpacing:'0.2px' }}>
+              🇬🇧 British built, owned and operated
             </span>
           </div>
 
@@ -261,7 +261,7 @@ export default function Landing() {
           <div className="grid-4" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:24, maxWidth:900, margin:'0 auto', textAlign:'center' }}>
             {[
               { num:'£2,000', label:'Average annual saving', sub:'vs. full-service management fees' },
-              { num:'10–20%', label:'Typical agent fee', sub:'typical full-service management fee' },
+              { num:'12%+', label:'Typical letting agent fee', sub:'of monthly rent, per Bannister & Co data' },
               { num:'1 place', label:'Everything managed', sub:'documents, rent, compliance' },
               { num:'2 min', label:'To set up', sub:'drop your documents and go' },
             ].map(s => (
@@ -328,7 +328,7 @@ export default function Landing() {
             <div style={{ opacity:0.75 }}>
               <div style={{ fontSize:13, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:16 }}>Without Lettly</div>
               {[
-                { icon:'💸', title:'Paying 10-20% in management fees', body:"On a £1,200/month property, that's up to £2,880/year straight out of your pocket." },
+                { icon:'💸', title:'Paying 12% or more in letting agent fees', body:"On a £1,200/month property, that\'s £1,728/year or more straight out of your pocket." },
                 { icon:'📁', title:'Chasing paperwork', body:'Gas certs, EICRs, EPCs, insurance renewals. All in different places, easy to miss.' },
                 { icon:'😰', title:'Three different sets of landlord law', body:'One missed requirement can mean fines, an invalid notice, or losing your case in court.' },
                 { icon:'📱', title:'Managing everything manually', body:'WhatsApp chains, sticky notes, and spreadsheets that only you understand.' },
@@ -660,7 +660,7 @@ export default function Landing() {
             </div>
             <div className="grid-3" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20 }}>
               {[
-                { stat:'£2,000+', label:'Saved per year', body:'Compared to typical full-service management fees of 10-15% of rent.' },
+                { stat:'£2,000+', label:'Saved per year', body:'Compared to typical letting agent fees of 12% or more of monthly rent.' },
                 { stat:'100%', label:'Control of your property', body:'Full control. You manage the relationship with your tenant and make all the decisions.' },
                 { stat:'2 min', label:'To feel the benefit', body:'Upload your first document and your compliance dashboard populates instantly.' },
               ].map(s => (
@@ -704,7 +704,7 @@ export default function Landing() {
             <div style={{ background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.15)', borderRadius:20, padding:'32px 28px' }}>
               <div style={{ fontSize:28, color:'var(--brand)', marginBottom:14, fontFamily:'Georgia, serif', lineHeight:1, fontWeight:300 }}>&ldquo;</div>
               <div style={{ fontFamily:'var(--display)', fontSize:'clamp(16px,2vw,20px)', fontWeight:300, fontStyle:'italic', color:'var(--brand)', marginBottom:16, lineHeight:1.6 }}>
-                I was paying £180 a month in management fees. Lettly gives me all the tools I need for £8. I wish I had found it sooner.
+                I was paying £156 a month in letting agent fees. Lettly gives me everything I need for £8. I wish I had found it sooner.
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--brand)', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -712,14 +712,14 @@ export default function Landing() {
                 </div>
                 <div>
                   <div style={{ fontSize:13, fontWeight:500, color:'var(--text)' }}>David R.</div>
-                  <div style={{ fontSize:12, color:'var(--text-3)' }}>2 properties · Yorkshire</div>
+                  <div style={{ fontSize:12, color:'var(--text-3)' }}>2 properties · Hull</div>
                 </div>
               </div>
             </div>
             <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:20, padding:'32px 28px' }}>
               <div style={{ fontSize:28, color:'var(--text-3)', marginBottom:14, fontFamily:'Georgia, serif', lineHeight:1, fontWeight:300 }}>&ldquo;</div>
               <div style={{ fontFamily:'var(--display)', fontSize:'clamp(16px,2vw,20px)', fontWeight:300, fontStyle:'italic', color:'var(--text)', marginBottom:16, lineHeight:1.6 }}>
-                The compliance dashboard is what sold it for me. Gas cert, EICR, EPC all in one place with reminders. I never have to think about it.
+                The compliance dashboard is what sold it for me. Gas cert, EICR, EPC all in one place with automatic reminders. I never have to think about it.
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--surface3)', border:'0.5px solid var(--border-strong)', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -727,7 +727,7 @@ export default function Landing() {
                 </div>
                 <div>
                   <div style={{ fontSize:13, fontWeight:500, color:'var(--text)' }}>Sarah M.</div>
-                  <div style={{ fontSize:12, color:'var(--text-3)' }}>3 properties · Manchester</div>
+                  <div style={{ fontSize:12, color:'var(--text-3)' }}>3 properties · Leeds</div>
                 </div>
               </div>
             </div>
@@ -743,7 +743,7 @@ export default function Landing() {
                 Starts at £8/month for 1-2 properties. All features included. 14-day free trial. No contract. Tax year export included on all plans.
               </p>
               <div style={{ display:'inline-block', background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.2)', borderRadius:12, padding:'12px 28px', fontSize:15, fontWeight:600, color:'var(--brand)' }}>
-                Compare to management fees of £100 to £200/month per property
+                Compare to letting agent fees of 12%+ per month per property
               </div>
             </div>
 
