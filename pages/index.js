@@ -863,6 +863,24 @@ export default function Landing() {
           <p style={{ fontSize:14, color:'var(--text-3)', marginTop:18 }}>
             No credit card · No contract · Cancel anytime
           </p>
+
+          {/* Dashboard screenshot */}
+          <div className="fade-up-3" style={{ marginTop:52, position:'relative', maxWidth:900, margin:'52px auto 0' }}>
+            <div style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1px solid var(--border)', boxShadow:'0 24px 64px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06)' }}>
+              <img
+                src="/dashboard-preview.png"
+                alt="Lettly dashboard showing Renters Rights Act compliance tracker"
+                style={{ width:'100%', display:'block', borderRadius:16 }}
+              />
+              {/* Browser chrome top bar */}
+              <div style={{ position:'absolute', top:0, left:0, right:0, height:4, background:'linear-gradient(90deg, var(--brand) 0%, var(--brand-mid) 100%)' }}/>
+            </div>
+            {/* Caption */}
+            <p style={{ fontSize:13, color:'var(--text-3)', marginTop:14, textAlign:'center' }}>
+              Legislation centre — England, Scotland and Wales tracked automatically
+            </p>
+          </div>
+
         </section>
 
         {/* ── Footer ── */}
