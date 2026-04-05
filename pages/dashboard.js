@@ -4023,7 +4023,7 @@ function UpgradeModal({onClose,user,currentPlan}){
         <div style={{flex:1}}>
           <div style={{fontSize:13,fontWeight:500}}>Add HMO management suite</div>
           <div style={{fontSize:11,color:'var(--text-3)'}}>Room tracking, licence manager, fire safety checklist, PAT testing</div>
-          <div style={{fontSize:11,color:'var(--amber)',marginTop:3,fontWeight:500}}>Priced per HMO address — add once per site</div>
+          <div style={{fontSize:11,color:'var(--amber)',marginTop:3,fontWeight:500}}>Priced per HMO address, add once per site</div>
         </div>
         <div style={{fontSize:13,fontWeight:600,color:'var(--brand)',flexShrink:0}}>+£{billing==='annual'?15:19}/mo</div>
       </label>
