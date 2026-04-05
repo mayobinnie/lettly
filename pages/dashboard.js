@@ -1702,7 +1702,7 @@ function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,
       {maxProps&&maxProps<999&&<span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:props.length>=maxProps?'#fce8e6':'var(--surface2)',color:props.length>=maxProps?'var(--red)':'var(--text-3)',fontWeight:500}}>{props.length}/{maxProps} on your plan</span>}
     </div>
     <div style={{display:'flex',gap:8,alignItems:'center'}}>
-      {maxProps&&props.length>=maxProps&&<button onClick={onUpgrade} style={{fontSize:12,padding:'6px 12px',borderRadius:8,border:'0.5px solid var(--brand)',background:'var(--brand-light)',color:'var(--brand)',cursor:'pointer',fontWeight:500}}>Upgrade to add more</button>}
+      {maxProps&&props.length>=maxProps&&<button onClick={onUpgrade} style={{fontSize:12,padding:'6px 12px',borderRadius:8,border:'0.5px solid var(--accent)',background:'var(--accent-light)',color:'var(--accent)',cursor:'pointer',fontWeight:500}}>Upgrade to add more</button>}
       <button onClick={onAdd} style={{background:props.length>=(maxProps||999)?'var(--surface2)':'var(--brand)',color:props.length>=(maxProps||999)?'var(--text-3)':'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>+ Add property</button>
     </div></div>
     {props.length===0?null:props.map(p=>{
@@ -1825,7 +1825,7 @@ function FinanceTab({portfolio,setPortfolio}){
     {/* Sub-nav */}
     <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
       {[['overview','Overview'],['expenses','Income & Expenses'],['yields','Yield Analysis'],['s24','Section 24']].map(([id,label])=>(
-        <button key={id} onClick={()=>setView(id)} style={{padding:'9px 18px',borderRadius:20,fontSize:15,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:view===id?'var(--brand)':'var(--border)',background:view===id?'var(--brand-light)':'var(--surface)',color:view===id?'var(--brand)':'var(--text-2)'}}>
+        <button key={id} onClick={()=>setView(id)} style={{padding:'9px 18px',borderRadius:20,fontSize:15,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:view===id?'var(--accent)':'var(--border)',background:view===id?'var(--accent-light)':'var(--surface)',color:view===id?'var(--accent)':'var(--text-2)'}}>
           {label}
         </button>
       ))}
@@ -3638,7 +3638,7 @@ function InvoicingTab({portfolio}){
   }
 
   function StatusPill({status}){
-    const colors={draft:['var(--text-3)','var(--surface2)'],sent:['#0C447C','#E6F1FB'],paid:['var(--green)','var(--green-bg)'],overdue:['var(--red)','#fce8e6']}
+    const colors={draft:['var(--text-3)','var(--surface2)'],sent:['var(--accent)','var(--accent-light)'],paid:['var(--green)','var(--green-bg)'],overdue:['var(--red)','#fce8e6']}
     const[fg,bg]=colors[status]||colors.draft
     return<span style={{fontSize:11,padding:'3px 10px',borderRadius:20,fontWeight:600,color:fg,background:bg,textTransform:'uppercase',letterSpacing:'0.5px'}}>{status||'draft'}</span>
   }
@@ -3902,7 +3902,7 @@ function PaywallBanner({subscription,user,onUpgrade,propCount,maxProps}){
           :'Upgrade to continue accessing your portfolio, compliance alerts, AI assistant and more.'}
       </div>
     </div>
-    <button onClick={onUpgrade} style={{background:'#fff',color:'var(--brand)',border:'none',borderRadius:10,padding:'10px 22px',fontSize:14,fontWeight:600,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
+    <button onClick={onUpgrade} style={{background:'#fff',color:'var(--accent)',border:'none',borderRadius:10,padding:'10px 22px',fontSize:14,fontWeight:600,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
       {status==='none'||!status?'Start free trial':'Choose a plan'}
     </button>
   </div>
@@ -3976,7 +3976,7 @@ function UpgradeModal({onClose,user,currentPlan}){
       </div>
 
       <button onClick={startCheckout} disabled={loading}
-        style={{width:'100%',background:'var(--brand)',color:'#fff',border:'none',borderRadius:12,padding:'14px',fontSize:15,fontWeight:600,cursor:loading?'not-allowed':'pointer',opacity:loading?0.7:1,marginBottom:12}}>
+        style={{width:'100%',background:'var(--accent)',color:'#fff',border:'none',borderRadius:12,padding:'14px',fontSize:15,fontWeight:600,cursor:loading?'not-allowed':'pointer',opacity:loading?0.7:1,marginBottom:12}}>
         {loading?'Redirecting to checkout...':'Start 14-day free trial →'}
       </button>
       <div style={{fontSize:11,color:'var(--text-3)',textAlign:'center',lineHeight:1.6}}>
@@ -5219,7 +5219,7 @@ export default function Dashboard(){
           {saveStatus==='saved'&&loaded&&<span className="nav-save-status" style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
           {saveStatus==='error'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--red)'}}>Save failed</span>}
           <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button>
-          {(!subscription||subscription.status==='none')&&<button className="nav-upgrade-btn" onClick={()=>setShowUpgrade(true)} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--brand)',background:'var(--brand-light)',cursor:'pointer',color:'var(--brand)',fontWeight:600,whiteSpace:'nowrap'}}>Upgrade</button>}
+          {(!subscription||subscription.status==='none')&&<button className="nav-upgrade-btn" onClick={()=>setShowUpgrade(true)} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--accent)',background:'var(--accent-light)',cursor:'pointer',color:'var(--accent)',fontWeight:600,whiteSpace:'nowrap'}}>Upgrade</button>}
           {subscription&&['active','trialing'].includes(subscription.status)&&<button className="nav-billing-btn" onClick={async()=>{const r=await fetch('/api/stripe/portal',{method:'POST'});const d=await r.json();if(d.url)window.location.href=d.url}} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)',whiteSpace:'nowrap'}}>Billing</button>}
           <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/>
         </div>
