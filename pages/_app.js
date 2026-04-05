@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs'
 import { useEffect } from 'react'
 import CookieBanner from '../components/CookieBanner'
 
@@ -27,9 +28,9 @@ export default function App({ Component, pageProps }) {
   }, [])
 
   return (
-    <>
+    <ClerkProvider {...pageProps}>
       <Component {...pageProps} />
       <CookieBanner onAccept={loadGA} onDecline={() => {}} />
-    </>
+    </ClerkProvider>
   )
 }
