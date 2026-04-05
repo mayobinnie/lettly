@@ -1,3 +1,4 @@
+import React from 'react'
 import Head from 'next/head'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/router'
@@ -254,6 +255,22 @@ export default function Landing() {
               and more, <a href="#features" style={{ color:'var(--brand)', textDecoration:'none', fontWeight:600 }}>see all features →</a>
             </div>
           </div>
+
+          {/* Dashboard screenshot */}
+          <div className="fade-up-3" style={{ marginTop:52, maxWidth:960, margin:'52px auto 0' }}>
+            <div style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1px solid var(--border)', boxShadow:'0 24px 64px rgba(0,0,0,0.10), 0 4px 16px rgba(0,0,0,0.06)' }}>
+              <div style={{ height:6, background:'var(--brand)', width:'100%' }}/>
+              <img
+                src="/dashboard-preview.png"
+                alt="Lettly dashboard showing Renters Rights Act compliance tracker"
+                style={{ width:'100%', display:'block' }}
+              />
+            </div>
+            <p style={{ fontSize:13, color:'var(--text-3)', marginTop:12, textAlign:'center' }}>
+              Legislation centre: England, Scotland and Wales compliance tracked automatically
+            </p>
+          </div>
+
         </section>
 
         {/* ── SAVINGS BAR ── */}
@@ -562,7 +579,7 @@ export default function Landing() {
               <div style={{fontSize:11,fontWeight:700,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'1px'}}>New feature</div>
               <div style={{fontSize:34,marginTop:4}}>🏠</div>
               <div style={{fontFamily:'var(--display)',fontSize:24,fontWeight:400,color:'var(--brand)',lineHeight:1.2,marginTop:4}}>HMO management suite</div>
-              <div style={{fontSize:13,color:'var(--text-2)',marginTop:4,lineHeight:1.6}}>Add to any plan for +£12.50/mo</div>
+              <div style={{fontSize:13,color:'var(--text-2)',marginTop:4,lineHeight:1.6}}>Add to any plan — priced per HMO address</div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px 24px'}}>
               {[
@@ -753,9 +770,27 @@ export default function Landing() {
             <div style={{ textAlign:'center', marginBottom:48 }}>
               <h2 className="section-title" style={{ marginBottom:14 }}>Simple, transparent pricing</h2>
               <p className="section-sub" style={{ maxWidth:480, margin:'0 auto 28px' }}>
-                Starts at £8/month for 1-2 properties. All features included. 14-day free trial. No contract. Tax year export included on all plans.
+                All features included. 14-day free trial. No contract. Cancel anytime.
               </p>
-              <div style={{ display:'inline-block', background:'var(--brand-light)', border:'1px solid rgba(27,94,59,0.2)', borderRadius:12, padding:'12px 28px', fontSize:15, fontWeight:600, color:'var(--brand)' }}>
+
+              {/* Billing toggle */}
+              {(()=>{
+                const[billing,setBilling]=React.useState('annual')
+                window.__lettlyBilling = billing
+                window.__lettlySetBilling = setBilling
+                return(
+                  <div style={{ display:'inline-flex', alignItems:'center', background:'var(--surface)', border:'0.5px solid var(--border)', borderRadius:12, padding:4, gap:2, marginBottom:24 }}>
+                    <button onClick={()=>{setBilling('annual');window.__lettlyBilling='annual'}} style={{ padding:'8px 20px', borderRadius:9, border:'none', fontFamily:'var(--font)', fontSize:13, fontWeight:billing==='annual'?600:400, background:billing==='annual'?'var(--brand)':'transparent', color:billing==='annual'?'#fff':'var(--text-2)', cursor:'pointer', transition:'all 0.15s' }}>
+                      Annual <span style={{ fontSize:11, opacity:0.85, marginLeft:4 }}>save 20%</span>
+                    </button>
+                    <button onClick={()=>{setBilling('monthly');window.__lettlyBilling='monthly'}} style={{ padding:'8px 20px', borderRadius:9, border:'none', fontFamily:'var(--font)', fontSize:13, fontWeight:billing==='monthly'?600:400, background:billing==='monthly'?'var(--brand)':'transparent', color:billing==='monthly'?'#fff':'var(--text-2)', cursor:'pointer', transition:'all 0.15s' }}>
+                      Monthly
+                    </button>
+                  </div>
+                )
+              })()}
+
+              <div style={{ display:'inline-block', background:'var(--brand-light)', border:'1px solid rgba(74,103,65,0.2)', borderRadius:12, padding:'12px 28px', fontSize:15, fontWeight:600, color:'var(--brand)' }}>
                 Compare to letting agent fees of 12%+ per month per property
               </div>
             </div>
@@ -764,10 +799,13 @@ export default function Landing() {
             <div style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:12 }}>Private landlords</div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:28 }}>
               {[
-                { name:'Starter', price:'£8', props:'1–2 properties', popular:false, features:['Document AI extraction','Compliance tracking','Rent & tenant tracker','Finance & P&L','Maintenance log','Lettly AI assistant'] },
-                { name:'Standard', price:'£16', props:'3–5 properties', popular:false, features:['Everything in Starter','Rent reminders to tenants','Void period tracker','Deal analyser','CGT planner'] },
-                { name:'Portfolio', price:'£28', props:'6–10 properties', popular:true, features:['Everything in Standard','HMO management suite','Invoicing','Condition reports + PDF','Tax year export'] },
-              ].map(plan => (
+                { name:'Starter', id:'starter', monthly:'£12.50', annual:'£10', props:'1–2 properties', popular:false, features:['Document AI extraction','Compliance tracking','Rent & tenant tracker','Finance & P&L','Maintenance log','Lettly AI assistant'] },
+                { name:'Standard', id:'standard', monthly:'£25', annual:'£20', props:'3–5 properties', popular:false, features:['Everything in Starter','Rent reminders to tenants','Void period tracker','Deal analyser','CGT planner'] },
+                { name:'Portfolio', id:'portfolio', monthly:'£44', annual:'£35', props:'6–10 properties', popular:true, features:['Everything in Standard','HMO management suite','Invoicing','Condition reports + PDF','Tax year export'] },
+              ].map(plan => {
+                const billing = (typeof window!=='undefined'&&window.__lettlyBilling)||'annual'
+                const price = billing==='annual' ? plan.annual : plan.monthly
+                return(
                 <div key={plan.name} style={{
                   background: plan.popular ? 'var(--brand)' : 'var(--surface)',
                   border: plan.popular ? 'none' : '1px solid var(--border)',
@@ -775,8 +813,8 @@ export default function Landing() {
                 }}>
                   {plan.popular && <div style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'2px 10px', fontSize:11, color:'#fff', fontWeight:600 }}>Popular</div>}
                   <div style={{ fontSize:13, fontWeight:500, color: plan.popular ? 'rgba(255,255,255,0.65)':'var(--text-2)', marginBottom:10 }}>{plan.name}</div>
-                  <div style={{ fontFamily:'var(--display)', fontSize:42, fontWeight:300, color: plan.popular ? '#fff':'var(--text)', lineHeight:1, marginBottom:4 }}>{plan.price}</div>
-                  <div style={{ fontSize:12, color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--text-3)', marginBottom:16 }}>per month</div>
+                  <div style={{ fontFamily:'var(--display)', fontSize:42, fontWeight:300, color: plan.popular ? '#fff':'var(--text)', lineHeight:1, marginBottom:4 }}>{price}</div>
+                  <div style={{ fontSize:12, color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--text-3)', marginBottom:16 }}>per month{billing==='annual'&&<span style={{ marginLeft:6, fontSize:10, opacity:0.75 }}>billed annually</span>}</div>
                   <div style={{ fontSize:13, fontWeight:500, color: plan.popular ? 'rgba(255,255,255,0.9)':'var(--brand)', marginBottom:20, padding:'7px 12px', background: plan.popular ? 'rgba(255,255,255,0.12)':'var(--brand-light)', borderRadius:10, textAlign:'center' }}>{plan.props}</div>
                   {plan.features.map(f => (
                     <div key={f} style={{ display:'flex', gap:8, alignItems:'flex-start', fontSize:13, color: plan.popular ? 'rgba(255,255,255,0.75)':'var(--text-2)', marginBottom:8, lineHeight:1.4 }}>
@@ -790,17 +828,20 @@ export default function Landing() {
                     fontSize:14, fontWeight:600, padding:'12px 16px', borderRadius:10, textDecoration:'none'
                   }}>Start free trial</a>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Professional operator plans */}
             <div style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:12 }}>Professional operators</div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:20 }}>
               {[
-                { name:'Pro landlord', price:'£45', props:'11–25 properties', popular:false, badge:null, features:['Everything in Portfolio','Multi-property bulk actions','Referral programme access','Priority WhatsApp support'], cta:'Start free trial', href:'https://accounts.lettly.co/sign-up' },
-                { name:'Agency', price:'£120', props:'26–100 properties', popular:true, badge:'New', features:['Everything in Pro','Multi-user logins (up to 5)','Branded client portal','Bulk document processing','Custom compliance reports','Onboarding call included'], cta:'Start free trial', href:'https://accounts.lettly.co/sign-up' },
+                { name:'Pro landlord', id:'pro', monthly:'£70', annual:'£56', props:'11–25 properties', popular:false, badge:null, features:['Everything in Portfolio','Multi-property bulk actions','Referral programme access','Priority WhatsApp support'], cta:'Start free trial', href:'https://accounts.lettly.co/sign-up' },
+                { name:'Agency', id:'agency', monthly:'£188', annual:'£150', props:'26–100 properties', popular:true, badge:'New', features:['Everything in Pro','Multi-user logins (up to 5)','Branded client portal','Bulk document processing','Custom compliance reports','Onboarding call included'], cta:'Start free trial', href:'https://accounts.lettly.co/sign-up' },
                 { name:'Enterprise', price:'Custom', props:'100+ properties', popular:false, badge:null, features:['Everything in Agency','Unlimited users','API access','Dedicated account manager','SLA guarantee','White-label option'], cta:'Contact us', href:'mailto:hello@lettly.co' },
-              ].map(plan => (
+              ].map(plan => {
+                const billing = (typeof window!=='undefined'&&window.__lettlyBilling)||'annual'
+                const price = plan.monthly ? (billing==='annual' ? plan.annual : plan.monthly) : 'Custom'
+                return(
                 <div key={plan.name} style={{
                   background: plan.popular ? 'var(--brand)' : 'var(--surface)',
                   border: plan.popular ? 'none' : '1px solid var(--border)',
@@ -808,8 +849,8 @@ export default function Landing() {
                 }}>
                   {plan.badge && <div style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'2px 10px', fontSize:11, color:'#fff', fontWeight:600 }}>{plan.badge}</div>}
                   <div style={{ fontSize:13, fontWeight:500, color: plan.popular ? 'rgba(255,255,255,0.65)':'var(--text-2)', marginBottom:10 }}>{plan.name}</div>
-                  <div style={{ fontFamily:'var(--display)', fontSize: plan.price==='Custom'?28:42, fontWeight:300, color: plan.popular ? '#fff':'var(--text)', lineHeight:1, marginBottom:4, paddingTop: plan.price==='Custom'?8:0 }}>{plan.price}</div>
-                  <div style={{ fontSize:12, color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--text-3)', marginBottom:16 }}>{plan.price==='Custom'?'bespoke pricing':'per month'}</div>
+                  <div style={{ fontFamily:'var(--display)', fontSize: price==='Custom'?28:42, fontWeight:300, color: plan.popular ? '#fff':'var(--text)', lineHeight:1, marginBottom:4, paddingTop: price==='Custom'?8:0 }}>{price}</div>
+                  <div style={{ fontSize:12, color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--text-3)', marginBottom:16 }}>{price==='Custom'?'bespoke pricing':(<>per month{billing==='annual'&&<span style={{ marginLeft:6, fontSize:10, opacity:0.75 }}>billed annually</span>}</>)}</div>
                   <div style={{ fontSize:13, fontWeight:500, color: plan.popular ? 'rgba(255,255,255,0.9)':'var(--brand)', marginBottom:20, padding:'7px 12px', background: plan.popular ? 'rgba(255,255,255,0.12)':'var(--brand-light)', borderRadius:10, textAlign:'center' }}>{plan.props}</div>
                   {plan.features.map(f => (
                     <div key={f} style={{ display:'flex', gap:8, alignItems:'flex-start', fontSize:13, color: plan.popular ? 'rgba(255,255,255,0.75)':'var(--text-2)', marginBottom:8, lineHeight:1.4 }}>
@@ -823,7 +864,7 @@ export default function Landing() {
                     fontSize:14, fontWeight:600, padding:'12px 16px', borderRadius:10, textDecoration:'none'
                   }}>{plan.cta}</a>
                 </div>
-              ))}
+              )})}
             </div>
 
             <p style={{ textAlign:'center', fontSize:13, color:'var(--text-3)' }}>
@@ -836,7 +877,7 @@ export default function Landing() {
                 <span style={{ fontSize:28 }}>🏠</span>
                 <div>
                   <div style={{ fontSize:14, fontWeight:600, color:'var(--brand)', marginBottom:3 }}>HMO management suite, add-on</div>
-                  <div style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.6 }}>Room-by-room tracking, HMO licence management, fire safety checklist, PAT testing records. Add to any plan.</div>
+                  <div style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.6 }}>Room-by-room tracking, HMO licence management, fire safety checklist, PAT testing records. Priced per HMO address — add once per site.</div>
                 </div>
               </div>
               <div style={{ textAlign:'center', flexShrink:0 }}>
@@ -863,24 +904,6 @@ export default function Landing() {
           <p style={{ fontSize:14, color:'var(--text-3)', marginTop:18 }}>
             No credit card · No contract · Cancel anytime
           </p>
-
-          {/* Dashboard screenshot */}
-          <div className="fade-up-3" style={{ marginTop:52, position:'relative', maxWidth:900, margin:'52px auto 0' }}>
-            <div style={{ position:'relative', borderRadius:16, overflow:'hidden', border:'1px solid var(--border)', boxShadow:'0 24px 64px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06)' }}>
-              <img
-                src="/dashboard-preview.png"
-                alt="Lettly dashboard showing Renters Rights Act compliance tracker"
-                style={{ width:'100%', display:'block', borderRadius:16 }}
-              />
-              {/* Browser chrome top bar */}
-              <div style={{ position:'absolute', top:0, left:0, right:0, height:4, background:'linear-gradient(90deg, var(--brand) 0%, var(--brand-mid) 100%)' }}/>
-            </div>
-            {/* Caption */}
-            <p style={{ fontSize:13, color:'var(--text-3)', marginTop:14, textAlign:'center' }}>
-              Legislation centre — England, Scotland and Wales tracked automatically
-            </p>
-          </div>
-
         </section>
 
         {/* ── Footer ── */}
