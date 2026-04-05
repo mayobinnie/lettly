@@ -784,7 +784,7 @@ export default function Landing() {
                       <span style={{ color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--green)', flexShrink:0 }}>✓</span>{f}
                     </div>
                   ))}
-                  <a href="https://accounts.lettly.co/sign-up" style={{
+                  <a href={'https://accounts.lettly.co/sign-up?redirect_url='+encodeURIComponent('https://lettly.co/dashboard?plan='+plan.id+'&billing='+billing)} style={{
                     display:'block', textAlign:'center', marginTop:'auto', paddingTop:20,
                     background: plan.popular ? '#fff':'var(--brand)',
                     color: plan.popular ? 'var(--brand)':'#fff',
@@ -798,8 +798,8 @@ export default function Landing() {
             <div style={{ fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:12 }}>Professional operators</div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:20 }}>
               {[
-                { name:'Pro landlord', id:'pro', monthly:'£70', annual:'£56', props:'11–25 properties', popular:false, badge:null, features:['Everything in Portfolio','Multi-property bulk actions','Referral programme access','Priority WhatsApp support'], cta:'Start free trial', href:'https://accounts.lettly.co/sign-up' },
-                { name:'Agency', id:'agency', monthly:'£188', annual:'£150', props:'26–100 properties', popular:true, badge:'New', features:['Everything in Pro','Multi-user logins (up to 5)','Branded client portal','Bulk document processing','Custom compliance reports','Onboarding call included'], cta:'Start free trial', href:'https://accounts.lettly.co/sign-up' },
+                { name:'Pro landlord', id:'pro', monthly:'£70', annual:'£56', props:'11–25 properties', popular:false, badge:null, features:['Everything in Portfolio','Multi-property bulk actions','Referral programme access','Priority WhatsApp support'], cta:'Start free trial', getHref:(id)=>'https://accounts.lettly.co/sign-up?redirect_url='+encodeURIComponent('https://lettly.co/dashboard?plan='+id+'&billing='+billing) },
+                { name:'Agency', id:'agency', monthly:'£188', annual:'£150', props:'26–100 properties', popular:true, badge:'New', features:['Everything in Pro','Multi-user logins (up to 5)','Branded client portal','Bulk document processing','Custom compliance reports','Onboarding call included'], cta:'Start free trial', getHref:(id)=>'https://accounts.lettly.co/sign-up?redirect_url='+encodeURIComponent('https://lettly.co/dashboard?plan='+id+'&billing='+billing) },
                 { name:'Enterprise', price:'Custom', props:'100+ properties', popular:false, badge:null, features:['Everything in Agency','Unlimited users','API access','Dedicated account manager','SLA guarantee','White-label option'], cta:'Contact us', href:'mailto:hello@lettly.co' },
               ].map(plan => {
                 const price = plan.monthly ? (billing==='annual' ? plan.annual : plan.monthly) : 'Custom'
@@ -819,7 +819,7 @@ export default function Landing() {
                       <span style={{ color: plan.popular ? 'rgba(255,255,255,0.5)':'var(--green)', flexShrink:0 }}>✓</span>{f}
                     </div>
                   ))}
-                  <a href={plan.href} style={{
+                  <a href={plan.getHref ? plan.getHref(plan.id) : plan.href} style={{
                     display:'block', textAlign:'center', marginTop:'auto', paddingTop:20,
                     background: plan.popular ? '#fff':'var(--brand)',
                     color: plan.popular ? 'var(--brand)':'#fff',
