@@ -4679,91 +4679,83 @@ function generateInspectionPDF(report, portfolio) {
   const prop = (portfolio.properties||[]).find(p=>p.id===report.propertyId)||{}
   const typeLabel = {move_in:'Move-in inspection',move_out:'Move-out inspection',periodic:'Periodic inspection',inventory:'Inventory check'}[report.type]||report.type
   const totalDamage = (report.damages||[]).reduce((s,d)=>s+(Number(d.estimatedCost)||0),0)
+  const condBg = c => c==='Excellent'?'#e8f5e9':c==='Good'?'#eaf4ee':c==='Fair'?'#fff8e1':'#fce8e6'
+  const condCol = c => c==='Excellent'?'#1e6e35':c==='Good'?'#1b5e3b':c==='Fair'?'#633806':'#791F1F'
 
-  const roomsHtml = (report.rooms||[]).map(room=>`
-    <div style="margin-bottom:16px;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
-      <div style="background:#f5f5f5;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
-        <strong style="font-size:14px;">${room.name}</strong>
-        <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:${room.condition==='Excellent'?'#e8f5e9':room.condition==='Good'?'#eaf4ee':room.condition==='Fair'?'#fff8e1':'#fce8e6'};color:${room.condition==='Excellent'?'#1e6e35':room.condition==='Good'?'#1b5e3b':room.condition==='Fair'?'#633806':'#791F1F'};">${room.condition||'Not rated'}</span>
-      </div>
-      ${room.notes?`<div style="padding:10px 14px;font-size:13px;color:#555;border-bottom:1px solid #eee;">${room.notes}</div>`:''}
-      ${(room.items||[]).length>0?`
-      <div style="padding:10px 14px;">
-        <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Inventory items</div>
-        ${room.items.map(item=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>${item.name}${item.qty>1?` (×${item.qty})`:''}</span><span style="color:#666;">${item.condition||''}</span></div>`).join('')}
-      </div>`:''}
-    </div>`).join('')
+  let roomsHtml = ''
+  ;(report.rooms||[]).forEach(function(room) {
+    let itemsHtml = ''
+    ;(room.items||[]).forEach(function(item) {
+      itemsHtml += '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>' + item.name + (item.qty>1?' (x'+item.qty+')':'') + '</span><span style="color:#666;">' + (item.condition||'') + '</span></div>'
+    })
+    roomsHtml += '<div style="margin-bottom:16px;border:1px solid #ddd;border-radius:8px;overflow:hidden;">'
+    roomsHtml += '<div style="background:#f5f5f5;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">'
+    roomsHtml += '<strong style="font-size:14px;">' + room.name + '</strong>'
+    roomsHtml += '<span style="font-size:12px;padding:3px 10px;border-radius:20px;background:' + condBg(room.condition) + ';color:' + condCol(room.condition) + ';">' + (room.condition||'Not rated') + '</span>'
+    roomsHtml += '</div>'
+    if(room.notes) roomsHtml += '<div style="padding:10px 14px;font-size:13px;color:#555;border-bottom:1px solid #eee;">' + room.notes + '</div>'
+    if((room.items||[]).length>0) {
+      roomsHtml += '<div style="padding:10px 14px;"><div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Inventory items</div>' + itemsHtml + '</div>'
+    }
+    roomsHtml += '</div>'
+  })
 
-  const damagesHtml = (report.damages||[]).length>0?`
-    <div style="background:#fce8e6;border:1px solid #e24b4a;border-radius:8px;padding:16px;margin-bottom:20px;">
-      <h3 style="font-size:14px;color:#791F1F;margin:0 0 12px;">Damage noted</h3>
-      ${report.damages.map(d=>`
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(226,75,74,0.2);font-size:13px;">
-          <div><strong>${d.room}</strong>: ${d.description}</div>
-          ${d.estimatedCost?`<div style="color:#791F1F;font-weight:600;">£${Number(d.estimatedCost).toLocaleString('en-GB')}</div>`:''}
-        </div>`).join('')}
-      ${totalDamage>0?`<div style="text-align:right;font-weight:700;color:#791F1F;margin-top:10px;font-size:14px;">Total estimated: £${totalDamage.toLocaleString('en-GB')}</div>`:''}
-    </div>`:''}
+  let damagesHtml = ''
+  if((report.damages||[]).length>0) {
+    let dRows = ''
+    ;(report.damages||[]).forEach(function(d) {
+      dRows += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(226,75,74,0.2);font-size:13px;">'
+      dRows += '<div><strong>' + d.room + '</strong>: ' + d.description + '</div>'
+      if(d.estimatedCost) dRows += '<div style="color:#791F1F;font-weight:600;">£' + Number(d.estimatedCost).toLocaleString('en-GB') + '</div>'
+      dRows += '</div>'
+    })
+    damagesHtml = '<div style="background:#fce8e6;border:1px solid #e24b4a;border-radius:8px;padding:16px;margin-bottom:20px;">'
+    damagesHtml += '<h3 style="font-size:14px;color:#791F1F;margin:0 0 12px;">Damage noted</h3>' + dRows
+    if(totalDamage>0) damagesHtml += '<div style="text-align:right;font-weight:700;color:#791F1F;margin-top:10px;font-size:14px;">Total estimated: £' + totalDamage.toLocaleString('en-GB') + '</div>'
+    damagesHtml += '</div>'
+  }
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>${typeLabel} - ${report.propertyName}</title>
-  <style>
-    body{font-family:system-ui,sans-serif;color:#1a1a18;margin:0;padding:32px;max-width:800px;}
-    h1{font-size:26px;font-weight:400;margin:0 0 4px;}
-    table{width:100%;border-collapse:collapse;margin-bottom:20px;}
-    td{padding:8px 0;border-bottom:1px solid #eee;font-size:13px;}
-    td:first-child{color:#888;width:160px;}
-    @media print{body{padding:16px;}}
-  </style>
-  </head><body>
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1b5e3b;">
-    <div>
-      <div style="font-size:11px;color:#1b5e3b;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Lettly Property Report</div>
-      <h1>${typeLabel}</h1>
-      <div style="font-size:15px;color:#555;margin-top:2px;">${report.propertyName}</div>
-    </div>
-    <div style="text-align:right;font-size:13px;color:#888;">
-      <div>${report.date}</div>
-      <div style="margin-top:4px;">Ref: ${report.id.slice(0,8).toUpperCase()}</div>
-    </div>
-  </div>
+  let tableRows = ''
+  tableRows += '<tr><td>Property address</td><td><strong>' + (prop.address||report.propertyName) + '</strong></td></tr>'
+  tableRows += '<tr><td>Inspection type</td><td>' + typeLabel + '</td></tr>'
+  tableRows += '<tr><td>Inspection date</td><td>' + report.date + '</td></tr>'
+  tableRows += '<tr><td>Overall condition</td><td><strong>' + (report.overallCondition||'Not rated') + '</strong></td></tr>'
+  if(report.tenantName) tableRows += '<tr><td>Tenant</td><td>' + report.tenantName + '</td></tr>'
+  if(report.keysHanded) tableRows += '<tr><td>Keys</td><td>' + report.keysHanded + '</td></tr>'
+  if(report.depositAmount) tableRows += '<tr><td>Deposit</td><td>£' + Number(report.depositAmount).toLocaleString('en-GB') + ' - ' + (report.depositScheme||'') + (report.depositRef?' Ref: '+report.depositRef:'') + '</td></tr>'
+  if(report.elecMeterReading) tableRows += '<tr><td>Electric meter</td><td>' + report.elecMeterReading + '</td></tr>'
+  if(report.gasMeterReading) tableRows += '<tr><td>Gas meter</td><td>' + report.gasMeterReading + '</td></tr>'
+  if(report.waterMeterReading) tableRows += '<tr><td>Water meter</td><td>' + report.waterMeterReading + '</td></tr>'
 
-  <table>
-    <tr><td>Property address</td><td><strong>${prop.address||report.propertyName}</strong></td></tr>
-    <tr><td>Inspection type</td><td>${typeLabel}</td></tr>
-    <tr><td>Inspection date</td><td>${report.date}</td></tr>
-    <tr><td>Overall condition</td><td><strong>${report.overallCondition||'Not rated'}</strong></td></tr>
-    ${report.tenantName?`<tr><td>Tenant</td><td>${report.tenantName}</td></tr>`:''}
-    ${report.keysHanded?`<tr><td>Keys</td><td>${report.keysHanded}</td></tr>`:''}
-    ${report.depositAmount?`<tr><td>Deposit</td><td>£${Number(report.depositAmount).toLocaleString('en-GB')} – ${report.depositScheme||''} ${report.depositRef?'Ref: '+report.depositRef:''}</td></tr>`:''}
-    ${report.elecMeterReading?`<tr><td>Electric meter</td><td>${report.elecMeterReading}</td></tr>`:''}
-    ${report.gasMeterReading?`<tr><td>Gas meter</td><td>${report.gasMeterReading}</td></tr>`:''}
-    ${report.waterMeterReading?`<tr><td>Water meter</td><td>${report.waterMeterReading}</td></tr>`:''}
-  </table>
+  const sigBlock = report.tenantSignature
+    ? '<div style="margin-top:32px;padding-top:16px;border-top:1px solid #eee;"><div style="font-size:12px;color:#888;margin-bottom:8px;">Tenant acknowledgement</div><div style="font-size:14px;font-style:italic;">' + report.tenantSignature + '</div><div style="font-size:11px;color:#aaa;margin-top:4px;">Signed ' + report.tenantSignedAt + '</div></div>'
+    : '<div style="margin-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:40px;"><div style="border-top:1px solid #999;padding-top:8px;font-size:11px;color:#888;">Landlord signature / date</div><div style="border-top:1px solid #999;padding-top:8px;font-size:11px;color:#888;">Tenant signature / date</div></div>'
 
-  ${damagesHtml}
+  const notesHtml = report.notes ? '<div style="background:#f7f5f0;border-radius:8px;padding:14px 16px;margin-top:16px;"><strong style="font-size:12px;color:#888;display:block;margin-bottom:6px;">NOTES</strong><p style="font-size:13px;margin:0;line-height:1.7;">' + report.notes + '</p></div>' : ''
+  const roomsSection = (report.rooms||[]).length>0 ? '<h2 style="font-size:16px;margin:20px 0 12px;">Room-by-room condition</h2>' + roomsHtml : ''
 
-  ${(report.rooms||[]).length>0?`<h2 style="font-size:16px;margin:20px 0 12px;">Room-by-room condition</h2>${roomsHtml}`:''}
-
-  ${report.notes?`<div style="background:#f7f5f0;border-radius:8px;padding:14px 16px;margin-top:16px;"><strong style="font-size:12px;color:#888;display:block;margin-bottom:6px;">NOTES</strong><p style="font-size:13px;margin:0;line-height:1.7;">${report.notes}</p></div>`:''}
-
-  ${report.tenantSignature?`
-  <div style="margin-top:32px;padding-top:16px;border-top:1px solid #eee;">
-    <div style="font-size:12px;color:#888;margin-bottom:8px;">Tenant acknowledgement</div>
-    <div style="font-size:14px;font-style:italic;">${report.tenantSignature}</div>
-    <div style="font-size:11px;color:#aaa;margin-top:4px;">Signed ${report.tenantSignedAt}</div>
-  </div>`:'<div style="margin-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:40px;"><div style="border-top:1px solid #999;padding-top:8px;font-size:11px;color:#888;">Landlord signature / date</div><div style="border-top:1px solid #999;padding-top:8px;font-size:11px;color:#888;">Tenant signature / date</div></div>'}
-
-  <div style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:12px;">
-    Generated by Lettly · lettly.co · ${new Date().toLocaleDateString('en-GB')} · This report is for record-keeping purposes. Not legal advice.
-  </div>
-  </body></html>`
+  const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + typeLabel + ' - ' + report.propertyName + '</title>'
+    + '<style>body{font-family:system-ui,sans-serif;color:#1a1a18;margin:0;padding:32px;max-width:800px;}h1{font-size:26px;font-weight:400;margin:0 0 4px;}table{width:100%;border-collapse:collapse;margin-bottom:20px;}td{padding:8px 0;border-bottom:1px solid #eee;font-size:13px;}td:first-child{color:#888;width:160px;}@media print{body{padding:16px;}}</style>'
+    + '</head><body>'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1b5e3b;">'
+    + '<div><div style="font-size:11px;color:#1b5e3b;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Lettly Property Report</div>'
+    + '<h1>' + typeLabel + '</h1><div style="font-size:15px;color:#555;margin-top:2px;">' + report.propertyName + '</div></div>'
+    + '<div style="text-align:right;font-size:13px;color:#888;"><div>' + report.date + '</div><div style="margin-top:4px;">Ref: ' + report.id.slice(0,8).toUpperCase() + '</div></div>'
+    + '</div>'
+    + '<table>' + tableRows + '</table>'
+    + damagesHtml
+    + roomsSection
+    + notesHtml
+    + sigBlock
+    + '<div style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:12px;">Generated by Lettly · lettly.co · ' + new Date().toLocaleDateString('en-GB') + ' · This report is for record-keeping purposes. Not legal advice.</div>'
+    + '</body></html>'
 
   const w = window.open('','_blank')
   w.document.write(html)
   w.document.close()
-  setTimeout(()=>w.print(), 600)
+  setTimeout(function(){w.print()}, 600)
 }
+
 
 function ComparisonView({reports, props, onClose}) {
   const propNames = [...new Set(reports.map(r=>r.propertyName))]
