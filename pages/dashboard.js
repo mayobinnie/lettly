@@ -4856,7 +4856,7 @@ function ComparisonView({reports, props, onClose}) {
         </div>
       </div>
 
-      {moveIn&&moveOut&&<div style={{marginTop:14,display:'flex',gap:8'}}>
+      {moveIn&&moveOut&&<div style={{marginTop:14,display:'flex',gap:8}}>
         <button onClick={()=>generateInspectionPDF(moveIn,{properties:[]})} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Export move-in PDF</button>
         <button onClick={()=>generateInspectionPDF(moveOut,{properties:[]})} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Export move-out PDF</button>
       </div>}
