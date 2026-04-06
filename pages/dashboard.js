@@ -1251,7 +1251,7 @@ function GrowthCards({props}){
           ))}
         </div>
       </div>
-    })}
+    )}
   </div>
 }
 
