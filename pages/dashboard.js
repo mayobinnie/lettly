@@ -1233,6 +1233,7 @@ function YearByYearTable({props, years}){
 
 function GrowthCards({props}){
   return <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:14}}>
+    {props.filter(p=>p.currentValue).map(p=>{
       const rate = getGrowthRate(p.address)
       const val = Number(p.currentValue)
       const in1 = projectValue(val,rate,1)[1]
@@ -1251,7 +1252,7 @@ function GrowthCards({props}){
           ))}
         </div>
       </div>
-    )}
+    })}
   </div>
 }
 
