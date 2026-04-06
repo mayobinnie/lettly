@@ -7,7 +7,7 @@ import { fmt, dueSoon, dueDays, epcColor, mergeDoc, LEGISLATION, LEGISLATION_SCO
 import { detectNation, NATION_LABELS, getChecklist } from '../lib/nations'
 
 // Load PDF.js once and cache it
-async ToolsTab({portfolio,setPortfolio}){ function loadPDFJS() {
+async function loadPDFJS() {
   if (window.pdfjsLib) return window.pdfjsLib
   await new Promise((resolve, reject) => {
     const s = document.createElement('script')
