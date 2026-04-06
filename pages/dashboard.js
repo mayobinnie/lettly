@@ -7,7 +7,7 @@ import { fmt, dueSoon, dueDays, epcColor, mergeDoc, LEGISLATION, LEGISLATION_SCO
 import { detectNation, NATION_LABELS, getChecklist } from '../lib/nations'
 
 // Load PDF.js once and cache it
-async function loadPDFJS() {
+async ToolsTab({portfolio,setPortfolio}){ function loadPDFJS() {
   if (window.pdfjsLib) return window.pdfjsLib
   await new Promise((resolve, reject) => {
     const s = document.createElement('script')
@@ -5213,7 +5213,15 @@ export default function Dashboard(){
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
       <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:62,position:'sticky',top:0,zIndex:100,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:34,height:34,background:'var(--brand)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:16,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:20,fontWeight:400}}>Lettly</span></div>
-        <div className="nav-tabs-desktop" style={{display:'flex',gap:1,background:'var(--surface2)',padding:3,borderRadius:9,overflowX:'auto',maxWidth:'calc(100vw - 180px)',scrollbarWidth:'none'}}>{TABS.filter(t=>{if(t.adminOnly&&!user?.publicMetadata?.admin&&!user?.emailAddresses?.[0]?.emailAddress?.includes('lettly.co'))return false;if(t.hmoOnly&&!(portfolio.properties||[]).some(p=>p.isHMO))return false;return true;}).map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:tab===t.id?'var(--surface)':'transparent',border:tab===t.id?'0.5px solid var(--border)':'none',padding:'7px 13px',borderRadius:7,fontFamily:'var(--font)',fontSize:13,color:tab===t.id?'var(--text)':'var(--text-2)',fontWeight:tab===t.id?600:400,cursor:'pointer',whiteSpace:'nowrap'}}><span className='tab-label-full'>{t.label}</span><span className='tab-label-short' style={{display:'none'}}>{t.short}</span>{t.id==='ai'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--brand)',marginLeft:3,verticalAlign:'middle'}}/>}{t.id==='legislation'&&<span style={{display:'inline-block',width:4,height:4,borderRadius:'50%',background:'var(--red)',marginLeft:3,verticalAlign:'middle'}}/>}</button>)}</div>
+        <div className="nav-tabs-desktop" style={{display:'flex',gap:2,alignItems:'center'}}>
+  {[
+    {label:'Overview',   tabs:['overview']},
+    {label:'Properties', tabs:['properties','tenants','conditions','maintenance']},
+    {label:'Finance',    tabs:['finance','rent','invoicing','tools']},
+    {label:'Compliance', tabs:['legislation','hmo']},
+    {label:'More',       tabs:['resources','ai','content']},
+  ].map(g=><NavGroup key={g.label} label={g.label} tabs={g.tabs} tab={tab} setTab={setTab} user={user} portfolio={portfolio}/>)}
+</div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
           {saveStatus==='saving'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
           {saveStatus==='saved'&&loaded&&<span className="nav-save-status" style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
