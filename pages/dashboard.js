@@ -4336,7 +4336,27 @@ function HMOTab({portfolio,setPortfolio}){
     </div>}
   </div>
 }
-
+function NavGroup({label,tabs,tab,setTab,user,portfolio}){
+  const[open,setOpen]=useState(false)
+  const isActive=tabs.includes(tab)
+  if(tabs.length===1){
+    return<button onClick={()=>setTab(tabs[0])} style={{padding:'7px 14px',borderRadius:8,fontFamily:'var(--font)',fontSize:13,background:isActive?'var(--brand)':'transparent',color:isActive?'#fff':'var(--text-2)',border:'none',cursor:'pointer',fontWeight:isActive?600:400,whiteSpace:'nowrap'}}>{label}</button>
+  }
+  return<div style={{position:'relative'}} onMouseEnter={()=>setOpen(true)} onMouseLeave={()=>setOpen(false)}>
+    <button style={{padding:'7px 14px',borderRadius:8,fontFamily:'var(--font)',fontSize:13,background:isActive?'var(--brand)':'transparent',color:isActive?'#fff':'var(--text-2)',border:'none',cursor:'pointer',fontWeight:isActive?600:400,display:'flex',alignItems:'center',gap:4,whiteSpace:'nowrap'}}>
+      {label}<span style={{fontSize:9,opacity:0.6}}>▾</span>
+    </button>
+    {open&&<div style={{position:'absolute',top:'100%',left:0,background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:10,padding:'6px',boxShadow:'0 8px 24px rgba(0,0,0,0.10)',zIndex:200,minWidth:180,display:'flex',flexDirection:'column',gap:2}}>
+      {tabs.map(id=>{
+        const t=TABS.find(x=>x.id===id)
+        if(!t)return null
+        if(t.adminOnly&&!user?.publicMetadata?.admin&&!(user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co'))return null
+        if(t.hmoOnly&&!(portfolio.properties||[]).some(p=>p.isHMO))return null
+        return<button key={id} onClick={()=>{setTab(id);setOpen(false)}} style={{padding:'8px 12px',borderRadius:7,fontSize:13,textAlign:'left',background:tab===id?'var(--brand-light)':'transparent',color:tab===id?'var(--brand)':'var(--text)',border:'none',cursor:'pointer',fontFamily:'var(--font)',fontWeight:tab===id?600:400,whiteSpace:'nowrap',width:'100%'}}>{t.label}</button>
+      })}
+    </div>}
+  </div>
+}
 function ToolsTab({portfolio,setPortfolio}){
   const props=portfolio.properties||[]
   const[tool,setTool]=useState('remortgage')
