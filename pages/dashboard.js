@@ -1811,11 +1811,11 @@ function PropCard({p,gasC,eicrC,insC,epcStatus,equity,grossYield,netYield,ltv,nl
     return (infos[docType]||[]).filter(i=>i.value)
   }
 
-      return<div key={p.id}
+  return<div
     onDragOver={e=>{e.preventDefault();setCardOver(true)}}
     onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setCardOver(false)}}
     onDrop={handleCardDrop}
-    style={{background:'var(--surface)',border:'2px solid '+(cardOver?'var(--brand)':'transparent'),outline:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:14,transition:'all 0.15s',background:cardOver?'var(--brand-subtle)':'var(--surface)'}}>
+    style={{background:cardOver?'var(--brand-subtle)':'var(--surface)',border:cardOver?'2px solid var(--brand)':'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:14,transition:'all 0.15s'}}>
     {cardOver&&<div style={{textAlign:'center',padding:'8px 0',fontSize:13,fontWeight:600,color:'var(--brand)',marginBottom:10}}>Drop documents for {p.shortName}</div>}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,gap:12}}>
           <div style={{minWidth:0}}>
