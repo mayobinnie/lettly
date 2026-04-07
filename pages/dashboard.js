@@ -1867,7 +1867,7 @@ function PropCard({p,gasC,eicrC,insC,epcStatus,equity,grossYield,netYield,ltv,nl
         {/* Property-scoped document drop - hidden when card is drag target */}
         {!cardOver&&<PropertyDropZone propName={p.shortName} propId={p.id} onFiles={files=>onAddDocsToProp&&onAddDocsToProp(files,p.id)} onManual={onManual}/>}
       </div>
-  )
+    )
 }
 
 /* ---- Finance ---- */
