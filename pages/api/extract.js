@@ -70,7 +70,9 @@ TENANCY AGREEMENT:
 INSURANCE POLICY:
 - insurer = the insurance company name (not the broker)
 - policyNumber = the policy reference number
+- type = the type of insurance: output exactly one of: "Landlord", "Buildings", "Home", "Contents", "Other"
 - renewal = the renewal / expiry date DD/MM/YYYY
+- startDate = the policy start date DD/MM/YYYY
 - premium = annual premium as a NUMBER in £
 - sumInsured = total buildings sum insured as a NUMBER in £
 - excess = the standard excess as a NUMBER in £
