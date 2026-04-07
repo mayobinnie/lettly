@@ -1256,7 +1256,7 @@ function YearByYearTable({props, years}){
 
 function GrowthCards({props}){
   const filtered = props.filter(p=>p.currentValue)
-  return <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:14}}>
+  return <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:10,marginBottom:14}}>
     {filtered.map(p=>{
       const rate = getGrowthRate(p.address)
       const val = Number(p.currentValue)
@@ -1532,7 +1532,7 @@ function Overview({portfolio,onAddDocs,onScan,onManual,user,onToggleCheck,setTab
     </div>
 
     {/* Projected value banner */}
-    {projectedValue>0&&<div style={{background:'var(--brand)',borderRadius:14,padding:'16px 20px',marginBottom:14,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,alignItems:'center'}}>
+    {projectedValue>0&&<div style={{background:'var(--brand)',borderRadius:14,padding:'16px 20px',marginBottom:14,display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:12,alignItems:'center'}}>
       <div>
         <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4}}>Projected value in 10 years</div>
         <div style={{fontFamily:'var(--display)',fontSize:26,fontWeight:300,color:'#fff'}}>{fmt(projectedValue)}</div>
@@ -1821,7 +1821,7 @@ function PropCard({p,gasC,eicrC,insC,epcStatus,equity,grossYield,netYield,ltv,nl
           <div style={{minWidth:0}}>
             <div style={{fontFamily:'var(--display)',fontSize:'clamp(17px,3vw,20px)',fontWeight:400,marginBottom:3}}>{p.shortName}</div>
             <div style={{fontSize:12,color:'var(--text-3)',marginBottom:8}}>{p.address}</div>
-            <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+            <div style={{display:'flex',flexWrap:'wrap',gap:5,maxWidth:'100%'}}>
               <Pill type={p.ownership==='Ltd Company'?'blue':'brand'}>{p.ownership||'Personal'}</Pill>
               {nl&&<span style={{fontSize:11,padding:'3px 10px',borderRadius:20,background:nl.bg,color:nl.color,fontWeight:500}}>{p.nation}</span>}
               {[...new Set(p.docs||[])].map(d=><span key={d} onClick={()=>setActiveDoc(activeDoc===d?null:d)} style={{cursor:'pointer',display:'inline-block'}}><DocBadge type={d}/></span>)}
@@ -5458,7 +5458,7 @@ function BottomNav({tab, setTab, portfolio, user}){
           <button key={t.id} onClick={()=>pick(t.id)} className={'bnav-btn'+(isActive?' active':'')}>
             {isActive&&t.id!=='_more'&&<span className="bnav-dot"/>}
             <span className="bnav-icon">{t.icon}</span>
-            <span className="bnav-label" style={{color:isActive?'var(--brand)':'var(--text-3)'}}>{t.label}</span>
+            <span className="bnav-label" style={{color:isActive?'#fff':'rgba(255,255,255,0.6)'}}>{t.label}</span>
           </button>
         )
       })}
@@ -5774,8 +5774,8 @@ export default function Dashboard(){
           position:fixed;
           bottom:0;left:0;right:0;
           z-index:150;
-          background:var(--surface);
-          border-top:0.5px solid var(--border);
+          background:var(--brand);
+          border-top:none;
           padding:6px 0;
           padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));
         }
@@ -5810,12 +5810,13 @@ export default function Dashboard(){
         -webkit-tap-highlight-color:transparent;
       }
       .bnav-btn span.bnav-icon{font-size:20px;line-height:1}
-      .bnav-btn span.bnav-label{font-size:10px;letter-spacing:0.1px}
-      .bnav-btn.active span.bnav-label{font-weight:600;color:var(--brand)}
-      .bnav-btn.active span.bnav-icon{filter:drop-shadow(0 0 3px rgba(27,94,59,0.3))}
+      .bnav-btn span.bnav-label{font-size:10px;letter-spacing:0.1px;color:rgba(255,255,255,0.6)}
+      .bnav-btn.active span.bnav-label{font-weight:600;color:#fff}
+      .bnav-btn span.bnav-icon{opacity:0.6}
+      .bnav-btn.active span.bnav-icon{opacity:1;filter:none}
       .bnav-dot{
         position:absolute;top:5px;
-        width:4px;height:4px;border-radius:50%;background:var(--brand);
+        width:4px;height:4px;border-radius:50%;background:#fff;
       }
 
       /* More menu slide-up */
