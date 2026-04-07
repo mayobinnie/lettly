@@ -1874,7 +1874,7 @@ function FinanceTab({portfolio,setPortfolio}){
   const props=portfolio.properties||[]
   const expenses=portfolio.expenses||[]
   const[showForm,setShowForm]=useState(false)
-  const[newExp,setNewExp]=useState({date:'',property:'',category:'',description:'',amount:''})
+  const[newExp,setNewExp]=useState({date:'',property:'',category:'',description:'',amount:'',receiptPhoto:''})
   const[taxRate,setTaxRate]=useState('40')
   const[s24Result,setS24Result]=useState(''),[s24Loading,setS24Loading]=useState(false)
   const[view,setView]=useState('overview') // overview | expenses | yields | s24
@@ -1914,7 +1914,7 @@ function FinanceTab({portfolio,setPortfolio}){
     if(!newExp.amount||!newExp.category)return
     const updated={...portfolio,expenses:[...expenses,{...newExp,id:Math.random().toString(36).slice(2)}]}
     setPortfolio(updated)
-    setNewExp({date:'',property:'',category:'',description:'',amount:''})
+    setNewExp({date:'',property:'',category:'',description:'',amount:'',receiptPhoto:''})
     setShowForm(false)
   }
   function deleteExpense(id){setPortfolio({...portfolio,expenses:expenses.filter(e=>e.id!==id)})}
@@ -2070,6 +2070,27 @@ function FinanceTab({portfolio,setPortfolio}){
             <div style={{marginBottom:14}}><label style={{display:'block',fontSize:15,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Category</label><select value={newExp.category} onChange={e=>setNewExp(p=>({...p,category:e.target.value}))} style={{width:'100%',background:'var(--surface)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:15,color:'var(--text)',outline:'none'}}><option value="">Select</option>{cats.map(cat=><option key={cat} value={cat}>{cat}</option>)}</select></div>
             <Input label="Amount (£)" value={newExp.amount} onChange={v=>setNewExp(p=>({...p,amount:v}))} placeholder="e.g. 120" type="number"/>
             <div style={{gridColumn:'1/-1'}}><Input label="Description" value={newExp.description} onChange={v=>setNewExp(p=>({...p,description:v}))} placeholder="Brief description"/></div>
+            <div style={{gridColumn:'1/-1',marginBottom:14}}>
+              <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Receipt photo (optional)</label>
+              {newExp.receiptPhoto
+                ?<div style={{position:'relative',display:'inline-block'}}>
+                    <img src={newExp.receiptPhoto} alt="Receipt" style={{maxHeight:120,maxWidth:'100%',borderRadius:8,border:'0.5px solid var(--border)',display:'block'}}/>
+                    <button onClick={()=>setNewExp(p=>({...p,receiptPhoto:''}))} style={{position:'absolute',top:4,right:4,width:20,height:20,borderRadius:'50%',background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',fontSize:12,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
+                  </div>
+                :<label style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'var(--surface)',border:'1.5px dashed var(--border-strong)',borderRadius:8,cursor:'pointer'}}>
+                    <input type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={e=>{
+                      const file=e.target.files[0]
+                      if(!file)return
+                      const reader=new FileReader()
+                      reader.onload=ev=>setNewExp(p=>({...p,receiptPhoto:ev.target.result}))
+                      reader.readAsDataURL(file)
+                      e.target.value=''
+                    }}/>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <span style={{fontSize:12,color:'var(--text-3)'}}>Tap to photograph receipt</span>
+                  </label>
+              }
+            </div>
           </div>
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:14,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button><button onClick={addExpense} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:14,fontWeight:500,cursor:'pointer'}}>Add</button></div>
         </div>}
@@ -2077,7 +2098,7 @@ function FinanceTab({portfolio,setPortfolio}){
           ?<div style={{fontSize:14,color:'var(--text-3)',padding:'10px 0',textAlign:'center'}}>No expenses logged yet.</div>
           :<><table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
             <thead><tr style={{borderBottom:'0.5px solid var(--border)'}}>{['Date','Property','Category','Description','Amount',''].map(h=><th key={h} style={{textAlign:'left',padding:'6px 8px',fontSize:14,color:'var(--text-3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px'}}>{h}</th>)}</tr></thead>
-            <tbody>{expenses.map(e=><tr key={e.id} style={{borderBottom:'0.5px solid var(--border)'}}><td style={{padding:'8px'}}>{e.date||'-'}</td><td style={{padding:'8px',color:'var(--text-2)'}}>{e.property||'All'}</td><td style={{padding:'8px'}}>{e.category}</td><td style={{padding:'8px',color:'var(--text-2)'}}>{e.description}</td><td style={{padding:'8px',fontFamily:'var(--mono)',fontWeight:500}}>{fmt(Number(e.amount))}</td><td style={{padding:'8px'}}><button onClick={()=>deleteExpense(e.id)} style={{color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',fontSize:14}}>x</button></td></tr>)}</tbody>
+            <tbody>{expenses.map(e=><tr key={e.id} style={{borderBottom:'0.5px solid var(--border)'}}><td style={{padding:'8px'}}>{e.date||'-'}</td><td style={{padding:'8px',color:'var(--text-2)'}}>{e.property||'All'}</td><td style={{padding:'8px'}}>{e.category}</td><td style={{padding:'8px',color:'var(--text-2)'}}>{e.description}</td><td style={{padding:'8px',fontFamily:'var(--mono)',fontWeight:500}}>{fmt(Number(e.amount))}</td><td style={{padding:'8px',display:'flex',gap:6,alignItems:'center'}}>{e.receiptPhoto&&<img src={e.receiptPhoto} alt="" style={{width:28,height:28,borderRadius:4,objectFit:'cover',border:'0.5px solid var(--border)',cursor:'pointer'}} onClick={()=>window.open(e.receiptPhoto)}/>}<button onClick={()=>deleteExpense(e.id)} style={{color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',fontSize:14}}>x</button></td></tr>)}</tbody>
             <tfoot><tr style={{borderTop:'0.5px solid var(--border-strong)'}}><td colSpan={4} style={{padding:'8px',fontWeight:500,fontSize:12}}>Total</td><td style={{padding:'8px',fontFamily:'var(--mono)',fontWeight:600,color:'var(--red)'}}>{fmt(totalExpenses)}</td><td/></tr></tfoot>
           </table>
           {Object.keys(bycat).length>0&&<div style={{marginTop:12,display:'flex',flexWrap:'wrap',gap:6}}>{Object.entries(bycat).sort((a,b)=>b[1]-a[1]).map(([cat,total])=><span key={cat} style={{fontSize:15,padding:'3px 9px',borderRadius:20,background:'var(--surface2)',color:'var(--text-2)'}}>{cat}: {fmt(total)}</span>)}</div>}
