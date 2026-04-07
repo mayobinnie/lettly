@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { fmt, dueSoon, dueDays, epcColor, mergeDoc, LEGISLATION, LEGISLATION_SCOTLAND, LEGISLATION_WALES, getGrowthRate, projectValue } from '../lib/data'
 // Portfolio loaded via /api/data (server-side auth)
 import { detectNation, NATION_LABELS, getChecklist } from '../lib/nations'
+import { savePortfolio } from '../lib/supabase'
 
 // Load PDF.js once and cache it
 async function loadPDFJS() {
@@ -95,7 +96,29 @@ const PILL={red:{bg:'#fce8e6',fg:'#791F1F'},amber:{bg:'#fff8e1',fg:'#633806'},gr
 function Pill({type='grey',dot,children}){const c=PILL[type]||PILL.grey;return<span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,background:c.bg,color:c.fg,whiteSpace:'nowrap'}}>{dot&&<span style={{width:5,height:5,borderRadius:'50%',background:c.fg,flexShrink:0}}/>}{children}</span>}
 function Row({label,value,valueColor,pill,pillType}){return<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'0.5px solid var(--border)',gap:8}}><span style={{fontSize:12,color:'var(--text-2)',flexShrink:0}}>{label}</span>{pill?<Pill type={pillType||'grey'} dot>{pill}</Pill>:<span style={{fontSize:12,fontWeight:500,fontFamily:'var(--mono)',color:valueColor||'var(--text)',textAlign:'right'}}>{value||'-'}</span>}</div>}
 function Metric({label,value,sub,subGreen,subRed,onClick}){return<div onClick={onClick} style={{background:'var(--surface2)',borderRadius:'var(--radius)',padding:'14px 16px',cursor:onClick?'pointer':'default',transition:'background 0.15s'}} onMouseEnter={e=>{if(onClick)e.currentTarget.style.background='var(--surface3)'}} onMouseLeave={e=>{if(onClick)e.currentTarget.style.background='var(--surface2)'}}><div style={{fontSize:11,color:'var(--text-2)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>{label}{onClick&&<span style={{float:'right',fontSize:10,color:'var(--brand)',fontWeight:400}}>View →</span>}</div><div style={{fontSize:20,fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px'}}>{value}</div>{sub&&<div style={{fontSize:11,marginTop:3,color:subGreen?'var(--green)':subRed?'var(--red)':'var(--text-3)'}}>{sub}</div>}</div>}
-function Input({label,value,onChange,type='text',placeholder='',hint}){return<div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label><input type={type} value={value||''} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/>{hint&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>{hint}</div>}</div>}
+function formatDateInput(raw,prev){
+  const digits=raw.replace(/\D/g,'')
+  const prevDigits=(prev||'').replace(/\D/g,'')
+  const deleting=digits.length<prevDigits.length
+  let out=digits.slice(0,8)
+  if(out.length>4) out=out.slice(0,2)+'/'+out.slice(2,4)+'/'+out.slice(4)
+  else if(out.length>2) out=out.slice(0,2)+'/'+out.slice(2)
+  if(deleting&&raw.endsWith('/')) out=out.slice(0,out.length-1)
+  return out
+}
+function Input({label,value,onChange,type='text',placeholder='',hint}){
+  const isDate=placeholder&&placeholder.includes('DD/MM/YYYY')
+  function handleChange(raw){
+    if(isDate) onChange(formatDateInput(raw,value))
+    else onChange(raw)
+  }
+  return<div style={{marginBottom:14}}>
+    <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+    <input type={type} value={value||''} onChange={e=>handleChange(e.target.value)} placeholder={placeholder}
+      style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/>
+    {hint&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>{hint}</div>}
+  </div>
+}
 function Select({label,value,onChange,options}){return<div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label><select value={value||''} onChange={e=>onChange(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>{options.map(o=><option key={o.value||o} value={o.value||o}>{o.label||o}</option>)}</select></div>}
 
 const DOC_META={gas_certificate:{label:'Gas cert',icon:'🔥',bg:'#fff8e1',fg:'#633806'},eicr:{label:'EICR',icon:'⚡',bg:'#e3f2fd',fg:'#0C447C'},insurance:{label:'Insurance',icon:'🛡️',bg:'#f3e8ff',fg:'#6b21a8'},epc_certificate:{label:'EPC',icon:'🌿',bg:'#e8f5e9',fg:'#1e6e35'},tenancy_agreement:{label:'Tenancy',icon:'📄',bg:'#eaf4ee',fg:'#1b5e3b'},mortgage_offer:{label:'Mortgage',icon:'🏦',bg:'#fce8e6',fg:'#791F1F'},completion_statement:{label:'Completion',icon:'🏠',bg:'#e8f5e9',fg:'#1e6e35'},other:{label:'Document',icon:'📋',bg:'#f2f0eb',fg:'#6b6860'}}
@@ -1232,22 +1255,23 @@ function YearByYearTable({props, years}){
 }
 
 function GrowthCards({props}){
+  const filtered = props.filter(p=>p.currentValue)
   return <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:14}}>
-    {props.filter(p=>p.currentValue).map(p=>{
+    {filtered.map(p=>{
       const rate = getGrowthRate(p.address)
       const val = Number(p.currentValue)
       const in1 = projectValue(val,rate,1)[1]
       const in5 = projectValue(val,rate,5)[5]
       const in10 = projectValue(val,rate,10)[10]
-      return <div key={p.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:14}}>
+      return <div key={p.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:16}}>
         <div style={{fontSize:14,fontWeight:600,color:'var(--brand)',marginBottom:1}}>{p.shortName}</div>
-        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10}}>{rate}% avg annual · {p.nation||'England'}</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:5}}>
+        <div style={{fontSize:11,color:'var(--text-3)',marginBottom:12}}>{rate}% avg annual · {p.nation||'England'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:6}}>
           {[['Now',val,null],['1yr',in1,in1-val],['5yr',in5,in5-val],['10yr',in10,in10-val]].map(([label,v,gain])=>(
-            <div key={label} style={{background:label==='Now'?'var(--surface2)':'var(--brand-subtle)',borderRadius:7,padding:'8px 7px',border:label==='Now'?'none':'0.5px solid rgba(27,94,59,0.1)'}}>
-              <div style={{fontSize:10,color:'var(--text-3)',marginBottom:2}}>{label}</div>
-              <div style={{fontSize:11,fontWeight:600,fontFamily:'var(--mono)',color:label==='Now'?'var(--text)':'var(--brand)'}}>{fmt(v)}</div>
-              {gain&&<div style={{fontSize:9,color:'var(--green)',marginTop:1}}>+{fmt(gain)}</div>}
+            <div key={label} style={{background:label==='Now'?'var(--surface2)':'var(--brand-subtle)',borderRadius:8,padding:'9px 8px',border:label==='Now'?'0.5px solid var(--border)':'0.5px solid rgba(74,103,65,0.12)',minWidth:0}}>
+              <div style={{fontSize:10,color:'var(--text-3)',marginBottom:3,fontWeight:500}}>{label}</div>
+              <div style={{fontSize:12,fontWeight:600,fontFamily:'var(--mono)',color:label==='Now'?'var(--text)':'var(--brand)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{fmt(v)}</div>
+              {gain&&<div style={{fontSize:10,color:'var(--green)',marginTop:2,whiteSpace:'nowrap'}}>+{fmt(gain)}</div>}
             </div>
           ))}
         </div>
@@ -1674,7 +1698,7 @@ function PropertyDropZone({propName,propId,onFiles,onManual}){
 
   return(
     <div onDragOver={e=>{e.preventDefault();setOver(true)}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setOver(false)}} onDrop={drop}
-      style={{marginTop:14,border:'2px dashed '+(over?'var(--brand)':'rgba(27,94,59,0.25)'),borderRadius:14,padding:'14px 18px',cursor:'pointer',background:over?'var(--brand-subtle)':'var(--brand-subtle)',display:'flex',alignItems:'center',gap:14,transition:'all 0.15s'}}
+      style={{marginTop:14,border:'2px dashed '+(over?'var(--brand)':'rgba(27,94,59,0.25)'),borderRadius:14,padding:'14px 18px',cursor:'pointer',background:'var(--brand-subtle)',display:'flex',alignItems:'center',gap:14,transition:'all 0.15s'}}
       onClick={()=>ref.current.click()}>
       <input ref={ref} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,image/*,application/pdf" style={{display:'none'}} onChange={e=>{onFiles(Array.from(e.target.files));e.target.value=''}}/>
       <div style={{width:36,height:36,borderRadius:9,background:'var(--brand)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -1712,7 +1736,87 @@ function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,
       const netYield=p.rent&&p.monthlyPayment&&p.currentValue?(((Number(p.rent)-Number(p.monthlyPayment))*12/Number(p.currentValue))*100).toFixed(1):null
       const ltv=p.mortgage&&p.currentValue?((Number(p.mortgage)/Number(p.currentValue))*100).toFixed(0):null
       const nl=p.nation?NATION_LABELS[p.nation]:null
-      return<div key={p.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:14}}>
+      return<PropCard key={p.id} p={p} gasC={gasC} eicrC={eicrC} insC={insC} epcStatus={epcStatus} equity={equity} grossYield={grossYield} netYield={netYield} ltv={ltv} nl={nl} onEdit={onEdit} onManual={onManual} onAddDocsToProp={onAddDocsToProp} col={col}/>
+    })}
+  </div>
+}
+
+function PropCard({p,gasC,eicrC,insC,epcStatus,equity,grossYield,netYield,ltv,nl,onEdit,onManual,onAddDocsToProp,col}){
+  const[activeDoc,setActiveDoc]=useState(null)
+  const[cardOver,setCardOver]=useState(false)
+
+  function handleCardDrop(e){
+    e.preventDefault()
+    e.stopPropagation()
+    setCardOver(false)
+    const files=Array.from(e.dataTransfer.files)
+    if(files.length&&onAddDocsToProp) onAddDocsToProp(files,p.id)
+  }
+
+  // Build doc info panel content per doc type
+  function getDocInfo(docType){
+    const infos={
+      gas_certificate:[
+        {label:'Gas due',value:p.gasDue,color:p.gasDue?'var(--'+dueSoon(p.gasDue)+')':null},
+        {label:'Last inspection',value:p.gasDate},
+        {label:'Engineer',value:p.gasEngineer},
+        {label:'Gas Safe No.',value:p.gasSafeNo},
+        {label:'Result',value:p.gasResult},
+        {label:'Appliances',value:p.gasAppliances},
+      ],
+      eicr:[
+        {label:'EICR due',value:p.eicrDue,color:p.eicrDue?'var(--'+dueSoon(p.eicrDue)+')':null},
+        {label:'Last inspection',value:p.eicrDate},
+        {label:'Inspector',value:p.eicrInspector},
+        {label:'Result',value:p.eicrResult},
+        {label:'Observations',value:p.eicrObservations},
+      ],
+      epc_certificate:[
+        {label:'EPC rating',value:p.epcRating},
+        {label:'Expires',value:p.epcExpiry},
+      ],
+      insurance:[
+        {label:'Insurer',value:p.insurer},
+        {label:'Policy No.',value:p.policyNo},
+        {label:'Renewal',value:p.insuranceRenewal},
+        {label:'Type',value:p.insuranceType},
+        {label:'Sum insured',value:p.insuranceSumInsured?'£'+Number(p.insuranceSumInsured).toLocaleString('en-GB'):null},
+        {label:'Annual premium',value:p.insurancePremium?'£'+Number(p.insurancePremium).toFixed(2):null},
+        {label:'Loss of rent',value:p.insuranceLossOfRent?'£'+Number(p.insuranceLossOfRent).toLocaleString('en-GB'):null},
+      ],
+      tenancy_agreement:[
+        {label:'Tenant',value:p.tenantName},
+        {label:'Start date',value:p.tenancyStart},
+        {label:'Rent',value:p.rent?'£'+Number(p.rent).toLocaleString('en-GB')+'/mo':null},
+        {label:'Deposit',value:p.depositAmount?'£'+Number(p.depositAmount).toLocaleString('en-GB'):null},
+        {label:'Deposit scheme',value:p.depositScheme},
+        {label:'Deposit ref',value:p.depositRef},
+      ],
+      mortgage_offer:[
+        {label:'Lender',value:p.lender},
+        {label:'Mortgage balance',value:p.mortgage?'£'+Number(p.mortgage).toLocaleString('en-GB'):null},
+        {label:'Rate',value:p.rate?p.rate+'%':null},
+        {label:'Fixed until',value:p.fixedEnd},
+        {label:'Monthly payment',value:p.monthlyPayment?'£'+Number(p.monthlyPayment).toLocaleString('en-GB'):null},
+        {label:'Account ref',value:p.mortgageRef},
+      ],
+      completion_statement:[
+        {label:'Purchase price',value:p.purchasePrice?'£'+Number(p.purchasePrice).toLocaleString('en-GB'):null},
+        {label:'Completion date',value:p.purchaseDate},
+      ],
+      other:[
+        {label:'Documents',value:(p.docs||[]).filter(d=>d==='other').length+' other document(s) uploaded'},
+      ],
+    }
+    return (infos[docType]||[]).filter(i=>i.value)
+  }
+
+      return<div key={p.id}
+    onDragOver={e=>{e.preventDefault();setCardOver(true)}}
+    onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setCardOver(false)}}
+    onDrop={handleCardDrop}
+    style={{background:'var(--surface)',border:'2px solid '+(cardOver?'var(--brand)':'transparent'),outline:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:14,transition:'all 0.15s',background:cardOver?'var(--brand-subtle)':'var(--surface)'}}>
+    {cardOver&&<div style={{textAlign:'center',padding:'8px 0',fontSize:13,fontWeight:600,color:'var(--brand)',marginBottom:10}}>Drop documents for {p.shortName}</div>}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,gap:12}}>
           <div style={{minWidth:0}}>
             <div style={{fontFamily:'var(--display)',fontSize:'clamp(17px,3vw,20px)',fontWeight:400,marginBottom:3}}>{p.shortName}</div>
@@ -1720,9 +1824,26 @@ function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,
             <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
               <Pill type={p.ownership==='Ltd Company'?'blue':'brand'}>{p.ownership||'Personal'}</Pill>
               {nl&&<span style={{fontSize:11,padding:'3px 10px',borderRadius:20,background:nl.bg,color:nl.color,fontWeight:500}}>{p.nation}</span>}
-              {(p.docs||[]).map(d=><DocBadge key={d} type={d}/>)}
+              {[...new Set(p.docs||[])].map(d=><span key={d} onClick={()=>setActiveDoc(activeDoc===d?null:d)} style={{cursor:'pointer',display:'inline-block'}}><DocBadge type={d}/></span>)}
               {p.epcRating&&<Pill type={epcStatus||'grey'}>EPC {p.epcRating}</Pill>}
             </div>
+            {activeDoc&&<div style={{marginTop:10,background:'var(--brand-subtle)',border:'0.5px solid var(--brand-light)',borderRadius:10,padding:'10px 12px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--brand)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{DOC_META[activeDoc]?.label||'Document'} details</div>
+                <button onClick={()=>setActiveDoc(null)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:14,padding:'0 2px'}}>x</button>
+              </div>
+              {getDocInfo(activeDoc).length>0
+                ?<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 16px'}}>
+                  {getDocInfo(activeDoc).map(item=>(
+                    <div key={item.label} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'0.5px solid var(--border)',fontSize:12}}>
+                      <span style={{color:'var(--text-3)'}}>{item.label}</span>
+                      <span style={{fontWeight:500,color:item.color||'var(--text)',textAlign:'right'}}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+                :<div style={{fontSize:12,color:'var(--text-3)'}}>No extracted data yet. Drop the document to extract details automatically.</div>
+              }
+            </div>}
           </div>
           <div style={{textAlign:'right',flexShrink:0}}>
             {p.rent&&<><div style={{fontSize:'clamp(18px,3vw,22px)',fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px'}}>{fmt(Number(p.rent))}</div><div style={{fontSize:10,color:'var(--text-3)'}}>per month</div></>}
@@ -1743,11 +1864,10 @@ function Properties({portfolio,onAddDocs,onAddDocsToProp,onScan,onManual,onEdit,
         {p.insuranceType?.toLowerCase()==='home'&&<div style={{marginTop:10,fontSize:11,color:'var(--red)',background:'var(--red-bg)',borderRadius:7,padding:'7px 10px',lineHeight:1.6}}>Home insurance detected - you need a landlord policy.</div>}
         {p.insurer&&p.insuranceType?.toLowerCase()!=='home'&&(p.insuranceSumInsured||p.insuranceCover||p.insuranceExclusions||p.insuranceLossOfRent||p.insuranceUnoccupancy)&&<InsuranceDetail p={p}/>}
         {p.epcRating&&['D','E','F','G'].includes(p.epcRating.toUpperCase())&&<div style={{marginTop:10,background:'#fff8e1',border:'0.5px solid #EF9F27',borderRadius:9,padding:'10px 13px',fontSize:12,color:'#633806',lineHeight:1.6}}>EPC {p.epcRating}: Minimum C required for new lets from 2028, all lets from 2030. Estimated upgrade cost: {p.epcRating==='D'?'£3,000-£8,000':'£5,000-£15,000'}.</div>}
-        {/* Property-scoped document drop */}
-        <PropertyDropZone propName={p.shortName} propId={p.id} onFiles={files=>onAddDocsToProp&&onAddDocsToProp(files,p.id)} onManual={onManual}/>
+        {/* Property-scoped document drop - hidden when card is drag target */}
+        {!cardOver&&<PropertyDropZone propName={p.shortName} propId={p.id} onFiles={files=>onAddDocsToProp&&onAddDocsToProp(files,p.id)} onManual={onManual}/>}
       </div>
-    })}
-  </div>
+  )
 }
 
 /* ---- Finance ---- */
@@ -3907,23 +4027,25 @@ function PaywallBanner({subscription,user,onUpgrade,propCount,maxProps}){
   </div>
 }
 
-function UpgradeModal({onClose,user,currentPlan}){
-  const[selPlan,setSelPlan]=useState('standard')
+function UpgradeModal({onClose,user,currentPlan,preselectedPlan,preselectedBilling}){
+  const[selPlan,setSelPlan]=useState(preselectedPlan||'standard')
+  const[billing,setBilling]=useState(preselectedBilling||'annual')
   const[addHmo,setAddHmo]=useState(false)
   const[loading,setLoading]=useState(false)
 
   const PLANS=[
-    {id:'starter',name:'Starter',price:8,props:'1-2 properties'},
-    {id:'standard',name:'Standard',price:16,props:'3-5 properties'},
-    {id:'portfolio',name:'Portfolio',price:28,props:'6-10 properties',popular:true},
-    {id:'pro',name:'Pro',price:40,props:'Unlimited'},
+    {id:'starter',   name:'Starter',      monthly:12.50, annual:10,  props:'1-2 properties',    group:'landlord'},
+    {id:'standard',  name:'Standard',     monthly:25,    annual:20,  props:'3-5 properties',    group:'landlord'},
+    {id:'portfolio', name:'Portfolio',    monthly:44,    annual:35,  props:'6-10 properties',   group:'landlord', popular:true},
+    {id:'pro',       name:'Pro landlord', monthly:70,    annual:56,  props:'11-25 properties',  group:'operator'},
+    {id:'agency',    name:'Agency',       monthly:188,   annual:150, props:'26-100 properties', group:'operator', popular:true},
   ]
 
   async function startCheckout(){
     setLoading(true)
     try{
       const r=await fetch('/api/stripe/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({plan:selPlan,addHmo,email:user?.emailAddresses?.[0]?.emailAddress})})
+        body:JSON.stringify({plan:selPlan,billing,addHmo,email:user?.emailAddresses?.[0]?.emailAddress})})
       const d=await r.json()
       if(d.url) window.location.href=d.url
       else alert('Could not start checkout. Please try again.')
@@ -3932,11 +4054,13 @@ function UpgradeModal({onClose,user,currentPlan}){
   }
 
   const plan=PLANS.find(p=>p.id===selPlan)
-  const total=(plan?.price||0)+(addHmo?12.50:0)
+  const price=billing==='annual'?(plan?.annual||0):(plan?.monthly||0)
+  const hmoPrice=billing==='annual'?15:19
+  const total=price+(addHmo?hmoPrice:0)
 
   return<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}>
     <div style={{background:'var(--surface)',borderRadius:20,padding:'32px 28px',maxWidth:520,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:24}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
         <div>
           <div style={{fontFamily:'var(--display)',fontSize:22,fontWeight:400,marginBottom:4}}>Choose your plan</div>
           <div style={{fontSize:13,color:'var(--text-3)'}}>14-day free trial, no credit card required</div>
@@ -3944,18 +4068,49 @@ function UpgradeModal({onClose,user,currentPlan}){
         <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--text-3)',padding:'0 4px'}}>x</button>
       </div>
 
-      {/* Plan selector */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
-        {PLANS.map(p=><button key={p.id} onClick={()=>setSelPlan(p.id)}
+      {/* Billing toggle */}
+      <div style={{display:'flex',alignItems:'center',background:'var(--surface2)',borderRadius:10,padding:3,gap:2,marginBottom:20,width:'fit-content'}}>
+        <button onClick={()=>setBilling('annual')} style={{padding:'6px 16px',borderRadius:8,border:'none',fontFamily:'var(--font)',fontSize:12,fontWeight:billing==='annual'?600:400,background:billing==='annual'?'var(--brand)':'transparent',color:billing==='annual'?'#fff':'var(--text-2)',cursor:'pointer'}}>
+          Annual <span style={{fontSize:10,opacity:0.85}}>save 20%</span>
+        </button>
+        <button onClick={()=>setBilling('monthly')} style={{padding:'6px 16px',borderRadius:8,border:'none',fontFamily:'var(--font)',fontSize:12,fontWeight:billing==='monthly'?600:400,background:billing==='monthly'?'var(--brand)':'transparent',color:billing==='monthly'?'#fff':'var(--text-2)',cursor:'pointer'}}>
+          Monthly
+        </button>
+      </div>
+
+      {/* Private landlord plans */}
+      <div style={{fontSize:10,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:8}}>Private landlords</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:14}}>
+        {PLANS.filter(p=>p.group==='landlord').map(p=><button key={p.id} onClick={()=>setSelPlan(p.id)}
           style={{padding:'12px 14px',borderRadius:12,border:'1.5px solid',textAlign:'left',cursor:'pointer',
             borderColor:selPlan===p.id?'var(--brand)':'var(--border)',
             background:selPlan===p.id?'var(--brand-subtle)':'var(--surface)',
             position:'relative'}}>
           {p.popular&&<span style={{position:'absolute',top:8,right:8,fontSize:10,background:'var(--brand)',color:'#fff',padding:'1px 6px',borderRadius:20,fontWeight:600}}>Popular</span>}
-          <div style={{fontSize:13,fontWeight:600,color:selPlan===p.id?'var(--brand)':'var(--text)',marginBottom:2}}>{p.name}</div>
-          <div style={{fontSize:18,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{p.price}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
-          <div style={{fontSize:11,color:'var(--text-3)'}}>{p.props}</div>
+          <div style={{fontSize:12,fontWeight:600,color:selPlan===p.id?'var(--brand)':'var(--text)',marginBottom:2}}>{p.name}</div>
+          <div style={{fontSize:17,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{billing==='annual'?p.annual:p.monthly}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
+          <div style={{fontSize:10,color:'var(--text-3)'}}>{p.props}</div>
         </button>)}
+      </div>
+      {/* Professional operator plans */}
+      <div style={{fontSize:10,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:8}}>Professional operators</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:16}}>
+        {PLANS.filter(p=>p.group==='operator').map(p=><button key={p.id} onClick={()=>setSelPlan(p.id)}
+          style={{padding:'12px 14px',borderRadius:12,border:'1.5px solid',textAlign:'left',cursor:'pointer',
+            borderColor:selPlan===p.id?'var(--brand)':'var(--border)',
+            background:selPlan===p.id?'var(--brand-subtle)':'var(--surface)',
+            position:'relative'}}>
+          {p.popular&&<span style={{position:'absolute',top:8,right:8,fontSize:10,background:'var(--brand)',color:'#fff',padding:'1px 6px',borderRadius:20,fontWeight:600}}>Popular</span>}
+          <div style={{fontSize:12,fontWeight:600,color:selPlan===p.id?'var(--brand)':'var(--text)',marginBottom:2}}>{p.name}</div>
+          <div style={{fontSize:17,fontWeight:700,color:selPlan===p.id?'var(--brand)':'var(--text)',fontFamily:'var(--mono)'}}>£{billing==='annual'?p.annual:p.monthly}<span style={{fontSize:11,fontWeight:400}}>/mo</span></div>
+          <div style={{fontSize:10,color:'var(--text-3)'}}>{p.props}</div>
+        </button>)}
+        <a href="mailto:hello@lettly.co"
+          style={{padding:'12px 14px',borderRadius:12,border:'1.5px solid var(--border)',textAlign:'left',cursor:'pointer',background:'var(--surface)',textDecoration:'none',display:'block'}}>
+          <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:2}}>Enterprise</div>
+          <div style={{fontSize:17,fontWeight:700,color:'var(--text)',fontFamily:'var(--mono)'}}>Custom</div>
+          <div style={{fontSize:10,color:'var(--text-3)'}}>100+ properties</div>
+        </a>
       </div>
 
       {/* HMO add-on */}
@@ -3964,14 +4119,18 @@ function UpgradeModal({onClose,user,currentPlan}){
         <div style={{flex:1}}>
           <div style={{fontSize:13,fontWeight:500}}>Add HMO management suite</div>
           <div style={{fontSize:11,color:'var(--text-3)'}}>Room tracking, licence manager, fire safety checklist, PAT testing</div>
+          <div style={{fontSize:11,color:'var(--amber)',marginTop:3,fontWeight:500}}>Priced per HMO address, add once per site</div>
         </div>
-        <div style={{fontSize:13,fontWeight:600,color:'var(--brand)',flexShrink:0}}>+£12.50/mo</div>
+        <div style={{fontSize:13,fontWeight:600,color:'var(--brand)',flexShrink:0}}>+£{billing==='annual'?15:19}/mo</div>
       </label>
 
       {/* Total */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 0',borderTop:'0.5px solid var(--border)',marginBottom:16}}>
-        <span style={{fontSize:13,color:'var(--text-2)'}}>Total after 14-day trial</span>
-        <span style={{fontSize:20,fontWeight:700,fontFamily:'var(--mono)',color:'var(--brand)'}}>£{total.toFixed(2).replace('.00','')}/mo</span>
+        <div>
+          <div style={{fontSize:13,color:'var(--text-2)'}}>Total after 14-day trial</div>
+          {billing==='annual'&&<div style={{fontSize:10,color:'var(--text-3)'}}>billed as £{(total*12).toFixed(0)}/year</div>}
+        </div>
+        <span style={{fontSize:20,fontWeight:700,fontFamily:'var(--mono)',color:'var(--brand)'}}>£{total % 1===0?total:total.toFixed(2)}/mo</span>
       </div>
 
       <button onClick={startCheckout} disabled={loading}
@@ -4336,27 +4495,7 @@ function HMOTab({portfolio,setPortfolio}){
     </div>}
   </div>
 }
-function NavGroup({label,tabs,tab,setTab,user,portfolio}){
-  const[open,setOpen]=useState(false)
-  const isActive=tabs.includes(tab)
-  if(tabs.length===1){
-    return<button onClick={()=>setTab(tabs[0])} style={{padding:'7px 14px',borderRadius:8,fontFamily:'var(--font)',fontSize:13,background:isActive?'var(--brand)':'transparent',color:isActive?'#fff':'var(--text-2)',border:'none',cursor:'pointer',fontWeight:isActive?600:400,whiteSpace:'nowrap'}}>{label}</button>
-  }
-  return<div style={{position:'relative'}} onMouseEnter={()=>setOpen(true)} onMouseLeave={()=>setOpen(false)}>
-    <button style={{padding:'7px 14px',borderRadius:8,fontFamily:'var(--font)',fontSize:13,background:isActive?'var(--brand)':'transparent',color:isActive?'#fff':'var(--text-2)',border:'none',cursor:'pointer',fontWeight:isActive?600:400,display:'flex',alignItems:'center',gap:4,whiteSpace:'nowrap'}}>
-      {label}<span style={{fontSize:9,opacity:0.6}}>▾</span>
-    </button>
-    {open&&<div style={{position:'absolute',top:'100%',left:0,background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:10,padding:'6px',boxShadow:'0 8px 24px rgba(0,0,0,0.10)',zIndex:200,minWidth:180,display:'flex',flexDirection:'column',gap:2}}>
-      {tabs.map(id=>{
-        const t=TABS.find(x=>x.id===id)
-        if(!t)return null
-        if(t.adminOnly&&!user?.publicMetadata?.admin&&!(user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co'))return null
-        if(t.hmoOnly&&!(portfolio.properties||[]).some(p=>p.isHMO))return null
-        return<button key={id} onClick={()=>{setTab(id);setOpen(false)}} style={{padding:'8px 12px',borderRadius:7,fontSize:13,textAlign:'left',background:tab===id?'var(--brand-light)':'transparent',color:tab===id?'var(--brand)':'var(--text)',border:'none',cursor:'pointer',fontFamily:'var(--font)',fontWeight:tab===id?600:400,whiteSpace:'nowrap',width:'100%'}}>{t.label}</button>
-      })}
-    </div>}
-  </div>
-}
+
 function ToolsTab({portfolio,setPortfolio}){
   const props=portfolio.properties||[]
   const[tool,setTool]=useState('remortgage')
@@ -4689,123 +4828,587 @@ function RentTracker({portfolio, setPortfolio}){
 
 
 /* ---- Condition Report ---- */
+const ROOM_TYPES = ['Living room','Kitchen','Bathroom','Bedroom 1','Bedroom 2','Bedroom 3','Hallway','Landing','Garden','Garage','Utility room','Dining room','Other']
+const CONDITIONS = ['Excellent','Good','Fair','Poor','Not inspected']
+const CONDITION_COLOR = {Excellent:'var(--green)',Good:'var(--brand)',Fair:'var(--amber)',Poor:'var(--red)','Not inspected':'var(--text-3)'}
+const CONDITION_BG = {Excellent:'var(--green-bg)',Good:'var(--brand-light)',Fair:'var(--amber-bg)',Poor:'var(--red-bg)','Not inspected':'var(--surface2)'}
+
+function generateInspectionPDF(report, portfolio) {
+  const prop = (portfolio.properties||[]).find(p=>p.id===report.propertyId)||{}
+  const typeLabel = {move_in:'Move-in inspection',move_out:'Move-out inspection',periodic:'Periodic inspection',inventory:'Inventory check'}[report.type]||report.type
+  const totalDamage = (report.damages||[]).reduce((s,d)=>s+(Number(d.estimatedCost)||0),0)
+  const condBg = c => c==='Excellent'?'#e8f5e9':c==='Good'?'#eaf4ee':c==='Fair'?'#fff8e1':'#fce8e6'
+  const condCol = c => c==='Excellent'?'#1e6e35':c==='Good'?'#1b5e3b':c==='Fair'?'#633806':'#791F1F'
+
+  let roomsHtml = ''
+  ;(report.rooms||[]).forEach(function(room) {
+    let itemsHtml = ''
+    ;(room.items||[]).forEach(function(item) {
+      itemsHtml += '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>' + item.name + (item.qty>1?' (x'+item.qty+')':'') + '</span><span style="color:#666;">' + (item.condition||'') + '</span></div>'
+    })
+    roomsHtml += '<div style="margin-bottom:16px;border:1px solid #ddd;border-radius:8px;overflow:hidden;">'
+    roomsHtml += '<div style="background:#f5f5f5;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">'
+    roomsHtml += '<strong style="font-size:14px;">' + room.name + '</strong>'
+    roomsHtml += '<span style="font-size:12px;padding:3px 10px;border-radius:20px;background:' + condBg(room.condition) + ';color:' + condCol(room.condition) + ';">' + (room.condition||'Not rated') + '</span>'
+    roomsHtml += '</div>'
+    if(room.notes) roomsHtml += '<div style="padding:10px 14px;font-size:13px;color:#555;border-bottom:1px solid #eee;">' + room.notes + '</div>'
+    if((room.items||[]).length>0) {
+      roomsHtml += '<div style="padding:10px 14px;"><div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Inventory items</div>' + itemsHtml + '</div>'
+    }
+    roomsHtml += '</div>'
+  })
+
+  let damagesHtml = ''
+  if((report.damages||[]).length>0) {
+    let dRows = ''
+    ;(report.damages||[]).forEach(function(d) {
+      dRows += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(226,75,74,0.2);font-size:13px;">'
+      dRows += '<div><strong>' + d.room + '</strong>: ' + d.description + '</div>'
+      if(d.estimatedCost) dRows += '<div style="color:#791F1F;font-weight:600;">£' + Number(d.estimatedCost).toLocaleString('en-GB') + '</div>'
+      dRows += '</div>'
+    })
+    damagesHtml = '<div style="background:#fce8e6;border:1px solid #e24b4a;border-radius:8px;padding:16px;margin-bottom:20px;">'
+    damagesHtml += '<h3 style="font-size:14px;color:#791F1F;margin:0 0 12px;">Damage noted</h3>' + dRows
+    if(totalDamage>0) damagesHtml += '<div style="text-align:right;font-weight:700;color:#791F1F;margin-top:10px;font-size:14px;">Total estimated: £' + totalDamage.toLocaleString('en-GB') + '</div>'
+    damagesHtml += '</div>'
+  }
+
+  let tableRows = ''
+  tableRows += '<tr><td>Property address</td><td><strong>' + (prop.address||report.propertyName) + '</strong></td></tr>'
+  tableRows += '<tr><td>Inspection type</td><td>' + typeLabel + '</td></tr>'
+  tableRows += '<tr><td>Inspection date</td><td>' + report.date + '</td></tr>'
+  tableRows += '<tr><td>Overall condition</td><td><strong>' + (report.overallCondition||'Not rated') + '</strong></td></tr>'
+  if(report.tenantName) tableRows += '<tr><td>Tenant</td><td>' + report.tenantName + '</td></tr>'
+  if(report.keysHanded) tableRows += '<tr><td>Keys</td><td>' + report.keysHanded + '</td></tr>'
+  if(report.depositAmount) tableRows += '<tr><td>Deposit</td><td>£' + Number(report.depositAmount).toLocaleString('en-GB') + ' - ' + (report.depositScheme||'') + (report.depositRef?' Ref: '+report.depositRef:'') + '</td></tr>'
+  if(report.elecMeterReading) tableRows += '<tr><td>Electric meter</td><td>' + report.elecMeterReading + '</td></tr>'
+  if(report.gasMeterReading) tableRows += '<tr><td>Gas meter</td><td>' + report.gasMeterReading + '</td></tr>'
+  if(report.waterMeterReading) tableRows += '<tr><td>Water meter</td><td>' + report.waterMeterReading + '</td></tr>'
+
+  const sigBlock = report.tenantSignature
+    ? '<div style="margin-top:32px;padding-top:16px;border-top:1px solid #eee;"><div style="font-size:12px;color:#888;margin-bottom:8px;">Tenant acknowledgement</div><div style="font-size:14px;font-style:italic;">' + report.tenantSignature + '</div><div style="font-size:11px;color:#aaa;margin-top:4px;">Signed ' + report.tenantSignedAt + '</div></div>'
+    : '<div style="margin-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:40px;"><div style="border-top:1px solid #999;padding-top:8px;font-size:11px;color:#888;">Landlord signature / date</div><div style="border-top:1px solid #999;padding-top:8px;font-size:11px;color:#888;">Tenant signature / date</div></div>'
+
+  const notesHtml = report.notes ? '<div style="background:#f7f5f0;border-radius:8px;padding:14px 16px;margin-top:16px;"><strong style="font-size:12px;color:#888;display:block;margin-bottom:6px;">NOTES</strong><p style="font-size:13px;margin:0;line-height:1.7;">' + report.notes + '</p></div>' : ''
+  const roomsSection = (report.rooms||[]).length>0 ? '<h2 style="font-size:16px;margin:20px 0 12px;">Room-by-room condition</h2>' + roomsHtml : ''
+
+  const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + typeLabel + ' - ' + report.propertyName + '</title>'
+    + '<style>body{font-family:system-ui,sans-serif;color:#1a1a18;margin:0;padding:32px;max-width:800px;}h1{font-size:26px;font-weight:400;margin:0 0 4px;}table{width:100%;border-collapse:collapse;margin-bottom:20px;}td{padding:8px 0;border-bottom:1px solid #eee;font-size:13px;}td:first-child{color:#888;width:160px;}@media print{body{padding:16px;}}</style>'
+    + '</head><body>'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1b5e3b;">'
+    + '<div><div style="font-size:11px;color:#1b5e3b;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Lettly Property Report</div>'
+    + '<h1>' + typeLabel + '</h1><div style="font-size:15px;color:#555;margin-top:2px;">' + report.propertyName + '</div></div>'
+    + '<div style="text-align:right;font-size:13px;color:#888;"><div>' + report.date + '</div><div style="margin-top:4px;">Ref: ' + report.id.slice(0,8).toUpperCase() + '</div></div>'
+    + '</div>'
+    + '<table>' + tableRows + '</table>'
+    + damagesHtml
+    + roomsSection
+    + notesHtml
+    + sigBlock
+    + '<div style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:12px;">Generated by Lettly · lettly.co · ' + new Date().toLocaleDateString('en-GB') + ' · This report is for record-keeping purposes. Not legal advice.</div>'
+    + '</body></html>'
+
+  const w = window.open('','_blank')
+  w.document.write(html)
+  w.document.close()
+  setTimeout(function(){w.print()}, 600)
+}
+
+
+function ComparisonView({reports, props, onClose}) {
+  const propNames = [...new Set(reports.map(r=>r.propertyName))]
+  const[selProp, setSelProp] = useState(propNames[0]||'')
+
+  const propReports = reports.filter(r=>r.propertyName===selProp)
+  const moveIn = [...propReports].filter(r=>r.type==='move_in').sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp))[0]
+  const moveOut = [...propReports].filter(r=>r.type==='move_out').sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp))[0]
+
+  if(!moveIn && !moveOut) return(
+    <div style={{textAlign:'center',padding:'40px 0',color:'var(--text-3)',fontSize:13}}>
+      No move-in or move-out reports for this property yet.
+    </div>
+  )
+
+  // Find rooms that deteriorated
+  const deteriorated = []
+  if(moveIn && moveOut) {
+    const condOrder = {Excellent:4,Good:3,Fair:2,Poor:1,'Not inspected':0}
+    ;(moveOut.rooms||[]).forEach(outRoom=>{
+      const inRoom = (moveIn.rooms||[]).find(r=>r.name===outRoom.name)
+      if(inRoom && condOrder[outRoom.condition] < condOrder[inRoom.condition]) {
+        deteriorated.push({room:outRoom.name, from:inRoom.condition, to:outRoom.condition})
+      }
+    })
+  }
+
+  const totalDamage = (moveOut?.damages||[]).reduce((s,d)=>s+(Number(d.estimatedCost)||0),0)
+
+  const ColHeader = ({report, label}) => report ? (
+    <div style={{background:'var(--surface2)',borderRadius:10,padding:'12px 14px',marginBottom:12}}>
+      <div style={{fontSize:11,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:2}}>{label}</div>
+      <div style={{fontSize:13,fontWeight:500}}>{report.date}</div>
+      {report.overallCondition&&<div style={{fontSize:11,color:CONDITION_COLOR[report.overallCondition],marginTop:3}}>{report.overallCondition}</div>}
+    </div>
+  ) : (
+    <div style={{background:'var(--surface2)',borderRadius:10,padding:'12px 14px',marginBottom:12,opacity:0.5}}>
+      <div style={{fontSize:11,fontWeight:600,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</div>
+      <div style={{fontSize:12,color:'var(--text-3)',marginTop:4}}>No report yet</div>
+    </div>
+  )
+
+  return(
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:16,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:500}}>Move-in vs move-out comparison</div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <select value={selProp} onChange={e=>setSelProp(e.target.value)}
+            style={{background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'5px 10px',fontFamily:'var(--font)',fontSize:12,color:'var(--text)'}}>
+            {propNames.map(n=><option key={n}>{n}</option>)}
+          </select>
+          <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:18}}>x</button>
+        </div>
+      </div>
+
+      {deteriorated.length>0&&<div style={{background:'var(--red-bg)',border:'0.5px solid var(--red)',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--red)',marginBottom:6}}>{deteriorated.length} room{deteriorated.length>1?'s':''} deteriorated since move-in</div>
+        {deteriorated.map(d=><div key={d.room} style={{fontSize:12,color:'var(--red)',lineHeight:1.8}}>
+          {d.room}: {d.from} → {d.to}
+        </div>)}
+      </div>}
+
+      {totalDamage>0&&<div style={{background:'var(--red-bg)',border:'0.5px solid var(--red)',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--red)'}}>Estimated damage deductions: £{totalDamage.toLocaleString('en-GB')}</div>
+        {(moveOut?.damages||[]).map(d=><div key={d.id} style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--red)',lineHeight:1.8}}>
+          <span>{d.room}: {d.description}</span>
+          {d.estimatedCost&&<span>£{Number(d.estimatedCost).toLocaleString('en-GB')}</span>}
+        </div>)}
+      </div>}
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div>
+          <ColHeader report={moveIn} label="Move-in"/>
+          {(moveIn?.rooms||[]).map(room=>(
+            <div key={room.id} style={{padding:'8px 0',borderBottom:'0.5px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:12}}>{room.name}</span>
+              <span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:CONDITION_BG[room.condition]||'var(--surface2)',color:CONDITION_COLOR[room.condition]||'var(--text-3)'}}>{room.condition||'-'}</span>
+            </div>
+          ))}
+          {moveIn?.elecMeterReading&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>Electric: {moveIn.elecMeterReading}</div>}
+          {moveIn?.gasMeterReading&&<div style={{fontSize:11,color:'var(--text-3)'}}>Gas: {moveIn.gasMeterReading}</div>}
+        </div>
+        <div>
+          <ColHeader report={moveOut} label="Move-out"/>
+          {(moveOut?.rooms||[]).map(room=>{
+            const inRoom = (moveIn?.rooms||[]).find(r=>r.name===room.name)
+            const condOrder = {Excellent:4,Good:3,Fair:2,Poor:1,'Not inspected':0}
+            const worse = inRoom && condOrder[room.condition]<condOrder[inRoom.condition]
+            return(
+              <div key={room.id} style={{padding:'8px 0',borderBottom:'0.5px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',background:worse?'rgba(226,75,74,0.04)':'transparent'}}>
+                <span style={{fontSize:12}}>{room.name}{worse&&<span style={{fontSize:10,color:'var(--red)',marginLeft:6}}>↓</span>}</span>
+                <span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:CONDITION_BG[room.condition]||'var(--surface2)',color:CONDITION_COLOR[room.condition]||'var(--text-3)'}}>{room.condition||'-'}</span>
+              </div>
+            )
+          })}
+          {moveOut?.elecMeterReading&&<div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>Electric: {moveOut.elecMeterReading}</div>}
+          {moveOut?.gasMeterReading&&<div style={{fontSize:11,color:'var(--text-3)'}}>Gas: {moveOut.gasMeterReading}</div>}
+        </div>
+      </div>
+
+      {moveIn&&moveOut&&<div style={{marginTop:14,display:'flex',gap:8}}>
+        <button onClick={()=>generateInspectionPDF(moveIn,{properties:[]})} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Export move-in PDF</button>
+        <button onClick={()=>generateInspectionPDF(moveOut,{properties:[]})} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Export move-out PDF</button>
+      </div>}
+    </div>
+  )
+}
+
 function ConditionReport({portfolio,setPortfolio,userId}){
   const reports=portfolio.conditionReports||[]
-  const[showForm,setShowForm]=useState(false)
-  const[selProp,setSelProp]=useState('')
+  const props=portfolio.properties||[]
+  const[view,setView]=useState('list') // list | form | compare
+  const[selProp,setSelProp]=useState(props[0]?.shortName||'')
   const[reportType,setReportType]=useState('move_in')
+  const[overallCond,setOverallCond]=useState('Good')
+  const[rooms,setRooms]=useState([])
+  const[damages,setDamages]=useState([])
+  const[showAddRoom,setShowAddRoom]=useState(false)
+  const[newRoomName,setNewRoomName]=useState(ROOM_TYPES[0])
   const[photos,setPhotos]=useState({})
-  const[form,setForm]=useState({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
+  const[form,setForm]=useState({tenantName:'',elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
   const photoRef=useRef(null)
   const[photoCategory,setPhotoCategory]=useState('general')
+  const[expandedRoom,setExpandedRoom]=useState(null)
+  const[showTenantAck,setShowTenantAck]=useState(null) // report id
+  const[tenantSig,setTenantSig]=useState('')
 
   const photoCategories=[
     {id:'general',label:'General'},{id:'kitchen',label:'Kitchen'},{id:'bathroom',label:'Bathroom'},
-    {id:'lounge',label:'Lounge'},{id:'bedroom',label:'Bedrooms'},{id:'exterior',label:'Exterior'},
-    {id:'meter_elec',label:'Elec meter'},{id:'meter_gas',label:'Gas meter'},
+    {id:'lounge',label:'Living room'},{id:'bedroom',label:'Bedrooms'},{id:'exterior',label:'Exterior'},
+    {id:'meter_elec',label:'Electric meter'},{id:'meter_gas',label:'Gas meter'},
     {id:'keys',label:'Keys'},{id:'damage',label:'Damage'},
   ]
 
   async function handlePhotos(files){
-    const compressed=await Promise.all(Array.from(files).slice(0,4).map(async f=>{
+    const compressed=await Promise.all(Array.from(files).slice(0,6).map(async f=>{
       const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})
       return new Promise(res=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,1200/img.width);const cv=document.createElement('canvas');cv.width=img.width*scale;cv.height=img.height*scale;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',0.75))};img.src=b64})
     }))
     setPhotos(prev=>({...prev,[photoCategory]:[...(prev[photoCategory]||[]),...compressed].slice(0,8)}))
   }
 
+  function addRoom(){
+    const id=Math.random().toString(36).slice(2)
+    setRooms(prev=>[...prev,{id,name:newRoomName,condition:'Good',notes:'',items:[],photos:[]}])
+    setShowAddRoom(false)
+    setExpandedRoom(id)
+  }
+
+  function updateRoom(id,patch){setRooms(prev=>prev.map(r=>r.id===id?{...r,...patch}:r))}
+  function removeRoom(id){setRooms(prev=>prev.filter(r=>r.id!==id));if(expandedRoom===id)setExpandedRoom(null)}
+
+  function addItem(roomId){
+    setRooms(prev=>prev.map(r=>r.id===roomId?{...r,items:[...r.items,{id:Math.random().toString(36).slice(2),name:'',qty:1,condition:'Good',notes:''}]}:r))
+  }
+
+  function updateItem(roomId,itemId,patch){
+    setRooms(prev=>prev.map(r=>r.id===roomId?{...r,items:r.items.map(i=>i.id===itemId?{...i,...patch}:i)}:r))
+  }
+
+  function removeItem(roomId,itemId){
+    setRooms(prev=>prev.map(r=>r.id===roomId?{...r,items:r.items.filter(i=>i.id!==itemId)}:r))
+  }
+
+  function addDamage(){
+    setDamages(prev=>[...prev,{id:Math.random().toString(36).slice(2),room:'',description:'',estimatedCost:'',photos:[]}])
+  }
+
+  function updateDamage(id,patch){setDamages(prev=>prev.map(d=>d.id===id?{...d,...patch}:d))}
+  function removeDamage(id){setDamages(prev=>prev.filter(d=>d.id!==id))}
+
   function saveReport(){
     if(!selProp) return
     const prop=props.find(p=>p.shortName===selProp||p.id===selProp)
-    const report={id:Math.random().toString(36).slice(2),propertyId:prop?.id,propertyName:selProp,type:reportType,date:new Date().toLocaleDateString('en-GB'),timestamp:new Date().toISOString(),...form,photos,completedBy:userId}
+    const report={
+      id:Math.random().toString(36).slice(2),
+      propertyId:prop?.id,
+      propertyName:selProp,
+      type:reportType,
+      overallCondition:overallCond,
+      date:new Date().toLocaleDateString('en-GB'),
+      timestamp:new Date().toISOString(),
+      ...form,
+      rooms,
+      damages,
+      photos,
+      completedBy:userId,
+      tenantAcknowledged:false,
+      tenantSignature:'',
+      tenantSignedAt:''
+    }
     setPortfolio(prev=>({...prev,conditionReports:[...(prev.conditionReports||[]),report]}))
-    setShowForm(false);setPhotos({});setForm({elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
+    // Reset
+    setView('list')
+    setRooms([])
+    setDamages([])
+    setPhotos({})
+    setOverallCond('Good')
+    setForm({tenantName:'',elecMeterReading:'',gasMeterReading:'',waterMeterReading:'',keysHanded:'',depositAmount:'',depositScheme:'',depositRef:'',notes:''})
   }
 
-  return<div>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-      <div><div style={{fontSize:13,fontWeight:500}}>Condition reports</div><div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Move-in and move-out inspections with photos, meter readings and key handover</div></div>
-      <button onClick={()=>setShowForm(v=>!v)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>+ New report</button>
-    </div>
+  function applyTenantSig(reportId){
+    if(!tenantSig.trim())return
+    setPortfolio(prev=>({...prev,conditionReports:(prev.conditionReports||[]).map(r=>
+      r.id===reportId?{...r,tenantAcknowledged:true,tenantSignature:tenantSig,tenantSignedAt:new Date().toLocaleDateString('en-GB')}:r
+    )}))
+    setShowTenantAck(null)
+    setTenantSig('')
+  }
 
-    {showForm&&<div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:16}}>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:12}}>
-        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label>
-          <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
+  const inp={background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',width:'100%',boxSizing:'border-box'}
+
+  if(view==='compare') return <ComparisonView reports={reports} props={props} onClose={()=>setView('list')}/>
+
+  if(view==='form') return(
+    <div style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14,padding:18,marginBottom:16}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:14,fontWeight:500}}>New inspection report</div>
+        <button onClick={()=>setView('list')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:18}}>x</button>
+      </div>
+
+      {/* Property + type */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:16}}>
+        <div style={{marginBottom:14}}>
+          <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Property</label>
+          <select value={selProp} onChange={e=>setSelProp(e.target.value)} style={inp}>
             <option value="">Select property</option>{props.map(p=><option key={p.id} value={p.shortName}>{p.shortName}</option>)}
-          </select></div>
-        <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Type</label>
-          <select value={reportType} onChange={e=>setReportType(e.target.value)} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none'}}>
-            <option value="move_in">Move-in</option><option value="move_out">Move-out</option><option value="periodic">Periodic</option><option value="inventory">Inventory</option>
-          </select></div>
-      </div>
-      <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Meter readings</div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0 12px',marginBottom:14}}>
-        {[['elecMeterReading','Electric'],['gasMeterReading','Gas'],['waterMeterReading','Water']].map(([key,label])=>(
-          <div key={key} style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
-            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder="Reading" style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/></div>
-        ))}
-      </div>
-      <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Keys and deposit</div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px',marginBottom:14}}>
-        {[['keysHanded','Keys handed to/from'],['depositAmount','Deposit amount (£)'],['depositScheme','Deposit scheme'],['depositRef','Deposit reference']].map(([key,label])=>(
-          <div key={key} style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
-            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder={label} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',boxSizing:'border-box'}}/></div>
-        ))}
-      </div>
-      <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Photos</div>
-      <input ref={photoRef} type="file" accept="image/*" multiple capture="environment" style={{display:'none'}} onChange={e=>handlePhotos(e.target.files)}/>
-      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
-        {photoCategories.map(cat=><button key={cat.id} onClick={()=>{setPhotoCategory(cat.id);setTimeout(()=>photoRef.current?.click(),100)}}
-          style={{padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--border)',background:(photos[cat.id]||[]).length>0?'var(--brand-light)':'var(--surface)',color:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--text-2)',position:'relative'}}>
-          {cat.label}{(photos[cat.id]||[]).length>0&&<span style={{position:'absolute',top:-4,right:-4,width:14,height:14,borderRadius:'50%',background:'var(--brand)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{(photos[cat.id]||[]).length}</span>}
-        </button>)}
-      </div>
-      <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:14}}>
-        {Object.entries(photos).flatMap(([cat,imgs])=>imgs.map((img,i)=>(
-          <div key={cat+i} style={{position:'relative',width:56,height:56,borderRadius:7,overflow:'hidden',border:'0.5px solid var(--border)'}}>
-            <img src={img} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-            <button onClick={()=>setPhotos(prev=>({...prev,[cat]:prev[cat].filter((_,j)=>j!==i)}))} style={{position:'absolute',top:2,right:2,width:14,height:14,borderRadius:'50%',background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
-          </div>
-        )))}
-      </div>
-      <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Notes</label>
-        <textarea value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Any additional observations..." rows={3} style={{width:'100%',background:'var(--surface2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'8px 11px',fontFamily:'var(--font)',fontSize:13,color:'var(--text)',outline:'none',resize:'vertical',boxSizing:'border-box'}}/>
-      </div>
-      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-        <button onClick={()=>setShowForm(false)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
-        <button onClick={saveReport} disabled={!selProp} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:selProp?'pointer':'not-allowed',opacity:selProp?1:0.5}}>Save report</button>
-      </div>
-    </div>}
-
-    {reports.length===0&&!showForm&&<div style={{textAlign:'center',padding:'32px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}><div style={{fontSize:13,color:'var(--text-3)'}}>No condition reports yet. Create a move-in report when a tenant arrives.</div></div>}
-    {reports.length>0&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
-      {[...reports].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(r=>{
-        const typeLabel={move_in:'Move-in',move_out:'Move-out',periodic:'Periodic',inventory:'Inventory'}[r.type]||r.type
-        const typeColor={move_in:'brand',move_out:'amber',periodic:'grey',inventory:'blue'}[r.type]||'grey'
-        const totalPhotos=Object.values(r.photos||{}).reduce((s,p)=>s+p.length,0)
-        return<div key={r.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'12px 14px'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,marginBottom:6,flexWrap:'wrap'}}>
-            <div><div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:2}}><span style={{fontSize:13,fontWeight:500}}>{r.propertyName}</span><Pill type={typeColor}>{typeLabel}</Pill><span style={{fontSize:11,color:'var(--text-3)'}}>{r.date}</span></div>
-              <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.7}}>
-                {r.elecMeterReading&&<span style={{marginRight:10}}>Elec: {r.elecMeterReading}</span>}
-                {r.gasMeterReading&&<span style={{marginRight:10}}>Gas: {r.gasMeterReading}</span>}
-                {r.keysHanded&&<span style={{marginRight:10}}>Keys: {r.keysHanded}</span>}
-                {totalPhotos>0&&<span>{totalPhotos} photo{totalPhotos!==1?'s':''}</span>}
-              </div>
-            </div>
-          </div>
-          {totalPhotos>0&&<div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-            {Object.entries(r.photos||{}).flatMap(([cat,imgs])=>imgs.slice(0,2).map((img,i)=>(
-              <img key={cat+i} src={img} alt="" style={{width:44,height:44,borderRadius:5,objectFit:'cover',cursor:'pointer'}} onClick={()=>window.open(img)}/>
-            ))).slice(0,8)}
-          </div>}
-          {r.notes&&<div style={{fontSize:11,color:'var(--text-2)',marginTop:6,paddingTop:6,borderTop:'0.5px solid var(--border)'}}>{r.notes}</div>}
+          </select>
         </div>
-      })}
-    </div>}
-  </div>
+        <div style={{marginBottom:14}}>
+          <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Type</label>
+          <select value={reportType} onChange={e=>setReportType(e.target.value)} style={inp}>
+            <option value="move_in">Move-in</option>
+            <option value="move_out">Move-out</option>
+            <option value="periodic">Periodic inspection</option>
+            <option value="inventory">Inventory check</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Overall condition */}
+      <div style={{marginBottom:16}}>
+        <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.4px'}}>Overall property condition</label>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {CONDITIONS.filter(c=>c!=='Not inspected').map(c=>(
+            <button key={c} onClick={()=>setOverallCond(c)}
+              style={{padding:'6px 14px',borderRadius:20,fontSize:12,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+                borderColor:overallCond===c?CONDITION_COLOR[c]:'var(--border)',
+                background:overallCond===c?CONDITION_BG[c]:'var(--surface)',
+                color:overallCond===c?CONDITION_COLOR[c]:'var(--text-2)'}}>
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tenant + meter readings */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+        <div style={{marginBottom:14,gridColumn:'1/-1'}}>
+          <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>Tenant name</label>
+          <input value={form.tenantName} onChange={e=>setForm(p=>({...p,tenantName:e.target.value}))} placeholder="Full name" style={inp}/>
+        </div>
+        {[['elecMeterReading','Electric meter'],['gasMeterReading','Gas meter'],['waterMeterReading','Water meter']].map(([key,label])=>(
+          <div key={key} style={{marginBottom:14}}>
+            <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder="Reading" style={inp}/>
+          </div>
+        ))}
+        {[['keysHanded','Keys handed'],['depositAmount','Deposit (£)'],['depositScheme','Deposit scheme'],['depositRef','Deposit ref']].map(([key,label])=>(
+          <div key={key} style={{marginBottom:14}}>
+            <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</label>
+            <input value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} placeholder={label} style={inp}/>
+          </div>
+        ))}
+      </div>
+
+      {/* Room-by-room */}
+      <div style={{marginBottom:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{fontSize:12,fontWeight:500}}>Room-by-room condition</div>
+          <button onClick={()=>setShowAddRoom(v=>!v)} style={{fontSize:11,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:7,padding:'4px 12px',cursor:'pointer',fontWeight:500}}>+ Add room</button>
+        </div>
+
+        {showAddRoom&&<div style={{background:'var(--surface2)',borderRadius:10,padding:12,marginBottom:10,display:'flex',gap:8,alignItems:'center'}}>
+          <select value={newRoomName} onChange={e=>setNewRoomName(e.target.value)} style={{...inp,width:'auto',flex:1}}>
+            {ROOM_TYPES.map(r=><option key={r}>{r}</option>)}
+          </select>
+          <input value={newRoomName} onChange={e=>setNewRoomName(e.target.value)} placeholder="Or type custom name" style={{...inp,flex:1}}/>
+          <button onClick={addRoom} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 14px',fontSize:12,cursor:'pointer',whiteSpace:'nowrap'}}>Add</button>
+          <button onClick={()=>setShowAddRoom(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)'}}>x</button>
+        </div>}
+
+        {rooms.map(room=>(
+          <div key={room.id} style={{border:'0.5px solid var(--border)',borderRadius:10,marginBottom:8,overflow:'hidden'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'var(--surface2)',cursor:'pointer'}}
+              onClick={()=>setExpandedRoom(expandedRoom===room.id?null:room.id)}>
+              <span style={{fontSize:13,fontWeight:500,flex:1}}>{room.name}</span>
+              <div style={{display:'flex',gap:4}}>
+                {CONDITIONS.filter(c=>c!=='Not inspected').map(c=>(
+                  <button key={c} onClick={e=>{e.stopPropagation();updateRoom(room.id,{condition:c})}}
+                    style={{padding:'3px 8px',borderRadius:20,fontSize:10,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+                      borderColor:room.condition===c?CONDITION_COLOR[c]:'var(--border)',
+                      background:room.condition===c?CONDITION_BG[c]:'var(--surface)',
+                      color:room.condition===c?CONDITION_COLOR[c]:'var(--text-3)'}}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+              <button onClick={e=>{e.stopPropagation();removeRoom(room.id)}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:14,padding:'0 4px'}}>x</button>
+            </div>
+
+            {expandedRoom===room.id&&<div style={{padding:12}}>
+              <textarea value={room.notes} onChange={e=>updateRoom(room.id,{notes:e.target.value})}
+                placeholder="Condition notes for this room..." rows={2}
+                style={{...inp,marginBottom:12,resize:'vertical'}}/>
+
+              {/* Inventory items */}
+              <div style={{marginBottom:8}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                  <span style={{fontSize:11,fontWeight:500,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.4px'}}>Inventory items</span>
+                  <button onClick={()=>addItem(room.id)} style={{fontSize:10,color:'var(--brand)',background:'var(--brand-light)',border:'none',borderRadius:6,padding:'3px 8px',cursor:'pointer'}}>+ Add item</button>
+                </div>
+                {room.items.map(item=>(
+                  <div key={item.id} style={{display:'grid',gridTemplateColumns:'1fr 60px 100px auto',gap:6,marginBottom:6,alignItems:'center'}}>
+                    <input value={item.name} onChange={e=>updateItem(room.id,item.id,{name:e.target.value})} placeholder="Item name" style={{...inp,padding:'5px 8px',fontSize:12}}/>
+                    <input type="number" value={item.qty} onChange={e=>updateItem(room.id,item.id,{qty:e.target.value})} placeholder="Qty" style={{...inp,padding:'5px 8px',fontSize:12}}/>
+                    <select value={item.condition} onChange={e=>updateItem(room.id,item.id,{condition:e.target.value})} style={{...inp,padding:'5px 8px',fontSize:12}}>
+                      {CONDITIONS.map(c=><option key={c}>{c}</option>)}
+                    </select>
+                    <button onClick={()=>removeItem(room.id,item.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:14}}>x</button>
+                  </div>
+                ))}
+              </div>
+            </div>}
+          </div>
+        ))}
+
+        {rooms.length===0&&<div style={{fontSize:12,color:'var(--text-3)',padding:'10px 0',textAlign:'center'}}>No rooms added yet. Add rooms to record condition per room.</div>}
+      </div>
+
+      {/* Damage section */}
+      <div style={{marginBottom:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{fontSize:12,fontWeight:500}}>Damage and defects</div>
+          <button onClick={addDamage} style={{fontSize:11,color:'var(--red)',background:'var(--red-bg)',border:'none',borderRadius:7,padding:'4px 12px',cursor:'pointer',fontWeight:500}}>+ Add damage</button>
+        </div>
+        {damages.map(d=>(
+          <div key={d.id} style={{display:'grid',gridTemplateColumns:'120px 1fr 100px auto',gap:8,marginBottom:8,alignItems:'center'}}>
+            <input value={d.room} onChange={e=>updateDamage(d.id,{room:e.target.value})} placeholder="Room" style={{...inp,padding:'6px 8px',fontSize:12}}/>
+            <input value={d.description} onChange={e=>updateDamage(d.id,{description:e.target.value})} placeholder="Description of damage" style={{...inp,padding:'6px 8px',fontSize:12}}/>
+            <input type="number" value={d.estimatedCost} onChange={e=>updateDamage(d.id,{estimatedCost:e.target.value})} placeholder="Est. cost £" style={{...inp,padding:'6px 8px',fontSize:12}}/>
+            <button onClick={()=>removeDamage(d.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:14}}>x</button>
+          </div>
+        ))}
+        {damages.length===0&&<div style={{fontSize:12,color:'var(--text-3)',padding:'6px 0'}}>No damage recorded. Add items if there are defects to note.</div>}
+      </div>
+
+      {/* Photos */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:12,fontWeight:500,marginBottom:8}}>Photos by area</div>
+        <input ref={photoRef} type="file" accept="image/*" multiple capture="environment" style={{display:'none'}} onChange={e=>handlePhotos(e.target.files)}/>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
+          {photoCategories.map(cat=>(
+            <button key={cat.id} onClick={()=>{setPhotoCategory(cat.id);setTimeout(()=>photoRef.current?.click(),100)}}
+              style={{padding:'4px 10px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',
+                borderColor:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--border)',
+                background:(photos[cat.id]||[]).length>0?'var(--brand-light)':'var(--surface)',
+                color:(photos[cat.id]||[]).length>0?'var(--brand)':'var(--text-2)',position:'relative'}}>
+              {cat.label}
+              {(photos[cat.id]||[]).length>0&&<span style={{position:'absolute',top:-4,right:-4,width:14,height:14,borderRadius:'50%',background:'var(--brand)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{(photos[cat.id]||[]).length}</span>}
+            </button>
+          ))}
+        </div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+          {Object.entries(photos).flatMap(([cat,imgs])=>imgs.map((img,i)=>(
+            <div key={cat+i} style={{position:'relative',width:60,height:60,borderRadius:7,overflow:'hidden',border:'0.5px solid var(--border)'}}>
+              <img src={img} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+              <button onClick={()=>setPhotos(prev=>({...prev,[cat]:prev[cat].filter((_,j)=>j!==i)}))}
+                style={{position:'absolute',top:2,right:2,width:16,height:16,borderRadius:'50%',background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>x</button>
+            </div>
+          )))}
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div style={{marginBottom:16}}>
+        <label style={{display:'block',fontSize:11,fontWeight:500,color:'var(--text-2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.4px'}}>General notes</label>
+        <textarea value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Any additional observations about the property..." rows={3} style={{...inp,resize:'vertical'}}/>
+      </div>
+
+      <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+        <button onClick={()=>setView('list')} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'8px 16px',fontSize:13,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
+        <button onClick={saveReport} disabled={!selProp} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:500,cursor:selProp?'pointer':'not-allowed',opacity:selProp?1:0.5}}>Save report</button>
+      </div>
+    </div>
+  )
+
+  // LIST VIEW
+  return(
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:500}}>Condition reports</div>
+          <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>Room-by-room inspections with photos, inventory and damage logging</div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          {reports.length>=2&&<button onClick={()=>setView('compare')} style={{background:'var(--surface2)',color:'var(--text)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer',fontWeight:500}}>Compare reports</button>}
+          <button onClick={()=>setView('form')} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>+ New report</button>
+        </div>
+      </div>
+
+      {showTenantAck&&<div style={{background:'var(--surface)',border:'0.5px solid var(--brand)',borderRadius:12,padding:16,marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:500,marginBottom:8}}>Tenant acknowledgement</div>
+        <div style={{fontSize:12,color:'var(--text-2)',marginBottom:12}}>Ask the tenant to type their full name below to acknowledge they have read and agreed with this report.</div>
+        <input value={tenantSig} onChange={e=>setTenantSig(e.target.value)} placeholder="Tenant full name" style={{...inp,marginBottom:10}}/>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={()=>applyTenantSig(showTenantAck)} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Confirm acknowledgement</button>
+          <button onClick={()=>{setShowTenantAck(null);setTenantSig('')}} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:'pointer',color:'var(--text-2)'}}>Cancel</button>
+        </div>
+      </div>}
+
+      {reports.length===0&&<div style={{textAlign:'center',padding:'40px 20px',background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:14}}>
+        <div style={{fontSize:32,marginBottom:12}}>📋</div>
+        <div style={{fontSize:14,fontWeight:500,marginBottom:6}}>No reports yet</div>
+        <div style={{fontSize:12,color:'var(--text-3)',marginBottom:16,maxWidth:360,margin:'0 auto 16px'}}>Create a move-in report when a tenant arrives. Include room condition, meter readings, photos and inventory to protect yourself in any deposit dispute.</div>
+        <button onClick={()=>setView('form')} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'9px 20px',fontSize:13,fontWeight:500,cursor:'pointer'}}>Create first report</button>
+      </div>}
+
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {[...reports].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(r=>{
+          const typeLabel={move_in:'Move-in',move_out:'Move-out',periodic:'Periodic',inventory:'Inventory'}[r.type]||r.type
+          const typeColor={move_in:'brand',move_out:'amber',periodic:'grey',inventory:'blue'}[r.type]||'grey'
+          const totalPhotos=Object.values(r.photos||{}).reduce((s,p)=>s+(Array.isArray(p)?p.length:0),0)
+          const totalDamage=(r.damages||[]).reduce((s,d)=>s+(Number(d.estimatedCost)||0),0)
+          return(
+            <div key={r.id} style={{background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:12,padding:'14px 16px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12,marginBottom:8,flexWrap:'wrap'}}>
+                <div>
+                  <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:4}}>
+                    <span style={{fontSize:14,fontWeight:500}}>{r.propertyName}</span>
+                    <Pill type={typeColor}>{typeLabel}</Pill>
+                    {r.overallCondition&&<span style={{fontSize:11,padding:'2px 8px',borderRadius:20,background:CONDITION_BG[r.overallCondition]||'var(--surface2)',color:CONDITION_COLOR[r.overallCondition]||'var(--text-3)'}}>{r.overallCondition}</span>}
+                    {r.tenantAcknowledged&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:'var(--green-bg)',color:'var(--green)',fontWeight:500}}>Tenant signed</span>}
+                    <span style={{fontSize:11,color:'var(--text-3)'}}>{r.date}</span>
+                  </div>
+                  <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.8}}>
+                    {r.tenantName&&<span style={{marginRight:10}}>{r.tenantName}</span>}
+                    {(r.rooms||[]).length>0&&<span style={{marginRight:10}}>{r.rooms.length} room{r.rooms.length>1?'s':''}</span>}
+                    {totalPhotos>0&&<span style={{marginRight:10}}>{totalPhotos} photo{totalPhotos>1?'s':''}</span>}
+                    {totalDamage>0&&<span style={{color:'var(--red)',fontWeight:500}}>£{totalDamage.toLocaleString('en-GB')} damage noted</span>}
+                  </div>
+                </div>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                  <button onClick={()=>generateInspectionPDF(r,portfolio)} style={{fontSize:11,padding:'4px 10px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)'}}>Export PDF</button>
+                  {!r.tenantAcknowledged&&<button onClick={()=>setShowTenantAck(r.id)} style={{fontSize:11,padding:'4px 10px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)'}}>Get tenant sign-off</button>}
+                  <button onClick={()=>setPortfolio(prev=>({...prev,conditionReports:(prev.conditionReports||[]).filter(x=>x.id!==r.id)}))} style={{fontSize:11,padding:'4px 10px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--red)'}}>Delete</button>
+                </div>
+              </div>
+
+              {/* Room summary pills */}
+              {(r.rooms||[]).length>0&&<div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:8}}>
+                {r.rooms.map(room=>(
+                  <span key={room.id} style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:CONDITION_BG[room.condition]||'var(--surface2)',color:CONDITION_COLOR[room.condition]||'var(--text-3)'}}>
+                    {room.name}: {room.condition||'?'}
+                  </span>
+                ))}
+              </div>}
+
+              {/* Damage alert */}
+              {(r.damages||[]).length>0&&<div style={{background:'var(--red-bg)',borderRadius:8,padding:'8px 10px',marginBottom:8,fontSize:11,color:'var(--red)'}}>
+                <strong>{r.damages.length} damage item{r.damages.length>1?'s':''} recorded</strong>
+                {r.damages.map(d=><div key={d.id}>{d.room}: {d.description}{d.estimatedCost?` – £${Number(d.estimatedCost).toLocaleString('en-GB')}`:''}</div>)}
+              </div>}
+
+              {/* Photo thumbnails */}
+              {totalPhotos>0&&<div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                {Object.entries(r.photos||{}).flatMap(([cat,imgs])=>(Array.isArray(imgs)?imgs:[]).slice(0,2).map((img,i)=>(
+                  <img key={cat+i} src={img} alt="" style={{width:44,height:44,borderRadius:5,objectFit:'cover',cursor:'pointer',border:'0.5px solid var(--border)'}} onClick={()=>window.open(img)}/>
+                ))).slice(0,8)}
+              </div>}
+
+              {r.notes&&<div style={{fontSize:11,color:'var(--text-2)',marginTop:8,paddingTop:8,borderTop:'0.5px solid var(--border)',lineHeight:1.6}}>{r.notes}</div>}
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{marginTop:14,background:'var(--surface2)',borderRadius:10,padding:'10px 14px',fontSize:11,color:'var(--text-3)',lineHeight:1.7}}>
+        Condition reports are stored in your portfolio. Export as PDF to share with tenants or to use as evidence in deposit disputes. Always complete a move-in report before handing over keys and a move-out report the day the tenant vacates.
+      </div>
+    </div>
+  )
 }
+
+
 
 /* ---- Bottom Navigation (mobile) ---- */
 function BottomNav({tab, setTab, portfolio, user}){
@@ -4856,7 +5459,7 @@ function BottomNav({tab, setTab, portfolio, user}){
           <button key={t.id} onClick={()=>pick(t.id)} className={'bnav-btn'+(isActive?' active':'')}>
             {isActive&&t.id!=='_more'&&<span className="bnav-dot"/>}
             <span className="bnav-icon">{t.icon}</span>
-            <span className="bnav-label">{t.label}</span>
+            <span className="bnav-label" style={{color:isActive?'var(--brand)':'var(--text-3)'}}>{t.label}</span>
           </button>
         )
       })}
@@ -4873,6 +5476,8 @@ export default function Dashboard(){
   const[subscription,setSubscription]=useState(null)
   const[subLoading,setSubLoading]=useState(true)
   const[showUpgrade,setShowUpgrade]=useState(false)
+  const[preselectedPlan,setPreselectedPlan]=useState(null)
+  const[preselectedBilling,setPreselectedBilling]=useState('annual')
   const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:'',voids:[],applicants:[]})
   const[queue,setQueue]=useState([])
   const[showDrop,setShowDrop]=useState(false)
@@ -4886,7 +5491,15 @@ export default function Dashboard(){
   const[showWizard,setShowWizard]=useState(false)
 
   useEffect(()=>{if(isLoaded&&!isSignedIn){router.replace('/');return}
-    if(isLoaded&&isSignedIn&&typeof window!=='undefined'&&window.location.search.includes('subscribed=1'))setJustSubscribed(true)},[isLoaded,isSignedIn,router])
+    if(isLoaded&&isSignedIn&&typeof window!=='undefined'){
+      if(window.location.search.includes('subscribed=1'))setJustSubscribed(true)
+      const params=new URLSearchParams(window.location.search)
+      const plan=params.get('plan')
+      const bil=params.get('billing')
+      if(plan){setPreselectedPlan(plan);setShowUpgrade(true)}
+      if(bil)setPreselectedBilling(bil)
+    }
+  },[isLoaded,isSignedIn,router])
   useEffect(()=>{
     if(!user?.id)return
     // localStorage check is instant - prevents wizard flash on every login
@@ -5162,15 +5775,15 @@ export default function Dashboard(){
           position:fixed;
           bottom:0;left:0;right:0;
           z-index:150;
-          background:#1b5e3b;
-          border-top:none;
-          padding:8px 0;
-          padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
-          box-shadow:0 -4px 24px rgba(0,0,0,0.18);
+          background:var(--surface);
+          border-top:0.5px solid var(--border);
+          padding:6px 0;
+          padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));
         }
 
         /* Hide top tab strip on mobile */
         .nav-tabs-desktop{display:none !important}
+        .nav-dropdown{display:none}
 
         /* Hide secondary nav clutter on mobile */
         .nav-save-status{display:none !important}
@@ -5178,7 +5791,7 @@ export default function Dashboard(){
         .nav-billing-btn{display:none !important}
 
         /* Extra bottom padding so content clears the bottom nav */
-        .dash-content{padding-bottom:100px !important}
+        .dash-content{padding-bottom:90px !important}
 
         /* Mobile upload bar: camera button is primary, drop zone hidden */
         .upload-bar-desktop{display:none !important}
@@ -5193,17 +5806,17 @@ export default function Dashboard(){
       /* Bottom nav button base */
       .bnav-btn{
         display:flex;flex-direction:column;align-items:center;justify-content:center;
-        gap:4px;flex:1;border:none;background:none;cursor:pointer;padding:8px 0;
+        gap:2px;flex:1;border:none;background:none;cursor:pointer;padding:6px 0;
         font-family:var(--font);position:relative;
         -webkit-tap-highlight-color:transparent;
       }
-      .bnav-btn span.bnav-icon{font-size:24px;line-height:1}
-      .bnav-btn span.bnav-label{font-size:11px;letter-spacing:0.1px;color:rgba(255,255,255,0.55)}
-      .bnav-btn.active span.bnav-label{font-weight:700;color:#fff}
-      .bnav-btn.active span.bnav-icon{filter:drop-shadow(0 0 6px rgba(255,255,255,0.4))}
+      .bnav-btn span.bnav-icon{font-size:20px;line-height:1}
+      .bnav-btn span.bnav-label{font-size:10px;letter-spacing:0.1px}
+      .bnav-btn.active span.bnav-label{font-weight:600;color:var(--brand)}
+      .bnav-btn.active span.bnav-icon{filter:drop-shadow(0 0 3px rgba(27,94,59,0.3))}
       .bnav-dot{
-        position:absolute;top:4px;
-        width:5px;height:5px;border-radius:50%;background:#fff;
+        position:absolute;top:5px;
+        width:4px;height:4px;border-radius:50%;background:var(--brand);
       }
 
       /* More menu slide-up */
@@ -5231,25 +5844,89 @@ export default function Dashboard(){
     {showWizard&&<OnboardingWizard onComplete={completeWizard} firstName={user?.firstName}/>}
 
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
-      <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:62,position:'sticky',top:0,zIndex:100,gap:8}}>
-        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}><div style={{width:34,height:34,background:'var(--brand)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:16,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span></div><span style={{fontFamily:'var(--display)',fontSize:20,fontWeight:400}}>Lettly</span></div>
-        <div className="nav-tabs-desktop" style={{display:'flex',gap:2,alignItems:'center'}}>
-  {[
-    {label:'Overview',   tabs:['overview']},
-    {label:'Properties', tabs:['properties','tenants','conditions','maintenance']},
-    {label:'Finance',    tabs:['finance','rent','invoicing','tools']},
-    {label:'Compliance', tabs:['legislation','hmo']},
-    {label:'More',       tabs:['resources','ai','content']},
-  ].map(g=><NavGroup key={g.label} label={g.label} tabs={g.tabs} tab={tab} setTab={setTab} user={user} portfolio={portfolio}/>)}
-</div>
+      <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 20px',display:'flex',alignItems:'center',height:56,position:'sticky',top:0,zIndex:100,gap:16}}>
+        {/* Logo */}
+        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+          <div style={{width:32,height:32,background:'var(--brand)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <span style={{color:'#fff',fontSize:15,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span>
+          </div>
+          <span style={{fontFamily:'var(--display)',fontSize:19,fontWeight:400}}>Lettly</span>
+        </div>
+
+        {/* Grouped dropdown nav */}
+        <div className="nav-tabs-desktop" style={{display:'flex',alignItems:'center',gap:2,flex:1}}>
+          {/* Overview - standalone */}
+          <button onClick={()=>setTab('overview')} style={{padding:'6px 12px',borderRadius:7,border:'none',background:tab==='overview'?'var(--brand-light)':'transparent',color:tab==='overview'?'var(--brand)':'var(--text-2)',fontWeight:tab==='overview'?600:400,fontSize:13,cursor:'pointer',fontFamily:'var(--font)',whiteSpace:'nowrap'}}>
+            Overview
+          </button>
+
+          {/* Portfolio dropdown */}
+          {[
+            {label:'Portfolio', tabs:[
+              {id:'properties',label:'Properties'},
+              {id:'rent',label:'Rent tracker'},
+              {id:'tenants',label:'Find & check tenants'},
+              {id:'maintenance',label:'Maintenance'},
+              {id:'conditions',label:'Condition reports'},
+              ...(portfolio.properties||[]).some(p=>p.isHMO)?[{id:'hmo',label:'HMO management'}]:[],
+            ]},
+            {label:'Finance', tabs:[
+              {id:'finance',label:'Finance & P&L'},
+              {id:'invoicing',label:'Invoicing'},
+              {id:'tools',label:'Tools & calculators'},
+            ]},
+            {label:'Compliance', tabs:[
+              {id:'legislation',label:'Legislation centre', dot:'red'},
+              {id:'resources',label:'Resources'},
+            ]},
+            {label:'More', tabs:[
+              {id:'ai',label:'Lettly AI', dot:'brand'},
+              ...(user?.publicMetadata?.admin||(user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co'))?[{id:'content',label:'Content queue'}]:[],
+            ]},
+          ].map(group=>{
+            const activeInGroup = group.tabs.some(t=>t.id===tab)
+            return(
+              <div key={group.label} style={{position:'relative'}} className="nav-group"
+                onMouseEnter={e=>e.currentTarget.querySelector('.nav-dropdown').style.display='block'}
+                onMouseLeave={e=>e.currentTarget.querySelector('.nav-dropdown').style.display='none'}>
+                <button style={{padding:'6px 12px',borderRadius:7,border:'none',
+                  background:activeInGroup?'var(--brand-light)':'transparent',
+                  color:activeInGroup?'var(--brand)':'var(--text-2)',
+                  fontWeight:activeInGroup?600:400,
+                  fontSize:13,cursor:'pointer',fontFamily:'var(--font)',whiteSpace:'nowrap',
+                  display:'flex',alignItems:'center',gap:5}}>
+                  {group.label}
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+                </button>
+                <div className="nav-dropdown" style={{display:'none',position:'absolute',top:'calc(100% + 4px)',left:0,background:'var(--surface)',border:'0.5px solid var(--border)',borderRadius:10,padding:6,minWidth:200,zIndex:200,boxShadow:'0 4px 16px rgba(0,0,0,0.08)'}}>
+                  {group.tabs.map(t=>(
+                    <button key={t.id} onClick={()=>setTab(t.id)}
+                      style={{display:'flex',alignItems:'center',gap:8,width:'100%',padding:'8px 12px',borderRadius:7,border:'none',
+                        background:tab===t.id?'var(--brand-light)':'transparent',
+                        color:tab===t.id?'var(--brand)':'var(--text)',
+                        fontSize:13,cursor:'pointer',fontFamily:'var(--font)',textAlign:'left',fontWeight:tab===t.id?500:400}}>
+                      {t.label}
+                      {t.dot==='red'&&<span style={{marginLeft:'auto',width:6,height:6,borderRadius:'50%',background:'var(--red)',flexShrink:0}}/>}
+                      {t.dot==='brand'&&<span style={{marginLeft:'auto',width:6,height:6,borderRadius:'50%',background:'var(--brand)',flexShrink:0}}/>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Right actions */}
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
           {saveStatus==='saving'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
           {saveStatus==='saved'&&loaded&&<span className="nav-save-status" style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
           {saveStatus==='error'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--red)'}}>Save failed</span>}
-          <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button>
+          <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add
+          </button>
           {(!subscription||subscription.status==='none')&&<button className="nav-upgrade-btn" onClick={()=>setShowUpgrade(true)} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--brand)',background:'var(--brand-light)',cursor:'pointer',color:'var(--brand)',fontWeight:600,whiteSpace:'nowrap'}}>Upgrade</button>}
           {subscription&&['active','trialing'].includes(subscription.status)&&<button className="nav-billing-btn" onClick={async()=>{const r=await fetch('/api/stripe/portal',{method:'POST'});const d=await r.json();if(d.url)window.location.href=d.url}} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--border)',background:'var(--surface2)',cursor:'pointer',color:'var(--text-2)',whiteSpace:'nowrap'}}>Billing</button>}
-          <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#1b5e3b'}}}/>
+          <UserButton afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#4a6741'}}}/>
         </div>
       </nav>
       {/* Desktop upload bar */}
@@ -5269,7 +5946,7 @@ export default function Dashboard(){
         </button>
       </div>
       <div className="dash-content" style={{paddingTop:0}}>
-        {showUpgrade&&<UpgradeModal onClose={()=>setShowUpgrade(false)} user={user} currentPlan={subscription?.plan}/>}
+        {showUpgrade&&<UpgradeModal onClose={()=>setShowUpgrade(false)} user={user} currentPlan={subscription?.plan} preselectedPlan={preselectedPlan} preselectedBilling={preselectedBilling}/>}
         <PaywallBanner subscription={subscription} user={user} onUpgrade={()=>setShowUpgrade(true)} propCount={(portfolio.properties||[]).length} maxProps={maxProps}/>
       </div>
       {queue.length>0&&<div style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'10px 16px'}}>
@@ -5281,7 +5958,97 @@ export default function Dashboard(){
               <button onClick={()=>setQueue([])} style={{fontSize:11,color:'var(--text-3)',background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}}>Clear all</button>
             </div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onManual={()=>setShowManual(true)} onConfirm={(confirmedItem)=>{setPortfolio(prev=>mergeDoc(prev,confirmedItem.extracted));setQueue(q=>q.map(x=>x.id===confirmedItem.id?{...x,status:'done'}:x))}} onReject={(rejectedItem)=>{setQueue(q=>q.filter(x=>x.id!==rejectedItem.id))}} onRetry={async(failedItem)=>{
+          <div style={{display:'flex',flexDirection:'column',gap:7}}>{queue.map(item=><QueueItem key={item.id} item={item} onManual={()=>setShowManual(true)} onConfirm={(confirmedItem)=>{
+  try {
+    const ex = confirmedItem.extracted
+    const currentPortfolio = portfolioRef.current
+    const prevProps = currentPortfolio?.properties || []
+
+    // Build patch from extracted data
+    function buildPatch(ex){
+      const cx = ex.compliance||{}, t = ex.tenancy||{}, f2 = ex.finance||{}
+      const patch = {}
+      if(cx.gas?.due) patch.gasDue = cx.gas.due
+      if(cx.gas?.date) patch.gasDate = cx.gas.date
+      if(cx.eicr?.due) patch.eicrDue = cx.eicr.due
+      if(cx.eicr?.date) patch.eicrDate = cx.eicr.date
+      if(cx.epc?.rating) patch.epcRating = cx.epc.rating?.toUpperCase()?.trim()?.charAt(0)
+      if(cx.epc?.expiry) patch.epcExpiry = cx.epc.expiry
+      if(cx.insurance?.insurer) patch.insurer = cx.insurance.insurer
+      if(cx.insurance?.renewal) patch.insuranceRenewal = cx.insurance.renewal
+      if(cx.insurance?.type) patch.insuranceType = cx.insurance.type
+      if(t.tenantName) patch.tenantName = t.tenantName
+      if(t.tenantEmail) patch.tenantEmail = t.tenantEmail
+      if(t.tenantPhone) patch.tenantPhone = t.tenantPhone
+      if(t.rent) patch.rent = Number(String(t.rent).replace(/[^0-9.]/g,''))||undefined
+      if(t.startDate) patch.tenancyStart = t.startDate
+      if(t.depositAmount) patch.depositAmount = Number(String(t.depositAmount).replace(/[^0-9.]/g,''))||undefined
+      if(t.depositScheme) patch.depositScheme = t.depositScheme
+      if(f2.lender) patch.lender = f2.lender
+      if(f2.mortgage) patch.mortgage = Number(String(f2.mortgage).replace(/[^0-9.]/g,''))||undefined
+      if(f2.rate) patch.rate = f2.rate
+      if(f2.fixedEnd) patch.fixedEnd = f2.fixedEnd
+      if(f2.monthlyPayment) patch.monthlyPayment = Number(String(f2.monthlyPayment).replace(/[^0-9.]/g,''))||undefined
+      return patch
+    }
+
+    // Smart address match - same house number + same street
+    function findSimilar(props, ex){
+      const eAddr = (ex.property?.address||'').toLowerCase()
+      const eShort = (ex.property?.shortName||'').toLowerCase()
+      const eNum = (eAddr.match(/^\d+/)||eShort.match(/^\d+/)||[''])[0]
+      if(!eNum) return -1
+      return props.findIndex(p=>{
+        const pAddr = (p.address||'').toLowerCase()
+        const pShort = (p.shortName||'').toLowerCase()
+        const pNum = (pAddr.match(/^\d+/)||pShort.match(/^\d+/)||[''])[0]
+        if(pNum !== eNum) return false
+        // Check street name overlap
+        const words = eAddr.split(' ').filter(w=>w.length>3&&!/^\d+$/.test(w))
+        return words.some(w=>pAddr.includes(w)||pShort.includes(w))
+      })
+    }
+
+    // First try mergeDoc
+    let next
+    try { next = mergeDoc(currentPortfolio, ex) } catch(e2) { next = currentPortfolio }
+
+    // Check if mergeDoc actually changed something
+    const mergeWorked = next.properties.length !== prevProps.length ||
+      JSON.stringify(next.properties) !== JSON.stringify(prevProps)
+
+    if(!mergeWorked){
+      // mergeDoc failed or returned unchanged - handle ourselves
+      const patch = buildPatch(ex)
+      const docType = ex.documentType
+      // Check if a similar property already exists (avoid duplicates)
+      const similarIdx = findSimilar(prevProps, ex)
+      if(similarIdx >= 0){
+        // Merge into existing property
+        const updated = prevProps.map((p,i) => i===similarIdx
+          ? {...p, ...patch, docs: Array.from(new Set([...(p.docs||[]), docType]))}
+          : p)
+        next = {...currentPortfolio, properties: updated}
+      } else {
+        // Create new property
+        const newProp = {
+          id: Math.random().toString(36).slice(2),
+          shortName: ex.property?.shortName || ex.property?.address?.split(',')[0]?.trim() || 'New property',
+          address: ex.property?.address || '',
+          nation: 'England',
+          ownership: 'Personal',
+          docs: [docType].filter(Boolean),
+          ...patch
+        }
+        next = {...currentPortfolio, properties:[...prevProps, newProp]}
+      }
+    }
+    setPortfolio(next)
+  } catch(e) {
+    console.error('Save error:', e)
+  }
+  setQueue(q=>q.map(x=>x.id===confirmedItem.id?{...x,status:'done'}:x))
+}} onReject={(rejectedItem)=>{setQueue(q=>q.filter(x=>x.id!==rejectedItem.id))}} onRetry={async(failedItem)=>{
               setQueue(q=>q.map(x=>x.id===failedItem.id?{...x,status:'reading',result:null}:x))
               try{
                 const file=new File([],failedItem.name)
