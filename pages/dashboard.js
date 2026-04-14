@@ -1846,8 +1846,10 @@ function PropCard({p,gasC,eicrC,insC,epcStatus,equity,grossYield,netYield,ltv,nl
             </div>}
           </div>
           <div style={{textAlign:'right',flexShrink:0}}>
-            {p.rent&&<><div style={{fontSize:'clamp(18px,3vw,22px)',fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px'}}>{fmt(Number(p.rent))}</div><div style={{fontSize:10,color:'var(--text-3)'}}>per month</div></>}
-            {!p.rent&&p.currentValue&&<><div style={{fontSize:'clamp(14px,2vw,17px)',fontWeight:500,fontFamily:'var(--mono)',color:'var(--text-2)'}}>{fmt(Number(p.currentValue))}</div><div style={{fontSize:10,color:'var(--text-3)'}}>est. value</div></>}
+            <div style={{fontSize:'clamp(18px,3vw,22px)',fontWeight:600,fontFamily:'var(--mono)',letterSpacing:'-0.5px',color:p.rent?'var(--text)':'var(--text-3)'}}>{p.rent?fmt(Number(p.rent)):'No tenant'}</div>
+            <div style={{fontSize:10,color:'var(--text-3)',marginBottom:4}}>{p.rent?'per month':'vacant'}</div>
+            {p.currentValue&&<><div style={{fontSize:13,fontWeight:500,fontFamily:'var(--mono)',color:'var(--text-2)'}}>{fmt(Number(p.currentValue))}</div><div style={{fontSize:10,color:'var(--text-3)'}}>est. value</div></>}
+            {!p.currentValue&&<div style={{fontSize:11,color:'var(--text-3)',fontStyle:'italic'}}>no value set</div>}
             <button onClick={()=>onEdit(p)} style={{marginTop:8,fontSize:11,color:'var(--brand)',background:'none',border:'0.5px solid var(--brand-light)',borderRadius:6,padding:'3px 10px',cursor:'pointer'}}>Edit</button>
           </div>
         </div>
