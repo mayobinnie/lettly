@@ -2553,6 +2553,18 @@ function ContentQueueTab({user}){
 
   useState(()=>{loadItems()},[filter,typeFilter])
 
+  async function publishPost(id){
+    const isAdmin = user?.publicMetadata?.admin || (user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co')
+    const r = await fetch('/api/blog/publish', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({itemId:id, isAdmin})})
+    const d = await r.json()
+    if(d.ok) {
+      await loadItems()
+      alert('Published! Blog post live at lettly.co/blog/' + d.slug)
+    } else {
+      alert('Publish failed: ' + (d.error||'unknown error'))
+    }
+  }
+
   async function updateItem(id, patch){
     await fetch('/api/content-queue',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,...patch})})
     await loadItems()
@@ -2664,7 +2676,7 @@ function ContentQueueTab({user}){
                 <button onClick={e=>{e.stopPropagation();deleteItem(item.id)}} style={{background:'none',color:'var(--text-3)',border:'none',padding:'4px 6px',fontSize:11,cursor:'pointer'}}>Delete</button>
               </div>}
               {item.status==='approved'&&<div style={{display:'flex',gap:6,marginTop:8}}>
-                <button onClick={e=>{e.stopPropagation();updateItem(item.id,{status:'published'})}} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:6,padding:'4px 12px',fontSize:11,fontWeight:500,cursor:'pointer'}}>Mark published</button>
+                <button onClick={e=>{e.stopPropagation();item.type==='blog_post'?publishPost(item.id):updateItem(item.id,{status:'published'})}} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:6,padding:'4px 12px',fontSize:11,fontWeight:500,cursor:'pointer'}}>{item.type==='blog_post'?'Publish to blog':'Mark published'}</button>
               </div>}
             </div>
           })}
@@ -2694,7 +2706,7 @@ function ContentQueueTab({user}){
             <button onClick={()=>updateItem(selected.id,{status:'approved'})} style={{background:'var(--green-bg)',color:'var(--green)',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Approve</button>
             <button onClick={()=>updateItem(selected.id,{status:'rejected'})} style={{background:'var(--red-bg)',color:'var(--red)',border:'none',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Reject</button>
           </>}
-          {selected.status==='approved'&&<button onClick={()=>updateItem(selected.id,{status:'published'})} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>Mark published</button>}
+          {selected.status==='approved'&&<button onClick={()=>selected.type==='blog_post'?publishPost(selected.id):updateItem(selected.id,{status:'published'})} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:7,padding:'7px 16px',fontSize:12,fontWeight:500,cursor:'pointer'}}>{selected.type==='blog_post'?'Publish to blog':'Mark published'}</button>}
           <button onClick={()=>{navigator.clipboard.writeText(selected.body||'')}} style={{background:'var(--surface2)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'7px 14px',fontSize:12,cursor:'pointer'}}>Copy</button>
         </div>
       </div>}
