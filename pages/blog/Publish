@@ -1,0 +1,72 @@
+import { getAuth } from '@clerk/nextjs/server'
+import { createClient } from '@supabase/supabase-js'
+
+// Publish a blog post from content_queue to blog_posts table
+// Also pings Google to reindex the sitemap
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).end()
+
+  const { userId } = getAuth(req)
+  if (!userId) return res.status(401).json({ error: 'Unauthorised' })
+
+  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+
+  // Verify admin
+  const { data: user } = await sb.auth.admin.getUserById(userId).catch(() => ({ data: null }))
+  // Allow if lettly.co email or admin flag - check via Clerk metadata passed in body
+  const { itemId, isAdmin } = req.body
+  if (!isAdmin) return res.status(403).json({ error: 'Admin only' })
+  if (!itemId) return res.status(400).json({ error: 'Missing itemId' })
+
+  // Fetch the content queue item
+  const { data: item, error: fetchErr } = await sb
+    .from('content_queue')
+    .select('*')
+    .eq('id', itemId)
+    .single()
+
+  if (fetchErr || !item) return res.status(404).json({ error: 'Item not found' })
+  if (item.type !== 'blog_post') return res.status(400).json({ error: 'Not a blog post' })
+
+  // Generate slug if missing
+  const slug = item.slug || item.title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 80)
+
+  // Write to blog_posts table
+  const { error: insertErr } = await sb.from('blog_posts').upsert({
+    slug,
+    title: item.title,
+    meta_description: item.meta_description || item.body?.slice(0, 155),
+    body: item.body,
+    tags: item.tags || [],
+    category: item.tags?.[0] || 'Guides',
+    published_at: new Date().toISOString(),
+    source_id: item.id,
+  }, { onConflict: 'slug' })
+
+  if (insertErr) {
+    console.error('Blog publish error:', insertErr)
+    return res.status(500).json({ error: 'Failed to publish' })
+  }
+
+  // Update content_queue status
+  await sb.from('content_queue').update({
+    status: 'published',
+    published_at: new Date().toISOString(),
+    slug,
+  }).eq('id', itemId)
+
+  // Ping Google to reindex sitemap
+  try {
+    await fetch('https://www.google.com/ping?sitemap=https://lettly.co/sitemap.xml')
+  } catch (e) {
+    console.warn('Google ping failed:', e.message)
+  }
+
+  return res.status(200).json({ ok: true, slug })
+}
