@@ -1,14 +1,61 @@
 import Head from 'next/head'
 import Link from 'next/link'
+import { createClient } from '@supabase/supabase-js'
 import { POSTS } from '../../lib/blog'
 
-export default function Blog() {
+export async function getStaticProps() {
+  // Load hardcoded posts + any published from Supabase
+  let dbPosts = []
+  try {
+    const sb = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    )
+    const { data } = await sb
+      .from('blog_posts')
+      .select('slug,title,meta_description,tags,category,published_at')
+      .order('published_at', { ascending: false })
+    dbPosts = data || []
+  } catch (e) {
+    console.warn('Blog index: could not load DB posts', e.message)
+  }
+
+  // Merge: DB posts first, then hardcoded (de-dupe by slug)
+  const dbSlugs = new Set(dbPosts.map(p => p.slug))
+  const staticPosts = POSTS.filter(p => !dbSlugs.has(p.slug)).map(p => ({
+    slug: p.slug,
+    title: p.title,
+    meta_description: p.description,
+    tags: [p.category],
+    category: p.category,
+    published_at: p.date,
+  }))
+
+  const allPosts = [...dbPosts, ...staticPosts]
+
+  return {
+    props: { posts: allPosts },
+    revalidate: 3600, // rebuild every hour
+  }
+}
+
+const CATEGORY_COLORS = {
+  Legislation: { bg: '#fce8e6', fg: '#791F1F' },
+  Compliance: { bg: '#eaf4ee', fg: '#1b5e3b' },
+  Finance: { bg: '#e3f2fd', fg: '#0C447C' },
+  Guides: { bg: '#fff8e1', fg: '#633806' },
+  default: { bg: '#f2f0eb', fg: '#6b6860' },
+}
+
+export default function Blog({ posts }) {
   return (
     <>
       <Head>
         <title>Landlord Guides and Resources - Lettly</title>
-        <meta name="description" content="Practical guides for UK landlords covering the Renters Rights Act, EPC minimum C, deposit protection, Scottish landlord registration, and more." />
+        <meta name="description" content="Practical guides for UK landlords covering the Renters Rights Act, EPC requirements, deposit protection, compliance and more." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+        <link rel="canonical" href="https://lettly.co/blog" />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font)' }}>
         <nav style={{ background: 'var(--surface)', borderBottom: '0.5px solid var(--border)', padding: '0 clamp(16px,4vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
@@ -28,44 +75,42 @@ export default function Blog() {
           <div style={{ marginBottom: 48 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>Landlord guides</div>
             <h1 style={{ fontFamily: 'var(--display)', fontSize: 'clamp(28px,4vw,42px)', fontWeight: 300, color: 'var(--text)', marginBottom: 12, lineHeight: 1.15 }}>Resources for UK landlords</h1>
-            <p style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.7, maxWidth: 540 }}>Practical guides on the Renters Rights Act, EPC requirements, compliance, and landlord law in England, Scotland and Wales.</p>
+            <p style={{ fontSize: 16, color: 'var(--text-2)', lineHeight: 1.7, maxWidth: 560 }}>
+              Practical guides on compliance, legislation and finance for private landlords in England, Scotland and Wales.
+            </p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {POSTS.map((post, i) => (
-              <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none', display: 'block', padding: '24px 0', borderBottom: '0.5px solid var(--border)' }}
-                onMouseEnter={e => e.currentTarget.querySelector('.post-title').style.color = 'var(--brand)'}
-                onMouseLeave={e => e.currentTarget.querySelector('.post-title').style.color = 'var(--text)'}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 9px', borderRadius: 20, background: post.categoryColor, color: post.categoryFg }}>{post.category}</span>
-                      <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{post.readTime}</span>
+            {posts.map(post => {
+              const cat = post.tags?.[0] || post.category || 'Guides'
+              const colors = CATEGORY_COLORS[cat] || CATEGORY_COLORS.default
+              const dateStr = post.published_at
+                ? new Date(post.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+                : ''
+              return (
+                <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none' }}>
+                  <div style={{ padding: '24px 0', borderBottom: '0.5px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20, background: colors.bg, color: colors.fg }}>{cat}</span>
+                        {dateStr && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{dateStr}</span>}
+                      </div>
+                      <div style={{ fontFamily: 'var(--display)', fontSize: 'clamp(17px,2vw,21px)', fontWeight: 400, color: 'var(--text)', marginBottom: 8, lineHeight: 1.3 }}>{post.title}</div>
+                      <p style={{ fontSize: 14, color: 'var(--text-2)', margin: 0, lineHeight: 1.65, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{post.meta_description}</p>
                     </div>
-                    <div className="post-title" style={{ fontFamily: 'var(--display)', fontSize: 'clamp(17px,2.5vw,21px)', fontWeight: 400, color: 'var(--text)', marginBottom: 8, lineHeight: 1.3, transition: 'color 0.15s' }}>{post.title}</div>
-                    <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.7 }}>{post.description}</div>
+                    <div style={{ fontSize: 20, color: 'var(--text-3)', flexShrink: 0 }}>→</div>
                   </div>
-                  <div style={{ fontSize: 20, color: 'var(--text-3)', flexShrink: 0, paddingTop: 4 }}>→</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <div style={{ marginTop: 56, background: 'var(--brand)', borderRadius: 16, padding: 'clamp(24px,4vw,40px)', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--display)', fontSize: 'clamp(20px,3vw,28px)', fontWeight: 300, color: '#fff', marginBottom: 10, lineHeight: 1.3 }}>Track your compliance automatically</div>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 24, lineHeight: 1.7 }}>Drop your documents and Lettly builds your compliance dashboard instantly. Gas certs, EICRs, EPCs, tenancy agreements - all tracked with deadline reminders.</p>
-            <a href="https://accounts.lettly.co/sign-up" style={{ display: 'inline-block', background: '#fff', color: 'var(--brand)', fontSize: 14, fontWeight: 600, padding: '12px 32px', borderRadius: 10, textDecoration: 'none' }}>Start free - no card needed</a>
+                </Link>
+              )
+            })}
           </div>
         </div>
 
-        <footer style={{ background: 'var(--surface)', borderTop: '0.5px solid var(--border)', padding: '20px clamp(16px,4vw,48px)', display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: 'var(--text-3)' }}>© 2026 Lettly Ltd</span>
-          <div style={{ display: 'flex', gap: 20 }}>
-            {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Security', '/security'], ['Blog', '/blog']].map(([l, h]) => (
-              <Link key={l} href={h} style={{ fontSize: 12, color: 'var(--text-3)', textDecoration: 'none' }}>{l}</Link>
-            ))}
-          </div>
-        </footer>
+        <div style={{ background: 'var(--brand)', padding: 'clamp(40px,5vw,64px) clamp(20px,4vw,48px)', textAlign: 'center', marginTop: 48 }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 'clamp(22px,3vw,32px)', fontWeight: 300, color: '#fff', marginBottom: 12 }}>Stay compliant automatically</div>
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.75)', marginBottom: 24, maxWidth: 480, margin: '0 auto 24px' }}>Track certificates, legislation and finances for your rental portfolio. From £10/month.</p>
+          <a href="https://accounts.lettly.co/sign-up" style={{ display: 'inline-block', background: '#fff', color: 'var(--brand)', fontWeight: 600, fontSize: 15, padding: '12px 32px', borderRadius: 10, textDecoration: 'none' }}>Try free for 14 days</a>
+        </div>
       </div>
     </>
   )
