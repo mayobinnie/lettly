@@ -114,6 +114,138 @@ Return JSON only:
   }
 }
 
+
+// ─── RRA Countdown post generator ─────────────────────────────────────────────
+async function draftCountdownPost(daysLeft) {
+  const prompt = `You are a UK property expert writing urgent social content for Lettly.
+
+The Renters' Rights Act comes into force in ${daysLeft} days (1 May 2026). Section 21 no-fault evictions are abolished.
+
+Write TWO posts for landlords who may not be ready:
+
+1. An Instagram post: urgent hook about ${daysLeft} days left, 3 practical things to do NOW, CTA to check compliance at lettly.co. Max 250 words. 5 relevant hashtags at end. No em dashes.
+
+2. A Facebook post: slightly longer, more explanatory tone. Same urgency. Practical steps. No em dashes.
+
+Return JSON only:
+{
+  "instagram": "...",
+  "facebook": "...",
+  "title": "RRA Countdown: ${daysLeft} days to go"
+}`
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1500,
+    messages: [{ role: 'user', content: prompt }]
+  })
+
+  const text = response.content.find(b => b.type === 'text')?.text || ''
+  try {
+    return JSON.parse(text.replace(/```json|```/g, '').trim())
+  } catch { return null }
+}
+
+// ─── Newsletter digest generator ──────────────────────────────────────────────
+async function draftNewsletter(supabase) {
+  // Get recent blog posts from last 30 days
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: posts } = await supabase
+    .from('blog_posts')
+    .select('title, meta_description, slug, published_at')
+    .gte('published_at', since)
+    .order('published_at', { ascending: false })
+    .limit(5)
+
+  const postList = (posts || []).map(p => `- ${p.title}: ${p.meta_description}`).join('\n')
+
+  const prompt = `You are writing a monthly newsletter for UK private landlords from Lettly.
+
+Recent articles published this month:
+${postList || 'General landlord compliance updates'}
+
+Write a friendly, practical newsletter email:
+- Subject line (compelling, under 60 chars)
+- Preview text (under 90 chars)
+- Hero headline
+- 2-3 paragraph intro covering key themes this month
+- Brief mentions of each article with link placeholders
+- 1 practical landlord tip
+- CTA to visit lettly.co
+- Tone: knowledgeable peer, not corporate
+- No em dashes
+
+Return JSON only:
+{
+  "subject": "...",
+  "preview": "...",
+  "hero_headline": "...",
+  "body": "full email body in plain text",
+  "tip": "one practical landlord tip"
+}`
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 2000,
+    messages: [{ role: 'user', content: prompt }]
+  })
+
+  const text = response.content.find(b => b.type === 'text')?.text || ''
+  try {
+    return JSON.parse(text.replace(/```json|```/g, '').trim())
+  } catch { return null }
+}
+
+// ─── Social posts from published blog ─────────────────────────────────────────
+async function draftSocialFromBlog(supabase) {
+  // Get most recently published post that doesn't have social content yet
+  const { data: posts } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .order('published_at', { ascending: false })
+    .limit(3)
+
+  if (!posts?.length) return []
+
+  const post = posts[0]
+  const prompt = `You are writing social media content for Lettly about this blog post:
+
+Title: ${post.title}
+Summary: ${post.meta_description}
+URL: https://lettly.co/blog/${post.slug}
+
+Write:
+1. Instagram post: strong hook, key takeaway, CTA with URL. Max 200 words. 5 hashtags. No em dashes.
+2. LinkedIn post: professional, data or insight led, 150 words. No em dashes.
+3. Facebook post: conversational, practical, 100 words. No em dashes.
+4. Tweet/X: under 280 chars including URL.
+
+Return JSON only:
+{
+  "instagram": "...",
+  "linkedin": "...",
+  "facebook": "...",
+  "tweet": "..."
+}`
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1500,
+    messages: [{ role: 'user', content: prompt }]
+  })
+
+  const text = response.content.find(b => b.type === 'text')?.text || ''
+  try {
+    const c = JSON.parse(text.replace(/```json|```/g, '').trim())
+    return [
+      { type: 'social_instagram', title: 'Instagram: ' + post.title, body: c.instagram, source: 'blog_post', urgency: 'LOW' },
+      { type: 'social_linkedin', title: 'LinkedIn: ' + post.title, body: c.linkedin, source: 'blog_post', urgency: 'LOW' },
+      { type: 'social_facebook', title: 'Facebook: ' + post.title, body: c.facebook, source: 'blog_post', urgency: 'LOW' },
+      { type: 'social_twitter', title: 'X/Twitter: ' + post.title, body: c.tweet, source: 'blog_post', urgency: 'LOW' },
+    ]
+  } catch { return [] }
+}
+
 async function saveToQueue(supabase, items) {
   if (!items.length) return
   const { error } = await supabase.from('content_queue').insert(items)
@@ -243,6 +375,52 @@ export default async function handler(req, res) {
         } catch (topicErr) {
           errors.push(`${topic.title}: ${topicErr.message}`)
         }
+      }
+
+    } else if (mode === 'countdown') {
+      // RRA countdown posts - run weekly until May 1st 2026
+      const deadline = new Date('2026-05-01')
+      const today = new Date()
+      const daysLeft = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24))
+      if (daysLeft < 0) return res.status(200).json({ ok: true, message: 'RRA already in force' })
+
+      const c = await draftCountdownPost(daysLeft)
+      if (c) {
+        const items = [
+          { type: 'social_instagram', status: 'draft', title: c.title + ' (Instagram)', body: c.instagram, source: 'countdown', urgency: 'HIGH' },
+          { type: 'social_facebook', status: 'draft', title: c.title + ' (Facebook)', body: c.facebook, source: 'countdown', urgency: 'HIGH' },
+        ]
+        await saveToQueue(supabase, items)
+        drafted.push(...items)
+      }
+
+    } else if (mode === 'newsletter') {
+      // Monthly newsletter digest
+      const c = await draftNewsletter(supabase)
+      if (c) {
+        const items = [
+          {
+            type: 'email_blast',
+            status: 'draft',
+            title: c.subject,
+            body: c.body,
+            meta_description: c.preview,
+            source: 'newsletter',
+            urgency: 'MEDIUM',
+            notes: 'Hero: ' + c.hero_headline + ' | Tip: ' + c.tip
+          }
+        ]
+        await saveToQueue(supabase, items)
+        drafted.push(...items)
+      }
+
+    } else if (mode === 'social_from_blog') {
+      // Generate social posts from latest published blog post
+      const items = await draftSocialFromBlog(supabase)
+      if (items.length) {
+        const withStatus = items.map(i => ({ ...i, status: 'draft' }))
+        await saveToQueue(supabase, withStatus)
+        drafted.push(...withStatus)
       }
 
     } else if (mode === 'topic') {
