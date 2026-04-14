@@ -2585,9 +2585,9 @@ function ContentQueueTab({user}){
       const body = mode==='topic'
         ? {manual:true,mode:'topic',topicTitle:topicInput,keyword:keywordInput}
         : {manual:true,mode:'seo'}
-      const r = await fetch('/api/agent-content',{
+      const r = await fetch('/api/admin/trigger-content',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+process.env.NEXT_PUBLIC_CRON_SECRET},
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify(body)
       })
       const d = await r.json()
@@ -5509,6 +5509,7 @@ export default function Dashboard(){
   const[subLoading,setSubLoading]=useState(true)
   const[showUpgrade,setShowUpgrade]=useState(false)
   const[preselectedPlan,setPreselectedPlan]=useState(null)
+  const[draftCount,setDraftCount]=useState(0)
   const[preselectedBilling,setPreselectedBilling]=useState('annual')
   const[portfolio,setPortfolio]=useState({properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null,contactEmail:'',ownerName:'',voids:[],applicants:[]})
   const[queue,setQueue]=useState([])
@@ -5539,6 +5540,10 @@ export default function Dashboard(){
     if(!wizardDone){
       // Only show wizard after Supabase confirms no onboarding data
       fetch('/api/stripe/subscription').then(r=>r.json()).then(d=>setSubscription(d.subscription)).finally(()=>setSubLoading(false))
+      // Load draft count for content queue badge
+      fetch('/api/content-queue?status=draft').then(r=>r.json()).then(d=>{
+        if(d.items) setDraftCount(d.items.length||0)
+      }).catch(()=>{})
       fetch('/api/data').then(r=>r.json()).then(({data})=>{
         const p=data||{properties:[],expenses:[],maintenance:[],conditionReports:[],rentLedger:{},checklist:{},onboarding:null}
         const pSafe={...p,conditionReports:p.conditionReports||[],rentLedger:p.rentLedger||{},checklist:p.checklist||{},properties:p.properties||[],expenses:p.expenses||[],maintenance:p.maintenance||[],voids:p.voids||[],applicants:p.applicants||[]}
@@ -5914,7 +5919,7 @@ export default function Dashboard(){
             ]},
             {label:'More', tabs:[
               {id:'ai',label:'Lettly AI', dot:'brand'},
-              ...(user?.publicMetadata?.admin||(user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co'))?[{id:'content',label:'Content queue'}]:[],
+              ...(user?.publicMetadata?.admin||(user?.emailAddresses?.[0]?.emailAddress||'').includes('lettly.co'))?[{id:'content',label:'Content queue', badge:draftCount}]:[],
             ]},
           ].map(group=>{
             const activeInGroup = group.tabs.some(t=>t.id===tab)
@@ -5941,6 +5946,7 @@ export default function Dashboard(){
                       {t.label}
                       {t.dot==='red'&&<span style={{marginLeft:'auto',width:6,height:6,borderRadius:'50%',background:'var(--red)',flexShrink:0}}/>}
                       {t.dot==='brand'&&<span style={{marginLeft:'auto',width:6,height:6,borderRadius:'50%',background:'var(--brand)',flexShrink:0}}/>}
+                      {t.badge>0&&<span style={{marginLeft:'auto',background:'var(--red)',color:'#fff',borderRadius:20,fontSize:10,fontWeight:700,padding:'1px 6px',flexShrink:0}}>{t.badge}</span>}
                     </button>
                   ))}
                 </div>
