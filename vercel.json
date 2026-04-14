@@ -15,6 +15,14 @@
     {
       "path": "/api/cron/trial-reminder",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/countdown",
+      "schedule": "0 8 * * 2"
+    },
+    {
+      "path": "/api/cron/newsletter",
+      "schedule": "0 9 1 * *"
     }
   ]
 }
