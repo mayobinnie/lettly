@@ -1,4 +1,4 @@
-import { getAuth } from '@clerk/nextjs/server'
+
 import { createClient } from '@supabase/supabase-js'
 
 // Simplified trigger - uses fetch to agent-content but with correct internal URL pattern
