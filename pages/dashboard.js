@@ -2603,6 +2603,9 @@ function ContentQueueTab({user}){
     blog_post:'Blog post',
     social_instagram:'Instagram',
     social_linkedin:'LinkedIn',
+    social_facebook:'Facebook',
+    social_twitter:'X / Twitter',
+    email_blast:'Newsletter',
     email_blast:'Email',
     seo_article:'SEO article'
   }
@@ -2637,6 +2640,15 @@ function ContentQueueTab({user}){
         <button onClick={()=>generateContent('seo')} disabled={generating} style={{background:'var(--surface2)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:generating?'not-allowed':'pointer',opacity:generating?0.6:1}}>
           Run weekly SEO batch (2 articles)
         </button>
+        <button onClick={()=>generateContent('countdown')} disabled={generating} style={{background:'#fce8e6',color:'#791F1F',border:'0.5px solid #E24B4A',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:generating?'not-allowed':'pointer',opacity:generating?0.6:1,fontWeight:500}}>
+          RRA countdown posts
+        </button>
+        <button onClick={()=>generateContent('newsletter')} disabled={generating} style={{background:'var(--surface2)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:generating?'not-allowed':'pointer',opacity:generating?0.6:1}}>
+          Draft monthly newsletter
+        </button>
+        <button onClick={()=>generateContent('social_from_blog')} disabled={generating} style={{background:'var(--surface2)',color:'var(--text-2)',border:'0.5px solid var(--border-strong)',borderRadius:8,padding:'7px 14px',fontSize:12,cursor:generating?'not-allowed':'pointer',opacity:generating?0.6:1}}>
+          Social posts from latest blog
+        </button>
         {genMsg&&<span style={{fontSize:11,color:'var(--text-3)'}}>{genMsg}</span>}
       </div>
     </div>
@@ -2647,7 +2659,7 @@ function ContentQueueTab({user}){
         <button key={s} onClick={()=>setFilter(s)} style={{padding:'5px 14px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:filter===s?'var(--brand)':'var(--border)',background:filter===s?'var(--brand-light)':'var(--surface)',color:filter===s?'var(--brand)':'var(--text-2)',textTransform:'capitalize'}}>{s==='all'?'All statuses':s}</button>
       )}
       <div style={{width:1,background:'var(--border)',margin:'0 4px'}}/>
-      {['all','blog_post','social_instagram','social_linkedin'].map(t=>
+      {['all','blog_post','social_instagram','social_linkedin','social_facebook','email_blast'].map(t=>
         <button key={t} onClick={()=>setTypeFilter(t)} style={{padding:'5px 14px',borderRadius:20,fontSize:11,fontWeight:500,cursor:'pointer',border:'0.5px solid',borderColor:typeFilter===t?'var(--brand)':'var(--border)',background:typeFilter===t?'var(--brand-light)':'var(--surface)',color:typeFilter===t?'var(--brand)':'var(--text-2)'}}>{t==='all'?'All types':typeLabel[t]||t}</button>
       )}
     </div>
