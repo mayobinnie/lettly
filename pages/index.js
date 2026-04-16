@@ -7,19 +7,8 @@ const RL = '#eca9a9'
 const RDIM = 'rgba(224,123,123,0.11)'
 const RBDR = 'rgba(224,123,123,0.26)'
 
-async function startCheckout(plan, billing) {
-  try {
-    const r = await fetch('/api/stripe/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan, billing })
-    })
-    const d = await r.json()
-    if (d.url) window.location.href = d.url
-    else alert('Could not start checkout. Please try again.')
-  } catch (e) {
-    alert('Could not start checkout. Please try again.')
-  }
+function startCheckout() {
+  window.location.href = 'https://accounts.lettly.co/sign-in'
 }
 
 function RoseBtn({ href, children, large, onClick }) {
@@ -121,7 +110,7 @@ function PricingSection() {
                   </div>
                 ))}
               </div>
-              <button onClick={() => startCheckout(plan.id, billing)} style={{ width: '100%', padding: 13, borderRadius: 100, fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, cursor: 'pointer', transition: 'all .2s', background: isHot ? R : 'transparent', color: '#fff', border: isHot ? 'none' : '0.5px solid rgba(255,255,255,0.15)' }}>
+              <button onClick={startCheckout} style={{ width: '100%', padding: 13, borderRadius: 100, fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, cursor: 'pointer', transition: 'all .2s', background: isHot ? R : 'transparent', color: '#fff', border: isHot ? 'none' : '0.5px solid rgba(255,255,255,0.15)' }}>
                 Start free trial
               </button>
             </div>
@@ -189,7 +178,7 @@ export default function HomePage() {
             <Link href="/blog" style={navLink}>Guides</Link>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <a href="https://accounts.lettly.co/sign-in" style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', padding: '8px 18px', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none' }}>Log in</a>
+            <a href="/dashboard" style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', padding: '8px 18px', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none' }}>Log in</a>
             <RoseBtn href="#pricing">Start free trial</RoseBtn>
           </div>
         </nav>
