@@ -1,6 +1,3 @@
-/* ============================================================
-   CONTENT QUEUE TAB: AI agent drafts, Mayo approves
-   ============================================================ */
 function ContentQueueTab({user}){
   const[items,setItems]=useState([])
   const[loading,setLoading]=useState(true)
