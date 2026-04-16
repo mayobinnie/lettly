@@ -1,191 +1,178 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
-import { POSTS } from '../../lib/blog'
 
-export async function getStaticPaths() {
-  // Include all hardcoded slugs
-  const paths = POSTS.map(p => ({ params: { slug: p.slug } }))
-  return { paths, fallback: 'blocking' } // blocking = SSR for new DB posts
+// Convert markdown-style content to readable HTML paragraphs
+function renderBody(body) {
+  if (!body) return []
+  const lines = body.split('\n')
+  const elements = []
+  let key = 0
+
+  lines.forEach(line => {
+    const trimmed = line.trim()
+    if (!trimmed) return
+
+    if (trimmed.startsWith('### ')) {
+      elements.push(
+        <h3 key={key++} style={{ fontSize: 'clamp(16px,2vw,19px)', fontWeight: 600, color: '#1a1a18', margin: '28px 0 10px', lineHeight: 1.3 }}>
+          {trimmed.slice(4)}
+        </h3>
+      )
+    } else if (trimmed.startsWith('## ')) {
+      elements.push(
+        <h2 key={key++} style={{ fontSize: 'clamp(19px,2.5vw,24px)', fontWeight: 500, color: '#1a1a18', margin: '36px 0 12px', lineHeight: 1.3 }}>
+          {trimmed.slice(3)}
+        </h2>
+      )
+    } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      elements.push(
+        <li key={key++} style={{ fontSize: 15, color: '#3a3a38', lineHeight: 1.75, marginBottom: 6, marginLeft: 20 }}>
+          {trimmed.slice(2)}
+        </li>
+      )
+    } else if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+      elements.push(
+        <p key={key++} style={{ fontSize: 15, color: '#1a1a18', fontWeight: 600, lineHeight: 1.75, margin: '12px 0' }}>
+          {trimmed.slice(2, -2)}
+        </p>
+      )
+    } else {
+      elements.push(
+        <p key={key++} style={{ fontSize: 15, color: '#3a3a38', lineHeight: 1.85, margin: '14px 0' }}>
+          {trimmed}
+        </p>
+      )
+    }
+  })
+
+  return elements
 }
 
-export async function getStaticProps({ params }) {
-  const { slug } = params
-
-  // Try Supabase first (for AI-published posts)
-  try {
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
+export default function BlogPost({ post }) {
+  if (!post) {
+    return (
+      <div style={{ fontFamily: 'system-ui', minHeight: '100vh', background: '#f7f5f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>404</div>
+          <div style={{ fontSize: 16, color: '#6b6860', marginBottom: 24 }}>Post not found</div>
+          <Link href="/blog" style={{ color: '#1b5e3b', textDecoration: 'none', fontWeight: 500 }}>Back to guides →</Link>
+        </div>
+      </div>
     )
-    const { data: dbPost } = await sb
-      .from('blog_posts')
-      .select('*')
-      .eq('slug', slug)
-      .single()
-
-    if (dbPost) {
-      // Fetch related from DB
-      const { data: relatedDB } = await sb
-        .from('blog_posts')
-        .select('slug,title,meta_description,tags,published_at')
-        .neq('slug', slug)
-        .order('published_at', { ascending: false })
-        .limit(3)
-
-      const related = (relatedDB || []).map(p => ({
-        slug: p.slug,
-        title: p.title,
-        description: p.meta_description,
-        category: p.tags?.[0] || 'Guides',
-        date: p.published_at,
-      }))
-
-      return {
-        props: {
-          post: {
-            slug: dbPost.slug,
-            title: dbPost.title,
-            description: dbPost.meta_description,
-            date: dbPost.published_at,
-            category: dbPost.category || dbPost.tags?.[0] || 'Guides',
-            categoryColor: '#fff8e1',
-            categoryFg: '#633806',
-            body: dbPost.body, // markdown
-            isMarkdown: true,
-          },
-          related,
-        },
-        revalidate: 3600,
-      }
-    }
-  } catch (e) {
-    console.warn('Blog slug: DB lookup failed', e.message)
   }
 
-  // Fall back to static POSTS
-  const post = POSTS.find(p => p.slug === slug)
-  if (!post) return { notFound: true }
-
-  const related = POSTS.filter(p => p.slug !== slug).slice(0, 3).map(p => ({
-    slug: p.slug, title: p.title, description: p.description,
-    category: p.category, date: p.date,
-  }))
-
-  return { props: { post: { ...post, isMarkdown: false }, related }, revalidate: 3600 }
-}
-
-function renderMarkdown(md) {
-  if (!md) return ''
-  return md
-    .replace(/^### (.+)$/gm, '<h3 style="font-family:var(--display);font-size:clamp(17px,2vw,21px);font-weight:400;margin:28px 0 10px;color:var(--text)">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 style="font-family:var(--display);font-size:clamp(20px,2.5vw,26px);font-weight:300;margin:36px 0 12px;color:var(--text)">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 style="font-family:var(--display);font-size:clamp(24px,3vw,32px);font-weight:300;margin:0 0 16px;color:var(--text)">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^\d+\. (.+)$/gm, '<li style="margin-bottom:8px">$1</li>')
-    .replace(/^- (.+)$/gm, '<li style="margin-bottom:8px">$1</li>')
-    .replace(/(<li.*<\/li>\n?)+/g, '<ul style="padding-left:24px;margin:12px 0">$&</ul>')
-    .replace(/\n\n/g, '</p><p style="margin:0 0 16px;line-height:1.8;font-size:16px;color:var(--text-2)">')
-    .replace(/^/, '<p style="margin:0 0 16px;line-height:1.8;font-size:16px;color:var(--text-2)">')
-    .replace(/$/, '</p>')
-}
-
-export default function BlogPost({ post, related }) {
-  const dateStr = post.date
-    ? new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  const publishedDate = post.published_at
+    ? new Date(post.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
     : ''
 
   return (
     <>
       <Head>
         <title>{post.title} - Lettly</title>
-        <meta name="description" content={post.description} />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.description} />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content={`https://lettly.co/blog/${post.slug}`} />
-        <link rel="canonical" href={`https://lettly.co/blog/${post.slug}`} />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          "headline": post.title,
-          "description": post.description,
-          "datePublished": post.date,
-          "publisher": { "@type": "Organization", "name": "Lettly", "url": "https://lettly.co" }
-        })}} />
+        {post.meta_description && <meta name="description" content={post.meta_description}/>}
+        <link rel="canonical" href={'https://lettly.co/blog/' + post.slug}/>
+        <meta property="og:title" content={post.title}/>
+        {post.meta_description && <meta property="og:description" content={post.meta_description}/>}
+        <meta property="og:url" content={'https://lettly.co/blog/' + post.slug}/>
+        <meta property="og:type" content="article"/>
       </Head>
 
-      <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font)' }}>
-        <nav style={{ background: 'var(--surface)', borderBottom: '0.5px solid var(--border)', padding: '0 clamp(16px,4vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <div style={{ width: 32, height: 32, background: 'var(--brand)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#fff', fontSize: 16, fontWeight: 700, fontFamily: 'var(--display)', fontStyle: 'italic' }}>L</span>
+      <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f7f5f0', minHeight: '100vh' }}>
+        {/* Nav */}
+        <nav style={{ background: '#fff', borderBottom: '0.5px solid #e5e2db', padding: '0 24px', display: 'flex', alignItems: 'center', height: 56, gap: 16 }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <div style={{ width: 32, height: 32, background: '#1b5e3b', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: '#fff', fontSize: 15, fontWeight: 700, fontStyle: 'italic' }}>L</span>
             </div>
-            <span style={{ fontFamily: 'var(--display)', fontSize: 18, fontWeight: 400, color: 'var(--text)' }}>Lettly</span>
+            <span style={{ fontSize: 19, fontWeight: 400, color: '#1a1a18' }}>Lettly</span>
           </Link>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <Link href="/blog" style={{ fontSize: 13, color: 'var(--text-2)', textDecoration: 'none' }}>All guides</Link>
-            <a href="https://accounts.lettly.co/sign-up" style={{ background: 'var(--brand)', color: '#fff', fontSize: 13, fontWeight: 500, padding: '7px 18px', borderRadius: 8, textDecoration: 'none' }}>Get started free</a>
-          </div>
+          <div style={{ flex: 1 }}/>
+          <Link href="/blog" style={{ fontSize: 13, color: '#6b6860', textDecoration: 'none' }}>All guides</Link>
+          <Link href="/dashboard" style={{ fontSize: 13, color: '#1b5e3b', textDecoration: 'none', fontWeight: 500 }}>Dashboard</Link>
         </nav>
 
-        <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(32px,5vw,64px) clamp(20px,4vw,48px)' }}>
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20, background: post.categoryColor || '#fff8e1', color: post.categoryFg || '#633806' }}>{post.category}</span>
-              {dateStr && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{dateStr}</span>}
-            </div>
-            <h1 style={{ fontFamily: 'var(--display)', fontSize: 'clamp(26px,4vw,40px)', fontWeight: 300, color: 'var(--text)', marginBottom: 16, lineHeight: 1.15 }}>{post.title}</h1>
-            <p style={{ fontSize: 17, color: 'var(--text-2)', lineHeight: 1.7, margin: 0 }}>{post.description}</p>
+        {/* Article */}
+        <div style={{ maxWidth: 740, margin: '0 auto', padding: '48px 24px 80px' }}>
+          {/* Breadcrumb */}
+          <div style={{ fontSize: 12, color: '#999', marginBottom: 28 }}>
+            <Link href="/blog" style={{ color: '#999', textDecoration: 'none' }}>Guides</Link>
+            {' / '}
+            <span>{post.title}</span>
           </div>
 
-          <div style={{ borderTop: '0.5px solid var(--border)', paddingTop: 32 }}>
-            {post.isMarkdown
-              ? <div dangerouslySetInnerHTML={{ __html: renderMarkdown(post.body) }}/>
-              : post.sections?.map((s, i) => (
-                <div key={i} style={{ marginBottom: 32 }}>
-                  <h2 style={{ fontFamily: 'var(--display)', fontSize: 'clamp(20px,2.5vw,26px)', fontWeight: 300, marginBottom: 12, color: 'var(--text)' }}>{s.heading}</h2>
-                  {s.body.split('\n\n').map((para, j) => (
-                    <p key={j} style={{ fontSize: 16, color: 'var(--text-2)', lineHeight: 1.8, marginBottom: 16 }}>{para}</p>
-                  ))}
-                </div>
-              ))
-            }
-          </div>
+          {/* Header */}
+          <header style={{ marginBottom: 40 }}>
+            {publishedDate && (
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#1b5e3b', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 14 }}>
+                {publishedDate}
+              </div>
+            )}
+            <h1 style={{ fontSize: 'clamp(24px,4vw,38px)', fontWeight: 400, color: '#1a1a18', lineHeight: 1.2, marginBottom: 16 }}>
+              {post.title}
+            </h1>
+            {post.meta_description && (
+              <p style={{ fontSize: 16, color: '#6b6860', lineHeight: 1.65, borderLeft: '3px solid #1b5e3b', paddingLeft: 16 }}>
+                {post.meta_description}
+              </p>
+            )}
+          </header>
 
-          {post.cta && (
-            <div style={{ background: 'var(--brand-light)', border: '0.5px solid rgba(74,103,65,0.2)', borderRadius: 12, padding: '20px 24px', margin: '32px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-              <p style={{ fontSize: 15, color: 'var(--brand)', margin: 0, fontWeight: 500, flex: 1 }}>{post.cta}</p>
-              <a href="https://accounts.lettly.co/sign-up" style={{ background: 'var(--brand)', color: '#fff', fontWeight: 600, fontSize: 14, padding: '10px 24px', borderRadius: 8, textDecoration: 'none', whiteSpace: 'nowrap' }}>Try Lettly free</a>
-            </div>
-          )}
-        </div>
+          {/* Body */}
+          <article style={{ background: '#fff', border: '0.5px solid #e5e2db', borderRadius: 14, padding: 'clamp(24px,4vw,40px)' }}>
+            {renderBody(post.body)}
+          </article>
 
-        {related.length > 0 && (
-          <div style={{ background: 'var(--surface)', borderTop: '0.5px solid var(--border)', padding: 'clamp(32px,5vw,48px) clamp(20px,4vw,48px)' }}>
-            <div style={{ maxWidth: 720, margin: '0 auto' }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 20 }}>More guides</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 16 }}>
-                {related.map(r => (
-                  <Link key={r.slug} href={`/blog/${r.slug}`} style={{ textDecoration: 'none', background: 'var(--bg)', borderRadius: 10, padding: '16px', border: '0.5px solid var(--border)', display: 'block' }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', marginBottom: 6, lineHeight: 1.4 }}>{r.title}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-3)' }}>{r.category}</div>
-                  </Link>
-                ))}
+          {/* CTA */}
+          <div style={{ background: '#1b5e3b', borderRadius: 14, padding: '28px 32px', marginTop: 40, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 500, color: '#fff', marginBottom: 6 }}>
+                Manage your properties without a letting agent
+              </div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+                Lettly tracks compliance, rent, documents and legislation for UK landlords. Free 14-day trial.
               </div>
             </div>
+            <Link href="/#pricing" style={{ background: '#fff', color: '#1b5e3b', borderRadius: 9, padding: '11px 24px', fontSize: 14, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              Start free trial
+            </Link>
           </div>
-        )}
 
-        <div style={{ background: 'var(--brand)', padding: 'clamp(40px,5vw,64px) clamp(20px,4vw,48px)', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--display)', fontSize: 'clamp(22px,3vw,32px)', fontWeight: 300, color: '#fff', marginBottom: 12 }}>Manage your rental portfolio with Lettly</div>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.75)', marginBottom: 24, maxWidth: 480, margin: '0 auto 24px' }}>Track compliance, read documents automatically and stay ahead of legislation. From £10/month.</p>
-          <a href="https://accounts.lettly.co/sign-up" style={{ display: 'inline-block', background: '#fff', color: 'var(--brand)', fontWeight: 600, fontSize: 15, padding: '12px 32px', borderRadius: 10, textDecoration: 'none' }}>Try free for 14 days</a>
+          <div style={{ marginTop: 32, textAlign: 'center' }}>
+            <Link href="/blog" style={{ fontSize: 13, color: '#1b5e3b', textDecoration: 'none', fontWeight: 500 }}>
+              ← Back to all guides
+            </Link>
+          </div>
+        </div>
+
+        {/* Disclaimer */}
+        <div style={{ borderTop: '0.5px solid #e5e2db', padding: '20px 24px', fontSize: 11, color: '#aaa', textAlign: 'center', lineHeight: 1.7 }}>
+          This article is for general information only and does not constitute legal or financial advice. Always consult a qualified solicitor or accountant before making decisions.
+          <br/>
+          © {new Date().getFullYear()} Lettly · <Link href="/terms" style={{ color: '#aaa' }}>Terms</Link>
         </div>
       </div>
     </>
   )
+}
+
+export async function getServerSideProps({ params }) {
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    )
+    const { data: post } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('slug', params.slug)
+      .eq('status', 'published')
+      .single()
+
+    if (!post) return { notFound: true }
+
+    return { props: { post } }
+  } catch (e) {
+    return { notFound: true }
+  }
 }
