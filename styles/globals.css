@@ -1,9 +1,9 @@
 :root {
   --brand:         #e07b7b;
   --brand-dark:    #c45c5c;
-  --brand-light:   rgba(224,123,123,0.12);
-  --brand-subtle:  rgba(224,123,123,0.07);
-  --brand-border:  rgba(224,123,123,0.26);
+  --brand-light:   rgba(224,123,123,0.10);
+  --brand-subtle:  rgba(224,123,123,0.06);
+  --brand-border:  rgba(224,123,123,0.24);
 
   --bg:            #f5f3f0;
   --surface:       #ffffff;
@@ -11,18 +11,18 @@
   --surface3:      #e8e4df;
 
   --text:          #1a1714;
-  --text-2:        #5a5652;
+  --text-2:        #6b6663;
   --text-3:        #9a9590;
 
-  --border:        rgba(0,0,0,0.08);
-  --border-strong: rgba(0,0,0,0.14);
+  --border:        rgba(0,0,0,0.07);
+  --border-strong: rgba(0,0,0,0.13);
 
   --green:         #2d7a3a;
   --green-bg:      #eaf5ec;
-  --red:           #c0392b;
-  --red-bg:        #fdf0ee;
-  --amber:         #b8780a;
-  --amber-bg:      #fef8ee;
+  --red:           #b83030;
+  --red-bg:        #fdf0f0;
+  --amber:         #9a6200;
+  --amber-bg:      #fff8ed;
 
   --font:          'DM Sans', system-ui, sans-serif;
   --display:       'Syne', sans-serif;
@@ -39,29 +39,35 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
   font-family: var(--font);
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  color: var(--text);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 60% 50% at 0% 0%,   rgba(224,123,123,0.13) 0%, transparent 100%),
+    radial-gradient(ellipse 45% 40% at 100% 0%,  rgba(224,123,123,0.09) 0%, transparent 100%),
+    radial-gradient(ellipse 40% 35% at 0% 100%,  rgba(224,123,123,0.07) 0%, transparent 100%),
+    radial-gradient(ellipse 35% 30% at 100% 100%,rgba(224,123,123,0.05) 0%, transparent 100%);
+  background-attachment: fixed;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-@keyframes pulsing { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse    { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes pulsing  { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes float    { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-.fade-up { animation: slideUp 0.4s ease; }
+.fade-up  { animation: slideUp 0.4s ease; }
 .scale-in { animation: slideUp 0.25s ease; }
 .floating { animation: float 3s ease-in-out infinite; }
-.pulsing { animation: pulsing 1.4s ease-in-out infinite; }
+.pulsing  { animation: pulsing 1.4s ease-in-out infinite; }
 
 *:focus-visible {
   outline: 2px solid var(--brand);
