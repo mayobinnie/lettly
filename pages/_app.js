@@ -63,7 +63,13 @@ export default function App({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="/icon.svg"/>
         <meta name="theme-color" content="#1b5e3b"/>
       </Head>
-      <ClerkProvider {...pageProps}>
+      <ClerkProvider
+        {...pageProps}
+        signInUrl="https://accounts.lettly.co/sign-in"
+        signUpUrl="https://accounts.lettly.co/sign-up"
+        signInFallbackRedirectUrl="/dashboard"
+        signUpFallbackRedirectUrl="/dashboard"
+      >
         <Component {...pageProps} />
 
         {showBanner && (
