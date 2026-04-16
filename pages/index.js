@@ -189,7 +189,7 @@ export default function HomePage() {
             <Link href="/blog" style={navLink}>Guides</Link>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <Link href="/sign-in" style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', padding: '8px 18px', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none' }}>Log in</Link>
+            <a href="https://accounts.lettly.co/sign-in" style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', padding: '8px 18px', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none' }}>Log in</a>
             <RoseBtn href="#pricing">Start free trial</RoseBtn>
           </div>
         </nav>
