@@ -1,45 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap');
-
 :root {
-  /* Brand - dusty rose */
-  --brand:          #e07b7b;
-  --brand-dark:     #c45c5c;
-  --brand-light:    rgba(224,123,123,0.12);
-  --brand-subtle:   rgba(224,123,123,0.07);
-  --brand-border:   rgba(224,123,123,0.26);
+  --brand:         #e07b7b;
+  --brand-dark:    #c45c5c;
+  --brand-light:   rgba(224,123,123,0.12);
+  --brand-subtle:  rgba(224,123,123,0.07);
+  --brand-border:  rgba(224,123,123,0.26);
 
-  /* Surfaces - clean light for dashboard readability */
-  --bg:             #f5f3f0;
-  --surface:        #ffffff;
-  --surface2:       #f0ede8;
-  --surface3:       #e8e4df;
+  --bg:            #f5f3f0;
+  --surface:       #ffffff;
+  --surface2:      #f0ede8;
+  --surface3:      #e8e4df;
 
-  /* Text */
-  --text:           #1a1714;
-  --text-2:         #5a5652;
-  --text-3:         #9a9590;
+  --text:          #1a1714;
+  --text-2:        #5a5652;
+  --text-3:        #9a9590;
 
-  /* Borders */
-  --border:         rgba(0,0,0,0.08);
-  --border-strong:  rgba(0,0,0,0.14);
+  --border:        rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
 
-  /* Semantic */
-  --green:          #2d7a3a;
-  --green-bg:       #eaf5ec;
-  --red:            #c0392b;
-  --red-bg:         #fdf0ee;
-  --amber:          #b8780a;
-  --amber-bg:       #fef8ee;
+  --green:         #2d7a3a;
+  --green-bg:      #eaf5ec;
+  --red:           #c0392b;
+  --red-bg:        #fdf0ee;
+  --amber:         #b8780a;
+  --amber-bg:      #fef8ee;
 
-  /* Typography */
-  --font:           'DM Sans', system-ui, sans-serif;
-  --display:        'Syne', sans-serif;
-  --mono:           'DM Mono', monospace;
+  --font:          'DM Sans', system-ui, sans-serif;
+  --display:       'Syne', sans-serif;
+  --mono:          'DM Mono', monospace;
 
-  /* Layout */
-  --radius:         14px;
-  --radius-sm:      9px;
-  --radius-lg:      20px;
+  --radius:        14px;
+  --radius-sm:     9px;
+  --radius-lg:     20px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -56,25 +47,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 
-/* Animations */
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 @keyframes pulsing { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
 .fade-up { animation: slideUp 0.4s ease; }
 .scale-in { animation: slideUp 0.25s ease; }
 .floating { animation: float 3s ease-in-out infinite; }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .pulsing { animation: pulsing 1.4s ease-in-out infinite; }
 
-/* Focus */
 *:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
