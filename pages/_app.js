@@ -61,7 +61,7 @@ export default function App({ Component, pageProps }) {
         <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
         <link rel="alternate icon" href="/favicon.svg"/>
         <link rel="apple-touch-icon" href="/icon.svg"/>
-        <meta name="theme-color" content="#1b5e3b"/>
+        <meta name="theme-color" content="#0d0a0a"/>
       </Head>
       <ClerkProvider
         {...pageProps}
