@@ -118,7 +118,7 @@ function PricingSection() {
         })}
       </div>
       <div style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: 'rgba(255,255,255,0.55)' }}>
-        14-day free trial on all plans, no credit card required. Enterprise plans for 10+ properties — <a href="mailto:hello@lettly.co" style={{ color: RL, textDecoration: 'underline' }}>contact us</a>.
+        14-day free trial on all plans, no credit card required. Enterprise plans for 10+ properties: <a href="mailto:hello@lettly.co" style={{ color: RL, textDecoration: 'underline' }}>contact us</a>.
       </div>
     </section>
   )
@@ -129,9 +129,9 @@ export default function HomePage() {
 
   const features = [
     { icon: '📋', title: 'AI document extraction', desc: 'Drop a gas cert, EICR, EPC or tenancy agreement. Lettly reads it and updates your records automatically. Every date, every detail.' },
-    { icon: '🛡️', title: 'Compliance tracking', desc: 'Gas certs, EICRs, EPCs, insurance, Right to Rent — every deadline tracked with alerts before anything expires.' },
+    { icon: '🛡️', title: 'Compliance tracking', desc: 'Gas certs, EICRs, EPCs, insurance, Right to Rent, every deadline tracked with alerts before anything expires.' },
     { icon: '💷', title: 'Rent tracker', desc: 'Monthly ledger for every property. Mark payments, log dates, track arrears across your full portfolio at a glance.' },
-    { icon: '⚖️', title: 'Legislation centre', desc: 'England, Scotland and Wales covered. Renters Rights Act, PRT, Occupation Contracts — always current, always by nation.' },
+    { icon: '⚖️', title: 'Legislation centre', desc: 'England, Scotland and Wales covered. Renters Rights Act, PRT, Occupation Contracts, always current, always by nation.' },
     { icon: '🤖', title: 'Lettly AI', desc: 'Ask anything about your portfolio, compliance or finances. Instant answers built on your actual property data.' },
     { icon: '📊', title: 'Finance and tax tools', desc: 'Section 24 calculator, CGT planner, Ltd vs personal comparison, deal analyser and remortgage planner. All built in.' },
     { icon: '🔧', title: 'Maintenance log', desc: 'Log repairs, track contractors, give tenants a direct reporting link. Photos, costs and status all in one place.' },
@@ -154,7 +154,7 @@ export default function HomePage() {
   return (
     <>
       <Head>
-        <title>Lettly — Property management for UK landlords</title>
+        <title>Lettly: Property management for UK landlords</title>
         <meta name="description" content="Replace your letting agent with Lettly. AI document extraction, compliance tracking, rent management and legislation for UK private landlords. From £10/month."/>
         <link rel="preconnect" href="https://fonts.googleapis.com"/>
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin=""/>
@@ -251,7 +251,7 @@ export default function HomePage() {
 
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: RDIM, border: '0.5px solid ' + RBDR, borderRadius: 100, padding: '6px 16px', marginBottom: 36, fontSize: 12, fontWeight: 600, color: RL, animation: 'fadeUp .5s ease both' }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: R, animation: 'pulse 2s infinite', display: 'inline-block' }}/>
-            Renters Rights Act in force 1 May 2026 — are you ready?
+            Renters Rights Act in force 1 May 2026. Are you ready?
           </div>
 
           <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(42px,7.5vw,88px)', fontWeight: 800, lineHeight: 1.0, letterSpacing: '-2.5px', marginBottom: 24, maxWidth: 860, animation: 'fadeUp .5s .08s ease both' }}>
@@ -259,11 +259,11 @@ export default function HomePage() {
           </h1>
 
           <p style={{ fontSize: 'clamp(16px,2vw,20px)', color: 'rgba(255,255,255,0.55)', fontWeight: 300, maxWidth: 560, lineHeight: 1.75, marginBottom: 40, animation: 'fadeUp .5s .16s ease both' }}>
-            Lettly replaces your letting agent. AI document reading, full compliance tracking, rent management and UK legislation — all three nations covered — from £10/month.
+            Lettly replaces your letting agent. AI document reading, full compliance tracking, rent management and UK legislation, all three nations covered, from £10/month.
           </p>
 
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', animation: 'fadeUp .5s .24s ease both' }}>
-            <RoseBtn onClick={startCheckout} large>Start free trial — 14 days free →</RoseBtn>
+            <RoseBtn onClick={startCheckout} large>Start free trial, 14 days free →</RoseBtn>
             <GhostBtn href="#pricing" large>See pricing</GhostBtn>
           </div>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 16 }}>No credit card required. Cancel any time.</p>
@@ -299,7 +299,7 @@ export default function HomePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, minWidth: 380 }}>
                   {[
                     { addr: '11 Northfield Ave, HU5', rent: '£850/mo', gas: {v:'Valid',s:'ok'}, eicr: {v:'Valid',s:'ok'}, epc: 'C', warn: 'Gas cert due in 28 days', bg: 'linear-gradient(135deg,#1a2a1e,#1e3024)', status: 'ok' },
-                    { addr: '7 Tower Hill Mews, HU1', rent: '£1,100/mo', gas: {v:'Valid',s:'ok'}, eicr: {v:'Overdue',s:'err'}, epc: 'D', warn: 'EICR overdue — book now', bg: 'linear-gradient(135deg,#1a1e2a,#202838)', status: 'err' },
+                    { addr: '7 Tower Hill Mews, HU1', rent: '£1,100/mo', gas: {v:'Valid',s:'ok'}, eicr: {v:'Overdue',s:'err'}, epc: 'D', warn: 'EICR overdue: book now', bg: 'linear-gradient(135deg,#1a1e2a,#202838)', status: 'err' },
                   ].map(p => (
                     <div key={p.addr} style={{ background: '#1e1515', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 11, overflow: 'hidden' }}>
                       <div style={{ height: 90, background: p.bg, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -342,7 +342,7 @@ export default function HomePage() {
         <section className="sec-pad" style={{ maxWidth: 1200, margin: '0 auto' }} id="features">
           <div style={secTag}>Everything included</div>
           <h2 style={secH2}>Not a feature list.<br/>A letting agent replacement.</h2>
-          <p style={secSub}>Every tool a letting agent uses to justify their fee — built into one platform.</p>
+          <p style={secSub}>Every tool a letting agent uses to justify their fee, built into one platform.</p>
           <div className="grid-features">
             {features.map(f => (
               <div key={f.title} style={{ background: '#0d0a0a', padding: '34px 28px', cursor: 'default', transition: 'background .2s' }}
@@ -361,10 +361,10 @@ export default function HomePage() {
           <section className="sec-pad" style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={secTag}>The honest numbers</div>
             <h2 style={secH2}>Letting agents charge 10–15%<br/>of your rent. We don't.</h2>
-            <p style={secSub}>On an £850/month property that is over £1,200 a year — for work you can do yourself in minutes.</p>
+            <p style={secSub}>On an £850/month property that is over £1,200 a year, for work you can do yourself in minutes.</p>
             <div className="grid-2">
               <div style={{ background: '#161010', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 36 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>Letting agent — full management</div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>Letting agent: full management</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Everything you pay for...</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 52, fontWeight: 800, color: R, marginBottom: 24, letterSpacing: '-2px', lineHeight: 1 }}>£1,275<span style={{ fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.5)', letterSpacing: 0 }}>/yr</span></div>
                 {['10–15% of rent, every month, every year','No transparency on what they actually do','Tenancy renewal fees on top','Maintenance markups passed back to you','You still carry all the legal liability'].map(item => (
@@ -374,7 +374,7 @@ export default function HomePage() {
                 ))}
               </div>
               <div style={{ background: 'linear-gradient(145deg,#1a0d0d,#150a0a)', border: '0.5px solid ' + RBDR, borderRadius: 16, padding: 36 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: RL, marginBottom: 20 }}>Lettly — full management software</div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: RL, marginBottom: 20 }}>Lettly: full management software</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Everything you actually need.</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 52, fontWeight: 800, color: R, marginBottom: 24, letterSpacing: '-2px', lineHeight: 1 }}>£120<span style={{ fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.5)', letterSpacing: 0 }}>/yr</span></div>
                 {['AI reads every certificate automatically','Compliance alerts before anything expires','All three nations covered in full','Every feature included, nothing gated','14-day free trial, cancel any time'].map(item => (
@@ -483,7 +483,7 @@ export default function HomePage() {
           </div>
           <div className="footer-bottom" style={{ marginTop: 32, paddingTop: 20, borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
-              © 2026 Lettly. ICO registered. Information only — not legal or financial advice.<br/>
+              © 2026 Lettly. ICO registered. Information only, not legal or financial advice.<br/>
               Lettly is not a letting agent and is not regulated by RICS or ARLA.
             </div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Lettly.co · Made in the UK</div>
