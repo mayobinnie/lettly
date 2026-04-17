@@ -70,7 +70,7 @@ function PricingSection() {
   ]
 
   return (
-    <section style={{ padding: '92px 44px', maxWidth: 1200, margin: '0 auto' }} id="pricing">
+    <section style={{ padding: '92px 44px', maxWidth: 1200, margin: '0 auto' }} className="sec-pad" id="pricing">
       <div style={{ fontSize: 11, fontWeight: 700, color: R, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 16 }}>Simple pricing</div>
       <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,4.5vw,56px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-1.5px', marginBottom: 18 }}>
         No hidden fees.<br/>No feature gating.
@@ -87,7 +87,7 @@ function PricingSection() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+      <div className="grid-3">
         {plans.map(plan => {
           const price = billing === 'annual' ? plan.annual : plan.monthly
           const isHot = plan.popular
@@ -125,6 +125,8 @@ function PricingSection() {
 }
 
 export default function HomePage() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   const features = [
     { icon: '📋', title: 'AI document extraction', desc: 'Drop a gas cert, EICR, EPC or tenancy agreement. Lettly reads it and updates your records automatically. Every date, every detail.' },
     { icon: '🛡️', title: 'Compliance tracking', desc: 'Gas certs, EICRs, EPCs, insurance, Right to Rent — every deadline tracked with alerts before anything expires.' },
@@ -160,31 +162,90 @@ export default function HomePage() {
         <style>{`
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
           @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+          .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+          .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+          .grid-features { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.08); border-radius:16px; overflow:hidden; }
+          .grid-footer { display:grid; grid-template-columns:250px 1fr 1fr 1fr; gap:36px; }
+          .sec-pad { padding:92px 44px; }
+          .hero-pad { padding:148px 44px 80px; }
+          .nav-links { display:flex; gap:26px; flex:1; }
+          .nav-ctas { display:flex; gap:10px; align-items:center; }
+          .hamburger { display:none; background:none; border:none; cursor:pointer; padding:4px; }
+          .mobile-menu { display:none; }
+          .dash-preview { padding:0 44px 80px; }
+
+          @media (max-width:768px) {
+            .grid-3 { grid-template-columns:1fr; gap:12px; }
+            .grid-2 { grid-template-columns:1fr; gap:14px; }
+            .grid-features { grid-template-columns:1fr; }
+            .grid-footer { grid-template-columns:1fr 1fr; gap:24px; }
+            .sec-pad { padding:60px 20px; }
+            .hero-pad { padding:110px 20px 60px; }
+            .nav-links { display:none; }
+            .nav-ctas { display:none; }
+            .hamburger { display:flex; align-items:center; justify-content:center; margin-left:auto; }
+            .dash-preview { padding:0 20px 60px; }
+            .mobile-menu {
+              display:block;
+              position:fixed;
+              top:62px;
+              left:0;
+              right:0;
+              background:rgba(13,10,10,0.98);
+              backdrop-filter:blur(24px);
+              border-bottom:0.5px solid rgba(255,255,255,0.08);
+              padding:20px;
+              z-index:99;
+            }
+            .footer-bottom { flex-direction:column; gap:8px; }
+          }
         `}</style>
       </Head>
 
       <div style={{ background: '#0d0a0a', color: '#fff', fontFamily: "'DM Sans', system-ui, sans-serif", minHeight: '100vh', overflowX: 'hidden' }}>
 
         {/* NAV */}
-        <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, padding: '0 44px', height: 62, display: 'flex', alignItems: 'center', gap: 32, background: 'rgba(13,10,10,0.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, padding: '0 24px', height: 62, display: 'flex', alignItems: 'center', gap: 24, background: 'rgba(13,10,10,0.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
             <div style={{ width: 34, height: 34, background: R, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, color: '#fff' }}>L</div>
             <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: '#fff' }}>Lettly</span>
           </Link>
-          <div style={{ display: 'flex', gap: 26, flex: 1 }}>
+          <div className="nav-links">
             <Link href="#features" style={navLink}>Features</Link>
             <Link href="#nations" style={navLink}>Nations</Link>
             <Link href="#pricing" style={navLink}>Pricing</Link>
             <Link href="/blog" style={navLink}>Guides</Link>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div className="nav-ctas">
             <a href="/dashboard" style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', padding: '8px 18px', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none' }}>Log in</a>
             <RoseBtn href="#pricing">Start free trial</RoseBtn>
           </div>
+          <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+            {menuOpen
+              ? <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><line x1="4" y1="4" x2="18" y2="18" stroke="white" strokeWidth="1.5" strokeLinecap="round"/><line x1="18" y1="4" x2="4" y2="18" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              : <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><line x1="3" y1="7" x2="19" y2="7" stroke="white" strokeWidth="1.5" strokeLinecap="round"/><line x1="3" y1="12" x2="19" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/><line x1="3" y1="17" x2="19" y2="17" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            }
+          </button>
         </nav>
 
+        {/* MOBILE MENU */}
+        {menuOpen && (
+          <div className="mobile-menu">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {[['#features','Features'],['#nations','Nations'],['#pricing','Pricing'],['/blog','Guides']].map(([href, label]) => (
+                <Link key={label} href={href} onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: 'rgba(255,255,255,0.8)', textDecoration: 'none', padding: '11px 0', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>{label}</Link>
+              ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+                <a href="/dashboard" style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', padding: '12px 20px', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', textAlign: 'center' }}>Log in</a>
+                <button onClick={() => { setMenuOpen(false); startCheckout() }} style={{ fontSize: 15, fontWeight: 700, color: '#fff', background: R, padding: '13px 20px', borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>Start free trial</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* HERO */}
-        <section style={{ minHeight: '100vh', padding: '148px 44px 80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <section className="hero-pad" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px)', backgroundSize: '60px 60px', WebkitMaskImage: 'radial-gradient(ellipse 90% 65% at 50% 0%,black,transparent 75%)', maskImage: 'radial-gradient(ellipse 90% 65% at 50% 0%,black,transparent 75%)', opacity: .45 }}/>
           <div style={{ position: 'absolute', top: -200, left: '50%', transform: 'translateX(-50%)', width: 700, height: 700, borderRadius: '50%', pointerEvents: 'none', background: 'radial-gradient(circle,rgba(224,123,123,0.09) 0%,transparent 68%)' }}/>
 
@@ -193,56 +254,51 @@ export default function HomePage() {
             Renters Rights Act in force 1 May 2026 — are you ready?
           </div>
 
-          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(48px,7.5vw,88px)', fontWeight: 800, lineHeight: 1.0, letterSpacing: '-2.5px', marginBottom: 24, maxWidth: 860, animation: 'fadeUp .5s .08s ease both' }}>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(42px,7.5vw,88px)', fontWeight: 800, lineHeight: 1.0, letterSpacing: '-2.5px', marginBottom: 24, maxWidth: 860, animation: 'fadeUp .5s .08s ease both' }}>
             Your letting agent<br/>charges <em style={{ fontStyle: 'normal', color: R }}>10x too much.</em>
           </h1>
 
-          <p style={{ fontSize: 'clamp(16px,2vw,19px)', color: 'rgba(255,255,255,0.55)', maxWidth: 500, lineHeight: 1.75, marginBottom: 44, fontWeight: 300, animation: 'fadeUp .5s .16s ease both' }}>
-            Lettly replaces your letting agent for a fraction of the cost. Full compliance, AI document reading, rent tracking and legislation for UK private landlords.
+          <p style={{ fontSize: 'clamp(16px,2vw,20px)', color: 'rgba(255,255,255,0.55)', fontWeight: 300, maxWidth: 560, lineHeight: 1.75, marginBottom: 40, animation: 'fadeUp .5s .16s ease both' }}>
+            Lettly replaces your letting agent. AI document reading, full compliance tracking, rent management and UK legislation — all three nations covered — from £10/month.
           </p>
 
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginBottom: 52, animation: 'fadeUp .5s .22s ease both' }}>
-            <RoseBtn href="#pricing" large>Start 14-day free trial</RoseBtn>
-            <GhostBtn href="/dashboard" large>See the dashboard →</GhostBtn>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', animation: 'fadeUp .5s .24s ease both' }}>
+            <RoseBtn onClick={startCheckout} large>Start free trial — 14 days free →</RoseBtn>
+            <GhostBtn href="#pricing" large>See pricing</GhostBtn>
           </div>
-
-          <div style={{ display: 'flex', gap: 28, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', animation: 'fadeUp .5s .28s ease both' }}>
-            {['England, Scotland & Wales', 'No credit card required', 'From £10/month', 'Cancel anytime'].map(t => (
-              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
-                <div style={{ width: 16, height: 16, borderRadius: '50%', background: RDIM, border: '0.5px solid ' + RBDR, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: RL, flexShrink: 0 }}>✓</div>
-                {t}
-              </div>
-            ))}
-          </div>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 16 }}>No credit card required. Cancel any time.</p>
         </section>
 
         {/* DASHBOARD PREVIEW */}
-        <div style={{ maxWidth: 1040, margin: '0 auto 110px', padding: '0 44px' }}>
-          <div style={{ background: '#161010', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 48px 120px rgba(0,0,0,0.80)' }}>
-            <div style={{ background: '#1e1515', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 7, borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
-              {['#f87171','#facc15','#4ade80'].map(c => <div key={c} style={{ width: 12, height: 12, borderRadius: '50%', background: c }}/>)}
-              <div style={{ flex: 1, background: '#272020', borderRadius: 6, padding: '5px 14px', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '0 12px' }}>lettly.co/dashboard</div>
+        <div className="dash-preview">
+          <div style={{ background: '#111010', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', maxWidth: 1100, margin: '0 auto' }}>
+            <div style={{ background: '#1a1515', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '0.5px solid rgba(255,255,255,0.07)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f87171', display: 'inline-block' }}/>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }}/>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }}/>
+              <div style={{ flex: 1, background: '#111010', borderRadius: 6, padding: '4px 12px', fontSize: 11, color: 'rgba(255,255,255,0.3)', marginLeft: 8 }}>lettly.co/dashboard</div>
             </div>
-            <div style={{ padding: 20, display: 'grid', gridTemplateColumns: '180px 1fr', gap: 16 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingRight: 16, borderRight: '0.5px solid rgba(255,255,255,0.08)' }}>
-                {[{l:'Overview',a:true},{l:'Properties'},{l:'Finance'},{l:'Compliance'},{l:'Rent tracker'},{l:'Maintenance'},{l:'Lettly AI'}].map(n => (
-                  <div key={n.l} style={{ padding: '9px 11px', borderRadius: 8, fontSize: 12, color: n.a ? RL : 'rgba(255,255,255,0.5)', background: n.a ? RDIM : 'transparent', border: n.a ? '0.5px solid ' + RBDR : '0.5px solid transparent', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', opacity: .7, display: 'inline-block' }}/>{n.l}
+            <div style={{ display: 'flex', minHeight: 420 }}>
+              <div style={{ width: 200, background: '#0d0a0a', borderRight: '0.5px solid rgba(255,255,255,0.07)', padding: '20px 14px', flexShrink: 0 }} className="dash-sidebar">
+                {['Overview','Properties','Finance','Compliance','Rent tracker','Maintenance','Lettly AI'].map((item, i) => (
+                  <div key={item} style={{ padding: '9px 12px', borderRadius: 8, marginBottom: 2, fontSize: 13, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.5)', background: i === 0 ? RDIM : 'transparent', cursor: 'default', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: i === 0 ? R : 'rgba(255,255,255,0.2)', flexShrink: 0 }}/>
+                    {item}
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
-                  {[{l:'Portfolio value',v:'£485,000',c:RL},{l:'Monthly income',v:'£2,850',c:'#4ade80'},{l:'Gross yield',v:'7.1%',c:'#fff'},{l:'Actions needed',v:'2',c:'#f87171'}].map(m => (
-                    <div key={m.l} style={{ background: '#1e1515', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 11, padding: 14 }}>
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 5 }}>{m.l}</div>
-                      <div style={{ fontSize: 19, fontWeight: 700, fontFamily: "'Syne', sans-serif", color: m.c }}>{m.v}</div>
+              <div style={{ flex: 1, padding: 20, overflowX: 'auto' }}>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 20, minWidth: 380 }}>
+                  {[['Portfolio value','£485,000',null],['Monthly income','£3,250',null],['Compliance','2 alerts','warn']].map(([label, val, st]) => (
+                    <div key={label} style={{ flex: 1, background: '#161010', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '14px 16px', minWidth: 110 }}>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{label}</div>
+                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 800, color: st === 'warn' ? RL : '#fff' }}>{val}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, minWidth: 380 }}>
                   {[
-                    { addr: '11 Northfield Ave, HU13', rent: '£925/mo', gas: {v:'Due 14d',s:'w'}, eicr: {v:'Valid',s:'ok'}, epc: 'C', warn: 'Gas cert due in 14 days', bg: 'linear-gradient(135deg,#1e2a1e,#2a3820)', status: 'ok' },
+                    { addr: '11 Northfield Ave, HU5', rent: '£850/mo', gas: {v:'Valid',s:'ok'}, eicr: {v:'Valid',s:'ok'}, epc: 'C', warn: 'Gas cert due in 28 days', bg: 'linear-gradient(135deg,#1a2a1e,#1e3024)', status: 'ok' },
                     { addr: '7 Tower Hill Mews, HU1', rent: '£1,100/mo', gas: {v:'Valid',s:'ok'}, eicr: {v:'Overdue',s:'err'}, epc: 'D', warn: 'EICR overdue — book now', bg: 'linear-gradient(135deg,#1a1e2a,#202838)', status: 'err' },
                   ].map(p => (
                     <div key={p.addr} style={{ background: '#1e1515', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 11, overflow: 'hidden' }}>
@@ -275,19 +331,19 @@ export default function HomePage() {
         </div>
 
         {/* STRIP */}
-        <div style={{ background: '#111010', borderTop: '0.5px solid rgba(255,255,255,0.07)', borderBottom: '0.5px solid rgba(255,255,255,0.07)', padding: '26px 44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginRight: 8 }}>Works alongside</span>
+        <div style={{ background: '#111010', borderTop: '0.5px solid rgba(255,255,255,0.07)', borderBottom: '0.5px solid rgba(255,255,255,0.07)', padding: '26px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginRight: 4 }}>Works alongside</span>
           {['DPS','TDS','mydeposits','Gas Safe Register','Land Registry','SafeDeposits Scotland','Stripe'].map(t => (
-            <span key={t} style={{ padding: '7px 18px', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 100, fontSize: 13, color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.04)' }}>{t}</span>
+            <span key={t} style={{ padding: '7px 14px', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 100, fontSize: 12, color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.04)' }}>{t}</span>
           ))}
         </div>
 
         {/* FEATURES */}
-        <section style={{ padding: '92px 44px', maxWidth: 1200, margin: '0 auto' }} id="features">
+        <section className="sec-pad" style={{ maxWidth: 1200, margin: '0 auto' }} id="features">
           <div style={secTag}>Everything included</div>
           <h2 style={secH2}>Not a feature list.<br/>A letting agent replacement.</h2>
           <p style={secSub}>Every tool a letting agent uses to justify their fee — built into one platform.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
+          <div className="grid-features">
             {features.map(f => (
               <div key={f.title} style={{ background: '#0d0a0a', padding: '34px 28px', cursor: 'default', transition: 'background .2s' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#161010'}
@@ -302,11 +358,11 @@ export default function HomePage() {
 
         {/* COMPARISON */}
         <div style={darkSection}>
-          <section style={{ padding: '92px 44px', maxWidth: 1200, margin: '0 auto' }}>
+          <section className="sec-pad" style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={secTag}>The honest numbers</div>
             <h2 style={secH2}>Letting agents charge 10–15%<br/>of your rent. We don't.</h2>
             <p style={secSub}>On an £850/month property that is over £1,200 a year — for work you can do yourself in minutes.</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <div className="grid-2">
               <div style={{ background: '#161010', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 36 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>Letting agent — full management</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Everything you pay for...</div>
@@ -332,11 +388,11 @@ export default function HomePage() {
         </div>
 
         {/* NATIONS */}
-        <section style={{ padding: '92px 44px', maxWidth: 1200, margin: '0 auto' }} id="nations">
+        <section className="sec-pad" style={{ maxWidth: 1200, margin: '0 auto' }} id="nations">
           <div style={secTag}>Three nations, one platform</div>
           <h2 style={secH2}>The only platform that covers<br/>all of UK landlord law.</h2>
           <p style={secSub}>England, Scotland and Wales have different legislation. Most platforms only cover England. Lettly covers all three.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+          <div className="grid-3">
             {[
               { flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', name: 'England', act: 'Renters Rights Act 2026', desc: 'Section 21 abolished from 1 May 2026. All tenancies become periodic. PRS Database registration required. Every requirement tracked in Lettly.' },
               { flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', name: 'Scotland', act: 'Private Residential Tenancy', desc: 'No-fault evictions already abolished. PRT replaces AST. Mandatory landlord registration. Repairing Standard compliance tracked automatically.' },
@@ -356,10 +412,10 @@ export default function HomePage() {
 
         {/* TESTIMONIALS */}
         <div style={darkSection}>
-          <section style={{ padding: '92px 44px', maxWidth: 1200, margin: '0 auto' }}>
+          <section className="sec-pad" style={{ maxWidth: 1200, margin: '0 auto' }}>
             <div style={secTag}>What landlords say</div>
             <h2 style={secH2}>Built for landlords<br/>who manage their own.</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+            <div className="grid-3">
               {testimonials.map(t => (
                 <div key={t.name} style={{ background: '#161010', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 26 }}>
                   <div style={{ color: R, fontSize: 13, letterSpacing: 2, marginBottom: 12 }}>★★★★★</div>
@@ -382,9 +438,9 @@ export default function HomePage() {
         <PricingSection/>
 
         {/* FINAL CTA */}
-        <div style={{ margin: '0 44px 80px', background: 'linear-gradient(140deg,#180d0d,#0d0a0a 50%,#180d0d)', border: '0.5px solid ' + RBDR, borderRadius: 24, padding: '80px 44px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ margin: '0 20px 80px', background: 'linear-gradient(140deg,#180d0d,#0d0a0a 50%,#180d0d)', border: '0.5px solid ' + RBDR, borderRadius: 24, padding: 'clamp(40px,6vw,80px) clamp(20px,5vw,44px)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 400, background: 'radial-gradient(circle,rgba(224,123,123,0.07) 0%,transparent 70%)', pointerEvents: 'none' }}/>
-          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(36px,5vw,68px)', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.05, marginBottom: 18 }}>
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,5vw,68px)', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.05, marginBottom: 18 }}>
             Stop paying your<br/>letting agent. <em style={{ fontStyle: 'normal', color: R }}>Start today.</em>
           </h2>
           <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.55)', marginBottom: 38, fontWeight: 300 }}>14-day free trial. No credit card. Cancel any time.</p>
@@ -396,34 +452,36 @@ export default function HomePage() {
         </div>
 
         {/* FOOTER */}
-        <footer style={{ borderTop: '0.5px solid rgba(255,255,255,0.08)', padding: '52px 44px 36px', display: 'grid', gridTemplateColumns: '250px 1fr 1fr 1fr', gap: 36 }}>
-          <div>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-              <div style={{ width: 34, height: 34, background: R, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, color: '#fff' }}>L</div>
-              <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: '#fff' }}>Lettly</span>
-            </Link>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: '14px 0 18px', fontWeight: 300 }}>Property management software for UK private landlords. Replace your letting agent for a fraction of the cost.</p>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {['🏴󠁧󠁢󠁥󠁮󠁧󠁿 England','🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland','🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales'].map(n => (
-                <span key={n} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)' }}>{n}</span>
-              ))}
-            </div>
-          </div>
-          {[
-            { title: 'Product', links: [['Features','#features'],['Pricing','#pricing'],['Dashboard','/dashboard'],['Guides','/blog']] },
-            { title: 'Legal', links: [['Terms of Service','/terms'],['Privacy Policy','/privacy'],['Security','/security']] },
-            { title: 'Contact', links: [['hello@lettly.co','mailto:hello@lettly.co'],['WhatsApp support','https://wa.me/447700000000']] },
-          ].map(col => (
-            <div key={col.title}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.5)', marginBottom: 13 }}>{col.title}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {col.links.map(([label, href]) => (
-                  <Link key={label} href={href} style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>{label}</Link>
+        <footer style={{ borderTop: '0.5px solid rgba(255,255,255,0.08)', padding: 'clamp(32px,5vw,52px) clamp(20px,4vw,44px) 36px' }}>
+          <div className="grid-footer" style={{ marginBottom: 0 }}>
+            <div>
+              <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+                <div style={{ width: 34, height: 34, background: R, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, color: '#fff' }}>L</div>
+                <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: '#fff' }}>Lettly</span>
+              </Link>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: '14px 0 18px', fontWeight: 300 }}>Property management software for UK private landlords. Replace your letting agent for a fraction of the cost.</p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {['🏴󠁧󠁢󠁥󠁮󠁧󠁿 England','🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland','🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales'].map(n => (
+                  <span key={n} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)' }}>{n}</span>
                 ))}
               </div>
             </div>
-          ))}
-          <div style={{ marginTop: 32, paddingTop: 20, borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gridColumn: '1/-1', flexWrap: 'wrap', gap: 10 }}>
+            {[
+              { title: 'Product', links: [['Features','#features'],['Pricing','#pricing'],['Dashboard','/dashboard'],['Guides','/blog']] },
+              { title: 'Legal', links: [['Terms of Service','/terms'],['Privacy Policy','/privacy'],['Security','/security']] },
+              { title: 'Contact', links: [['hello@lettly.co','mailto:hello@lettly.co'],['WhatsApp support','https://wa.me/447700000000']] },
+            ].map(col => (
+              <div key={col.title}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.5)', marginBottom: 13 }}>{col.title}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                  {col.links.map(([label, href]) => (
+                    <Link key={label} href={href} style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>{label}</Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="footer-bottom" style={{ marginTop: 32, paddingTop: 20, borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
               © 2026 Lettly. ICO registered. Information only — not legal or financial advice.<br/>
               Lettly is not a letting agent and is not regulated by RICS or ARLA.
