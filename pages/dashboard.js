@@ -5405,7 +5405,7 @@ function ConditionReport({portfolio,setPortfolio,userId}){
                     {r.tenantAcknowledged&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:'var(--green-bg)',color:'var(--green)',fontWeight:500}}>Tenant signed</span>}
                     <span style={{fontSize:11,color:'var(--text-3)'}}>{r.date}</span>
                   </div>
-                  <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',lineHeight:1.8}}>
+                  <div style={{fontSize:11,color:'var(--text-3)',lineHeight:1.8}}>
                     {r.tenantName&&<span style={{marginRight:10}}>{r.tenantName}</span>}
                     {(r.rooms||[]).length>0&&<span style={{marginRight:10}}>{r.rooms.length} room{r.rooms.length>1?'s':''}</span>}
                     {totalPhotos>0&&<span style={{marginRight:10}}>{totalPhotos} photo{totalPhotos>1?'s':''}</span>}
@@ -5894,19 +5894,19 @@ export default function Dashboard(){
     {showWizard&&<OnboardingWizard onComplete={completeWizard} firstName={user?.firstName}/>}
 
     <div style={{minHeight:'100vh',background:'var(--bg)'}} onDragOver={e=>{e.preventDefault()}} onDragEnter={e=>{e.preventDefault();setShowDrop(true)}} onDragLeave={e=>{const r=e.relatedTarget;if(!r||!e.currentTarget.contains(r))setShowDrop(false)}} onDrop={e=>{e.preventDefault();setShowDrop(false)}}>
-      <nav style={{background:'#0d0a0a',borderBottom:'0.5px solid rgba(255,255,255,0.08)',padding:'0 20px',display:'flex',alignItems:'center',height:56,position:'sticky',top:0,zIndex:100,gap:16}}>
+      <nav style={{background:'var(--surface)',borderBottom:'0.5px solid var(--border)',padding:'0 20px',display:'flex',alignItems:'center',height:56,position:'sticky',top:0,zIndex:100,gap:16}}>
         {/* Logo */}
         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
           <div style={{width:32,height:32,background:'var(--brand)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>
             <span style={{color:'#fff',fontSize:15,fontWeight:700,fontFamily:'var(--display)',fontStyle:'italic'}}>L</span>
           </div>
-          <span style={{fontFamily:'var(--display)',fontSize:19,fontWeight:700,color:'#fff'}}>Lettly</span>
+          <span style={{fontFamily:'var(--display)',fontSize:19,fontWeight:400}}>Lettly</span>
         </div>
 
         {/* Grouped dropdown nav */}
         <div className="nav-tabs-desktop" style={{display:'flex',alignItems:'center',gap:2,flex:1}}>
           {/* Overview - standalone */}
-          <button onClick={()=>setTab('overview')} style={{padding:'6px 12px',borderRadius:7,border:'none',background:tab==='overview'?'var(--brand-light)':'transparent',color:activeInGroup?'var(--brand)':'var(--text-2)',fontWeight:tab==='overview'?600:400,fontSize:13,cursor:'pointer',fontFamily:'var(--font)',whiteSpace:'nowrap'}}>
+          <button onClick={()=>setTab('overview')} style={{padding:'6px 12px',borderRadius:7,border:'none',background:tab==='overview'?'var(--brand-light)':'transparent',color:tab==='overview'?'var(--brand)':'var(--text-2)',fontWeight:tab==='overview'?600:400,fontSize:13,cursor:'pointer',fontFamily:'var(--font)',whiteSpace:'nowrap'}}>
             Overview
           </button>
 
@@ -5972,7 +5972,7 @@ export default function Dashboard(){
           {saveStatus==='saving'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--text-3)'}}>Saving…</span>}
           {saveStatus==='saved'&&loaded&&<span className="nav-save-status" style={{fontSize:11,color:'var(--green)'}}>✓ Saved</span>}
           {saveStatus==='error'&&<span className="nav-save-status" style={{fontSize:11,color:'var(--red)'}}>Save failed</span>}
-          <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'rgba(255,255,255,0.7)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}>
+          <button onClick={()=>setShowDrop(v=>!v)} style={{background:'none',border:'0.5px solid var(--border-strong)',borderRadius:7,padding:'6px 10px',fontSize:12,color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center',gap:5,whiteSpace:'nowrap'}}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add
           </button>
           {(!subscription||subscription.status==='none')&&<button className="nav-upgrade-btn" onClick={()=>setShowUpgrade(true)} style={{fontSize:11,padding:'5px 12px',borderRadius:7,border:'0.5px solid var(--brand)',background:'var(--brand-light)',cursor:'pointer',color:'var(--brand)',fontWeight:600,whiteSpace:'nowrap'}}>Upgrade</button>}
@@ -6110,7 +6110,7 @@ export default function Dashboard(){
         </div>
       </div>}
       <div className="dash-content">
-        {tab==='overview'&&<div style={{marginBottom:20,paddingBottom:20,borderBottom:'0.5px solid var(--border)'}}>{justSubscribed&&<div style={{background:'var(--green-bg)',border:'0.5px solid var(--green)',borderRadius:10,padding:'10px 16px',marginBottom:14,fontSize:13,color:'var(--green)',fontWeight:500,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span>Welcome to Lettly! Your 14-day free trial has started.</span><button onClick={()=>setJustSubscribed(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--green)',fontSize:16}}>x</button></div>}<h1 style={{fontFamily:'var(--display)',fontSize:'clamp(26px,4vw,38px)',fontWeight:800,marginBottom:6,color:'var(--text)',letterSpacing:'-1px'}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:14,color:'var(--text-2)',fontWeight:500}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} in your portfolio`}</p></div>}
+        {tab==='overview'&&<div style={{marginBottom:20,paddingBottom:20,borderBottom:'0.5px solid var(--border)'}}>{justSubscribed&&<div style={{background:'var(--green-bg)',border:'0.5px solid var(--green)',borderRadius:10,padding:'10px 16px',marginBottom:14,fontSize:13,color:'var(--green)',fontWeight:500,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span>Welcome to Lettly! Your 14-day free trial has started.</span><button onClick={()=>setJustSubscribed(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--green)',fontSize:16}}>x</button></div>}<h1 style={{fontFamily:'var(--display)',fontSize:'clamp(26px,4vw,38px)',fontWeight:400,marginBottom:6,color:'var(--text)',letterSpacing:'-0.3px'}}>Good {getGreeting()}, {user?.firstName||'there'}</h1><p style={{fontSize:14,color:'var(--text-2)',fontWeight:500}}>{(portfolio.properties||[]).length===0?'Add a property or drop documents to get started.':`${(portfolio.properties||[]).length} propert${(portfolio.properties||[]).length===1?'y':'ies'} in your portfolio`}</p></div>}
         {tab==='overview'    &&<Overview     portfolio={portfolio} onAddDocs={handleFiles} onScan={()=>setShowCamera(true)} onManual={()=>setShowManual(true)} user={user} onToggleCheck={toggleCheck} setTab={setTab}/>}
         {tab==='properties'  &&<Properties   portfolio={portfolio} onAddDocs={handleFiles} onAddDocsToProp={handleFilesForProp} onEdit={setFormProp} onAdd={()=>{if(atLimit){setShowUpgrade(true)}else{setFormProp({})}}} maxProps={maxProps} onUpgrade={()=>setShowUpgrade(true)}/>}
         {tab==='tenants'     &&<TenantsTab    portfolio={portfolio} setPortfolio={setPortfolio}/>}
