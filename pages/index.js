@@ -438,7 +438,7 @@ export default function HomePage() {
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>Letting agent: full management</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Everything you pay for...</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 52, fontWeight: 800, color: R, marginBottom: 24, letterSpacing: '-2px', lineHeight: 1 }}>£1,275<span style={{ fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.5)', letterSpacing: 0 }}>/yr</span></div>
-                {['10–15% of rent, every month, every year','No transparency on what they actually do','Tenancy renewal fees on top','Maintenance markups passed back to you','You still carry all the legal liability'].map(item => (
+                {['10–15% of rent, every month, every year','England only — Scotland and Wales ignored','Tenancy renewal fees on top','Maintenance markups passed back to you','You still carry all the legal liability'].map(item => (
                   <div key={item} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', fontSize: 14, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, marginBottom: 11 }}>
                     <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, marginTop: 1, background: 'rgba(248,113,113,.10)', color: '#f87171' }}>✕</div>{item}
                   </div>
@@ -448,7 +448,7 @@ export default function HomePage() {
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: RL, marginBottom: 20 }}>Lettly: full management software</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Everything you actually need.</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 52, fontWeight: 800, color: R, marginBottom: 24, letterSpacing: '-2px', lineHeight: 1 }}>£120<span style={{ fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.5)', letterSpacing: 0 }}>/yr</span></div>
-                {['AI reads every certificate automatically','Compliance alerts before anything expires','All three nations covered in full','Every feature included, nothing gated','14-day free trial, cancel any time'].map(item => (
+                {['AI reads every certificate automatically','Compliance alerts before anything expires','England, Scotland and Wales all covered','Every feature included, nothing gated','14-day free trial, cancel any time'].map(item => (
                   <div key={item} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', fontSize: 14, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, marginBottom: 11 }}>
                     <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, marginTop: 1, background: RDIM, color: RL }}>✓</div>{item}
                   </div>
