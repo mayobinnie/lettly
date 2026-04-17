@@ -259,11 +259,11 @@ export default function HomePage() {
           </div>
 
           <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(42px,7.5vw,88px)', fontWeight: 800, lineHeight: 1.0, letterSpacing: '-2.5px', marginBottom: 24, maxWidth: 860, animation: 'fadeUp .5s .08s ease both' }}>
-            Your letting agent<br/>charges <em style={{ fontStyle: 'normal', color: R }}>10x too much.</em>
+            Everything your<br/>letting agent does.<br/><em style={{ fontStyle: 'normal', color: R }}>For £10 a month.</em>
           </h1>
 
           <p style={{ fontSize: 'clamp(16px,2vw,20px)', color: 'rgba(255,255,255,0.55)', fontWeight: 300, maxWidth: 560, lineHeight: 1.75, marginBottom: 40, animation: 'fadeUp .5s .16s ease both' }}>
-            Lettly replaces your letting agent. AI document reading, full compliance tracking, rent management and UK legislation, all three nations covered, from £10/month.
+            AI document reading, compliance tracking, rent management and full UK legislation across England, Scotland and Wales. No letting agent required.
           </p>
 
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', animation: 'fadeUp .5s .24s ease both' }}>
