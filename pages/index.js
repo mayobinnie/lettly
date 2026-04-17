@@ -174,8 +174,12 @@ export default function HomePage() {
           .hamburger { display:none; background:none; border:none; cursor:pointer; padding:4px; }
           .mobile-menu { display:none; }
           .dash-preview { padding:0 44px 80px; }
+          .dash-desktop { display:block; }
+          .dash-mobile { display:none !important; }
 
           @media (max-width:768px) {
+            .dash-desktop { display:none !important; }
+            .dash-mobile { display:flex !important; }
             .grid-3 { grid-template-columns:1fr; gap:12px; }
             .grid-2 { grid-template-columns:1fr; gap:14px; }
             .grid-features { grid-template-columns:1fr; }
@@ -269,8 +273,8 @@ export default function HomePage() {
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 16 }}>No credit card required. Cancel any time.</p>
         </section>
 
-        {/* DASHBOARD PREVIEW */}
-        <div className="dash-preview">
+        {/* DASHBOARD PREVIEW - desktop browser */}
+        <div className="dash-preview dash-desktop">
           <div style={{ background: '#111010', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ background: '#1a1515', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '0.5px solid rgba(255,255,255,0.07)' }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f87171', display: 'inline-block' }}/>
@@ -279,7 +283,7 @@ export default function HomePage() {
               <div style={{ flex: 1, background: '#111010', borderRadius: 6, padding: '4px 12px', fontSize: 11, color: 'rgba(255,255,255,0.3)', marginLeft: 8 }}>lettly.co/dashboard</div>
             </div>
             <div style={{ display: 'flex', minHeight: 420 }}>
-              <div style={{ width: 200, background: '#0d0a0a', borderRight: '0.5px solid rgba(255,255,255,0.07)', padding: '20px 14px', flexShrink: 0 }} className="dash-sidebar">
+              <div style={{ width: 200, background: '#0d0a0a', borderRight: '0.5px solid rgba(255,255,255,0.07)', padding: '20px 14px', flexShrink: 0 }}>
                 {['Overview','Properties','Finance','Compliance','Rent tracker','Maintenance','Lettly AI'].map((item, i) => (
                   <div key={item} style={{ padding: '9px 12px', borderRadius: 8, marginBottom: 2, fontSize: 13, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.5)', background: i === 0 ? RDIM : 'transparent', cursor: 'default', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: i === 0 ? R : 'rgba(255,255,255,0.2)', flexShrink: 0 }}/>
@@ -326,6 +330,73 @@ export default function HomePage() {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* PHONE MOCKUP - mobile only */}
+        <div className="dash-mobile" style={{ display: 'none', padding: '0 24px 60px', justifyContent: 'center' }}>
+          {/* phone shell */}
+          <div style={{ width: '100%', maxWidth: 300, background: '#1a1515', border: '1.5px solid rgba(255,255,255,0.12)', borderRadius: 36, overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)' }}>
+            {/* notch bar */}
+            <div style={{ background: '#111010', padding: '12px 20px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>9:41</span>
+              <div style={{ width: 80, height: 18, background: '#0d0a0a', borderRadius: 20 }}/>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                <svg width="14" height="10" viewBox="0 0 14 10" fill="rgba(255,255,255,0.4)"><rect x="0" y="3" width="2" height="7" rx="1"/><rect x="3" y="2" width="2" height="8" rx="1"/><rect x="6" y="1" width="2" height="9" rx="1"/><rect x="9" y="0" width="2" height="10" rx="1"/></svg>
+                <svg width="14" height="10" viewBox="0 0 14 10" fill="rgba(255,255,255,0.4)"><rect x="1" y="3" width="12" height="7" rx="2" fillOpacity="0.3"/><rect x="1" y="3" width="9" height="7" rx="2"/><rect x="13" y="5" width="1.5" height="3" rx="1"/></svg>
+              </div>
+            </div>
+            {/* app header */}
+            <div style={{ background: '#0d0a0a', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '0.5px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 26, height: 26, background: R, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Syne',sans-serif", fontSize: 12, fontWeight: 800, color: '#fff' }}>L</div>
+                <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 15, fontWeight: 700, color: '#fff' }}>Lettly</span>
+              </div>
+              <div style={{ fontSize: 10, color: RL, background: RDIM, border: '0.5px solid ' + RBDR, borderRadius: 20, padding: '3px 10px', fontWeight: 600 }}>2 alerts</div>
+            </div>
+            {/* stats row */}
+            <div style={{ padding: '14px 12px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {[['Portfolio value','£485,000',false],['Monthly income','£3,250',false]].map(([label, val]) => (
+                <div key={label} style={{ background: '#161010', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 800, color: '#fff' }}>{val}</div>
+                </div>
+              ))}
+            </div>
+            {/* property cards */}
+            <div style={{ padding: '0 12px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { addr: '11 Northfield Ave, HU5', rent: '£850/mo', gas: {v:'Valid',s:'ok'}, eicr: {v:'Valid',s:'ok'}, epc: 'C', warn: 'Gas cert due in 28 days', bg: 'linear-gradient(135deg,#1a2a1e,#1e3024)', status: 'ok' },
+                { addr: '7 Tower Hill Mews, HU1', rent: '£1,100/mo', gas: {v:'Valid',s:'ok'}, eicr: {v:'Overdue',s:'err'}, epc: 'D', warn: 'EICR overdue: book now', bg: 'linear-gradient(135deg,#1a1e2a,#202838)', status: 'err' },
+              ].map(p => (
+                <div key={p.addr} style={{ background: '#1e1515', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, overflow: 'hidden' }}>
+                  <div style={{ height: 80, background: p.bg, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="54" height="54" viewBox="0 0 80 80" fill="none" style={{ opacity: .18 }}><rect x="10" y="35" width="60" height="35" fill="white" rx="2"/><polygon points="40,8 5,38 75,38" fill="white"/><rect x="30" y="50" width="20" height="20" fill="#111"/></svg>
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 10px', background: 'linear-gradient(transparent,rgba(0,0,0,.8))', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>{p.addr}</div>
+                      <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 20, background: p.status === 'ok' ? 'rgba(74,222,128,.18)' : 'rgba(248,113,113,.18)', color: p.status === 'ok' ? '#4ade80' : '#f87171' }}>{p.status === 'ok' ? 'Compliant' : 'Action needed'}</span>
+                    </div>
+                  </div>
+                  <div style={{ padding: '8px 10px' }}>
+                    {[['Rent', p.rent, null], ['Gas cert', p.gas.v, p.gas.s], ['EICR', p.eicr.v, p.eicr.s], ['EPC', p.epc, null]].map(([label, val, st]) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '0.5px solid rgba(255,255,255,0.05)', fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+                        <span>{label}</span>
+                        {st ? <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 20, background: st === 'ok' ? 'rgba(74,222,128,.14)' : 'rgba(248,113,113,.14)', color: st === 'ok' ? '#4ade80' : '#f87171' }}>{val}</span>
+                          : <span style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>{val}</span>}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ padding: '6px 10px', background: RDIM, borderTop: '0.5px solid ' + RBDR, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ fontSize: 11 }}>⚠</span>
+                    <span style={{ fontSize: 9, fontWeight: 600, color: RL }}>{p.warn}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* home indicator */}
+            <div style={{ background: '#111010', padding: '8px 0 14px', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ width: 100, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 4 }}/>
             </div>
           </div>
         </div>
