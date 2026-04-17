@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 export default function CookieBanner({ onAccept, onDecline }) {
   const [visible, setVisible] = useState(false)
@@ -8,13 +9,13 @@ export default function CookieBanner({ onAccept, onDecline }) {
     if (!consent) setVisible(true)
   }, [])
 
-  const handleAccept = () => {
+  function accept() {
     localStorage.setItem('lettly_cookie_consent', 'accepted')
     setVisible(false)
     if (onAccept) onAccept()
   }
 
-  const handleDecline = () => {
+  function decline() {
     localStorage.setItem('lettly_cookie_consent', 'declined')
     setVisible(false)
     if (onDecline) onDecline()
@@ -23,122 +24,54 @@ export default function CookieBanner({ onAccept, onDecline }) {
   if (!visible) return null
 
   return (
-    <>
-      <style>{`
-        .cookie-banner {
-          position: fixed;
-          bottom: 24px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 9999;
-          width: calc(100% - 48px);
-          max-width: 560px;
-          background: #ffffff;
-          border: 0.5px solid rgba(27, 94, 59, 0.25);
-          border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(27, 94, 59, 0.12), 0 2px 8px rgba(0,0,0,0.06);
-          padding: 20px 24px;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateX(-50%) translateY(16px); }
-          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        .cookie-inner {
-          display: flex;
-          align-items: flex-start;
-          gap: 14px;
-        }
-        .cookie-icon {
-          flex-shrink: 0;
-          width: 36px;
-          height: 36px;
-          background: #f0f7f3;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 17px;
-          margin-top: 1px;
-        }
-        .cookie-text { flex: 1; }
-        .cookie-title {
-          font-size: 13.5px;
-          font-weight: 700;
-          color: #1a1a1a;
-          margin: 0 0 4px 0;
-          letter-spacing: -0.01em;
-        }
-        .cookie-body {
-          font-size: 12.5px;
-          color: #5a5a5a;
-          line-height: 1.55;
-          margin: 0;
-        }
-        .cookie-body a {
-          color: #1b5e3b;
-          text-decoration: underline;
-          text-underline-offset: 2px;
-        }
-        .cookie-actions {
-          display: flex;
-          gap: 8px;
-          margin-top: 14px;
-          justify-content: flex-end;
-        }
-        .cookie-btn-decline {
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 12.5px;
-          font-weight: 600;
-          color: #6b6b6b;
-          background: transparent;
-          border: 0.5px solid #d8d8d8;
-          border-radius: 7px;
-          padding: 7px 16px;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-        .cookie-btn-decline:hover { border-color: #aaa; color: #333; }
-        .cookie-btn-accept {
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-size: 12.5px;
-          font-weight: 700;
-          color: #ffffff;
-          background: #1b5e3b;
-          border: none;
-          border-radius: 7px;
-          padding: 7px 18px;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-        .cookie-btn-accept:hover { background: #164d30; }
-        @media (max-width: 480px) {
-          .cookie-banner {
-            bottom: 16px;
-            left: 16px;
-            right: 16px;
-            width: auto;
-            transform: none;
-          }
-        }
-      `}</style>
-      <div className="cookie-banner" role="dialog" aria-label="Cookie consent">
-        <div className="cookie-inner">
-          <div className="cookie-icon">🍪</div>
-          <div className="cookie-text">
-            <p className="cookie-title">We use cookies</p>
-            <p className="cookie-body">
-              We use analytics cookies to understand how you use Lettly so we can improve the experience. No advertising data is collected.{' '}
-              <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
-            </p>
+    <div style={{
+      position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 1000, width: 'min(480px, calc(100vw - 32px))',
+      background: '#161010',
+      border: '0.5px solid rgba(224,123,123,0.26)',
+      borderRadius: 16,
+      padding: '20px 22px',
+      boxShadow: '0 8px 40px rgba(0,0,0,0.35)',
+      display: 'flex', flexDirection: 'column', gap: 14,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        <div style={{
+          width: 36, height: 36, background: '#e07b7b', borderRadius: 9,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+          fontFamily: 'Georgia, serif', fontSize: 18, fontWeight: 700,
+          fontStyle: 'italic', color: '#fff',
+        }}>L</div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 5 }}>
+            We use cookies
+          </div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65 }}>
+            We use analytics cookies to understand how you use Lettly so we can improve the experience. No advertising data is collected.{' '}
+            <Link href="/privacy" style={{ color: '#eca9a9', textDecoration: 'underline' }}>
+              Privacy policy
+            </Link>
           </div>
         </div>
-        <div className="cookie-actions">
-          <button className="cookie-btn-decline" onClick={handleDecline}>Decline</button>
-          <button className="cookie-btn-accept" onClick={handleAccept}>Accept cookies</button>
-        </div>
       </div>
-    </>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+        <button onClick={decline} style={{
+          padding: '8px 20px', borderRadius: 100, border: '0.5px solid rgba(255,255,255,0.15)',
+          background: 'transparent', color: 'rgba(255,255,255,0.7)',
+          fontSize: 13, fontWeight: 500, cursor: 'pointer',
+          fontFamily: "'DM Sans', sans-serif",
+        }}>
+          Decline
+        </button>
+        <button onClick={accept} style={{
+          padding: '8px 20px', borderRadius: 100, border: 'none',
+          background: '#e07b7b', color: '#fff',
+          fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          fontFamily: "'DM Sans', sans-serif",
+        }}>
+          Accept cookies
+        </button>
+      </div>
+    </div>
   )
 }
