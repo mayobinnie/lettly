@@ -258,7 +258,7 @@ export default function HomePage() {
             Renters Rights Act in force 1 May 2026. Are you ready?
           </div>
 
-          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(42px,7.5vw,88px)', fontWeight: 800, lineHeight: 1.0, letterSpacing: '-2.5px', marginBottom: 24, maxWidth: 860, animation: 'fadeUp .5s .08s ease both' }}>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(42px,7.5vw,88px)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-1px', marginBottom: 24, maxWidth: 860, animation: 'fadeUp .5s .08s ease both' }}>
             Everything your<br/>letting agent does.<br/><em style={{ fontStyle: 'normal', color: R }}>For £10 a month.</em>
           </h1>
 
