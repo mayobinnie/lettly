@@ -72,7 +72,7 @@ function PricingSection() {
   return (
     <section style={{ padding: '92px 44px', maxWidth: 1200, margin: '0 auto' }} className="sec-pad" id="pricing">
       <div style={{ fontSize: 11, fontWeight: 700, color: R, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 16 }}>Simple pricing</div>
-      <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,4.5vw,56px)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.5px', marginBottom: 18 }}>
+      <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,4.5vw,56px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.5px', marginBottom: 18 }}>
         No hidden fees.<br/>No feature gating.
       </h2>
       <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.55)', fontWeight: 300, maxWidth: 520, lineHeight: 1.75, marginBottom: 36 }}>
@@ -148,7 +148,7 @@ export default function HomePage() {
   const navLink = { fontSize: 14, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }
   const darkSection = { background: '#111010', borderTop: '0.5px solid rgba(255,255,255,0.07)', borderBottom: '0.5px solid rgba(255,255,255,0.07)' }
   const secTag = { fontSize: 11, fontWeight: 700, color: R, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 16, display: 'inline-block' }
-  const secH2 = { fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,4.5vw,56px)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.5px', marginBottom: 18 }
+  const secH2 = { fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,4.5vw,56px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.5px', marginBottom: 18 }
   const secSub = { fontSize: 18, color: 'rgba(255,255,255,0.55)', fontWeight: 300, maxWidth: 520, lineHeight: 1.75, marginBottom: 52 }
 
   return (
@@ -249,7 +249,7 @@ export default function HomePage() {
         )}
 
         {/* HERO */}
-        <section className="hero-pad" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <section className="hero-pad" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflowY: 'hidden' }}>
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px)', backgroundSize: '60px 60px', WebkitMaskImage: 'radial-gradient(ellipse 90% 65% at 50% 0%,black,transparent 75%)', maskImage: 'radial-gradient(ellipse 90% 65% at 50% 0%,black,transparent 75%)', opacity: .45 }}/>
           <div style={{ position: 'absolute', top: -200, left: '50%', transform: 'translateX(-50%)', width: 700, height: 700, borderRadius: '50%', pointerEvents: 'none', background: 'radial-gradient(circle,rgba(224,123,123,0.09) 0%,transparent 68%)' }}/>
 
@@ -258,7 +258,7 @@ export default function HomePage() {
             Renters Rights Act in force 1 May 2026. Are you ready?
           </div>
 
-          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(42px,7.5vw,88px)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-1px', marginBottom: 24, maxWidth: 860, animation: 'fadeUp .5s .08s ease both' }}>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(42px,7.5vw,88px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-1px', marginBottom: 24, maxWidth: 860, padding: '0 4px', animation: 'fadeUp .5s .08s ease both' }}>
             Everything your<br/>letting agent does.<br/><em style={{ fontStyle: 'normal', color: R }}>For £10 a month.</em>
           </h1>
 
@@ -511,7 +511,7 @@ export default function HomePage() {
         {/* FINAL CTA */}
         <div style={{ margin: '0 20px 80px', background: 'linear-gradient(140deg,#180d0d,#0d0a0a 50%,#180d0d)', border: '0.5px solid ' + RBDR, borderRadius: 24, padding: 'clamp(40px,6vw,80px) clamp(20px,5vw,44px)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 400, background: 'radial-gradient(circle,rgba(224,123,123,0.07) 0%,transparent 70%)', pointerEvents: 'none' }}/>
-          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,5vw,68px)', fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1, marginBottom: 18 }}>
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,5vw,68px)', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, marginBottom: 18 }}>
             Stop paying your<br/>letting agent. <em style={{ fontStyle: 'normal', color: R }}>Start today.</em>
           </h2>
           <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.55)', marginBottom: 38, fontWeight: 300 }}>14-day free trial. No credit card. Cancel any time.</p>
