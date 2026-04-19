@@ -72,7 +72,7 @@ function PricingSection() {
   return (
     <section style={{ padding: '92px 44px', maxWidth: 1200, margin: '0 auto' }} className="sec-pad" id="pricing">
       <div style={{ fontSize: 11, fontWeight: 700, color: R, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 16 }}>Simple pricing</div>
-      <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,4.5vw,56px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-1.5px', marginBottom: 18 }}>
+      <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,4.5vw,56px)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.5px', marginBottom: 18 }}>
         No hidden fees.<br/>No feature gating.
       </h2>
       <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.55)', fontWeight: 300, maxWidth: 520, lineHeight: 1.75, marginBottom: 36 }}>
@@ -95,7 +95,7 @@ function PricingSection() {
             <div key={plan.id} style={{ background: isHot ? 'linear-gradient(145deg,#1a0d0d,#150a0a)' : '#161010', border: '0.5px solid ' + (isHot ? RBDR : 'rgba(255,255,255,0.08)'), borderRadius: 16, padding: 30, display: 'flex', flexDirection: 'column', position: 'relative' }}>
               {isHot && <div style={{ position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', background: R, color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 14px', borderRadius: 100, whiteSpace: 'nowrap', fontFamily: "'Syne', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px' }}>Most popular</div>}
               <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, color: isHot ? RL : 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 14 }}>{plan.name}</div>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 52, fontWeight: 800, letterSpacing: '-2px', lineHeight: 1, marginBottom: 4 }}>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 52, fontWeight: 800, letterSpacing: '-1px', lineHeight: 1, marginBottom: 4 }}>
                 <sup style={{ fontSize: 22, fontWeight: 600, verticalAlign: 'top', marginTop: 10, marginRight: 2 }}>£</sup>
                 {price}
                 <sub style={{ fontSize: 15, fontWeight: 400, color: 'rgba(255,255,255,0.55)', letterSpacing: 0 }}>/mo</sub>
@@ -148,7 +148,7 @@ export default function HomePage() {
   const navLink = { fontSize: 14, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }
   const darkSection = { background: '#111010', borderTop: '0.5px solid rgba(255,255,255,0.07)', borderBottom: '0.5px solid rgba(255,255,255,0.07)' }
   const secTag = { fontSize: 11, fontWeight: 700, color: R, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 16, display: 'inline-block' }
-  const secH2 = { fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,4.5vw,56px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-1.5px', marginBottom: 18 }
+  const secH2 = { fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,4.5vw,56px)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.5px', marginBottom: 18 }
   const secSub = { fontSize: 18, color: 'rgba(255,255,255,0.55)', fontWeight: 300, maxWidth: 520, lineHeight: 1.75, marginBottom: 52 }
 
   return (
@@ -436,9 +436,9 @@ export default function HomePage() {
             <div className="grid-2">
               <div style={{ background: '#161010', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 36 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>Letting agent: full management</div>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Everything you pay for...</div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Everything you pay for...</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 52, fontWeight: 800, color: R, marginBottom: 24, letterSpacing: '-2px', lineHeight: 1 }}>£1,275<span style={{ fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.5)', letterSpacing: 0 }}>/yr</span></div>
-                {['10–15% of rent, every month, every year','England only — Scotland and Wales ignored','Tenancy renewal fees on top','Maintenance markups passed back to you','You still carry all the legal liability'].map(item => (
+                {['10–15% of rent, every month, every year','England only: Scotland and Wales not covered','Tenancy renewal fees on top','Maintenance markups passed back to you','You still carry all the legal liability'].map(item => (
                   <div key={item} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', fontSize: 14, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, marginBottom: 11 }}>
                     <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, marginTop: 1, background: 'rgba(248,113,113,.10)', color: '#f87171' }}>✕</div>{item}
                   </div>
@@ -446,7 +446,7 @@ export default function HomePage() {
               </div>
               <div style={{ background: 'linear-gradient(145deg,#1a0d0d,#150a0a)', border: '0.5px solid ' + RBDR, borderRadius: 16, padding: 36 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: RL, marginBottom: 20 }}>Lettly: full management software</div>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Everything you actually need.</div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Everything you actually need.</div>
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 52, fontWeight: 800, color: R, marginBottom: 24, letterSpacing: '-2px', lineHeight: 1 }}>£120<span style={{ fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.5)', letterSpacing: 0 }}>/yr</span></div>
                 {['AI reads every certificate automatically','Compliance alerts before anything expires','England, Scotland and Wales all covered','Every feature included, nothing gated','14-day free trial, cancel any time'].map(item => (
                   <div key={item} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', fontSize: 14, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, marginBottom: 11 }}>
@@ -473,7 +473,7 @@ export default function HomePage() {
                 onMouseEnter={e => { e.currentTarget.style.borderColor = RBDR; e.currentTarget.style.background = '#1e1515' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.background = '#161010' }}>
                 <span style={{ fontSize: 36, marginBottom: 14, display: 'block' }}>{n.flag}</span>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 21, fontWeight: 800, marginBottom: 5 }}>{n.name}</div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 5 }}>{n.name}</div>
                 <div style={{ fontSize: 11, color: RL, fontWeight: 700, marginBottom: 11, textTransform: 'uppercase', letterSpacing: '.6px' }}>{n.act}</div>
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7 }}>{n.desc}</div>
               </div>
@@ -511,7 +511,7 @@ export default function HomePage() {
         {/* FINAL CTA */}
         <div style={{ margin: '0 20px 80px', background: 'linear-gradient(140deg,#180d0d,#0d0a0a 50%,#180d0d)', border: '0.5px solid ' + RBDR, borderRadius: 24, padding: 'clamp(40px,6vw,80px) clamp(20px,5vw,44px)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 400, background: 'radial-gradient(circle,rgba(224,123,123,0.07) 0%,transparent 70%)', pointerEvents: 'none' }}/>
-          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,5vw,68px)', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.05, marginBottom: 18 }}>
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(32px,5vw,68px)', fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1, marginBottom: 18 }}>
             Stop paying your<br/>letting agent. <em style={{ fontStyle: 'normal', color: R }}>Start today.</em>
           </h2>
           <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.55)', marginBottom: 38, fontWeight: 300 }}>14-day free trial. No credit card. Cancel any time.</p>
