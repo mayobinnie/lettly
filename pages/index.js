@@ -158,7 +158,7 @@ export default function HomePage() {
         <meta name="description" content="Replace your letting agent with Lettly. AI document extraction, compliance tracking, rent management and legislation for UK private landlords. From £10/month."/>
         <link rel="preconnect" href="https://fonts.googleapis.com"/>
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin=""/>
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet"/>
         <style>{`
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
           @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -258,7 +258,7 @@ export default function HomePage() {
             Renters Rights Act in force 1 May 2026. Are you ready?
           </div>
 
-          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(42px,7.5vw,88px)', fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.5px', marginBottom: 24, maxWidth: 860, animation: 'fadeUp .5s .08s ease both' }}>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 'clamp(42px,7.5vw,88px)', fontWeight: 800, lineHeight: 1.15, letterSpacing: '-1px', marginBottom: 24, maxWidth: 860, animation: 'fadeUp .5s .08s ease both' }}>
             Everything your<br/>letting agent does.<br/><em style={{ fontStyle: 'normal', color: R }}>For £10 a month.</em>
           </h1>
 
