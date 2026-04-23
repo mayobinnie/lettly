@@ -61,7 +61,7 @@ export default function App({ Component, pageProps }) {
         <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
         <link rel="alternate icon" href="/favicon.svg"/>
         <link rel="apple-touch-icon" href="/icon.svg"/>
-        <meta name="theme-color" content="#0d0a0a"/>
+        <meta name="theme-color" content="#1b5e3b"/>
       </Head>
       <ClerkProvider
         {...pageProps}
@@ -98,7 +98,7 @@ export default function App({ Component, pageProps }) {
           rel="noopener noreferrer"
           aria-label="Chat with us on WhatsApp"
           style={{
-            position:'fixed', bottom:24, right:24, zIndex:999,
+            position:'fixed', bottom:'calc(env(safe-area-inset-bottom, 0px) + 80px)', right:24, zIndex:999,
             width:54, height:54, borderRadius:'50%',
             background:'#25D366', display:'flex', alignItems:'center', justifyContent:'center',
             boxShadow:'0 4px 16px rgba(37,211,102,0.4)', textDecoration:'none',
